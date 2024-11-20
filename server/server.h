@@ -10,6 +10,7 @@
 #include "user.h"
 #include <unordered_map>
 #include "msganalyse.h"
+#include "threadpool.h"
 
 class Server
 {
@@ -24,6 +25,9 @@ private:
     void deal_read_in_connsocketfd(int socketfd);
     onlineio* connection;
     msganalyse* m_analyser;
+    ThreadPool* pool;
+    taskpackage* task;
+
     //以连接并已登录用户
     std::unordered_map<int,user*> login_user;
     //已连接但未登录用户

@@ -47,6 +47,10 @@ msgtype msganalyse::get_msg_type()
     {
         return REGISTER;
     }
+    else if (type == "error")
+    {
+        return ERROR;
+    }
     else
     {
         return ERROR;
@@ -55,7 +59,7 @@ msgtype msganalyse::get_msg_type()
 
 void loginmsg::init(const json& msg)
 {
-    msg_type = "login";
+    msg_type = LOGIN;
     m_username = msg["data"]["username"];
     m_password = msg["data"]["password"];
     // m_username = msg["username"];
@@ -64,14 +68,14 @@ void loginmsg::init(const json& msg)
 
 void chatmsg::init(const json& msg)
 {
-    msg_type = "chat";
+    msg_type = LOGIN;
     m_msg = msg["data"]["context"];
     m_reciver = msg["data"]["reciver"];
 }
 
 void registermsg::init(const json& msg)
 {
-    msg_type = "register";
+    msg_type = REGISTER;
     m_username = msg["data"]["username"];
     m_password = msg["data"]["password"];
     m_email = msg["data"]["email"];
@@ -79,5 +83,5 @@ void registermsg::init(const json& msg)
 
 void errormsg::init(const json& msg)
 {
-    msg_type = "error";
+    msg_type = ERROR;
 }

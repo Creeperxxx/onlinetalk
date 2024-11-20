@@ -12,7 +12,8 @@ enum msgtype
     LOGIN,
     REGISTER,
     CHAT,
-    ERROR
+    ERROR,
+    RET
 };
 
 class msganalyse
@@ -20,7 +21,10 @@ class msganalyse
 public:
     void set_msg(const std::string& msg){m_msg = msg;}
     void generate_msg();
+    // msgtype get_message_type(){return m_type;}
     // void set_msg();
+    abstractmsg* get_final_msg(){return m_msg_ptr;}
+private:
     msgtype get_msg_type();
 private:
     std::string m_msg;
@@ -32,10 +36,11 @@ private:
 class abstractmsg
 {
 public:
-    const std::string& get_msg_type(){return msg_type;}
+    msgtype get_msg_type(){return msg_type;}
     virtual void init(const json & msg) = 0;
 protected:
-    std::string msg_type;
+    // std::string msg_type;
+    msgtype msg_type;
 };
 
 

@@ -48,9 +48,10 @@ void Server::event_loop()
                 // recv_msg(unlogin_user[evs[i].data.fd]);
                 deal_read_in_connsocketfd(evs[i].data.fd);
                 //此时，处理过的消息对象，被放置在m_analyser的m_msg_ptr中
+                task->set_msg(m_analyser->get_final_msg());
+                auto ret = task->generate_task();
+                pool->addTask(std::move(task->takeTask()));
                 
-
-
 
 
                 
