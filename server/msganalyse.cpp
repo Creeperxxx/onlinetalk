@@ -3,32 +3,31 @@
 void msganalyse::generate_msg()
 {
     msgtype type = get_msg_type();
-    abstractmsg* msg = NULL;
-    abstractmsgfactory* fac = NULL;
+    delete m_msg_factory;
+    delete m_msg_ptr;
     switch (type)
     {
         case LOGIN:
-            fac = new loginmsgfactory();
-            msg = fac->create_msg();
+            m_msg_factory = new loginmsgfactory();
+            m_msg_ptr = m_msg_factory->create_msg();
             break;
         case CHAT:
-            fac = new chatmsgfactory();
-            msg = fac->create_msg();
+            m_msg_factory = new chatmsgfactory();
+            m_msg_ptr = m_msg_factory->create_msg();
             break;
         case REGISTER:
-            fac = new registermsgfactory();
-            msg = fac->create_msg();
+            m_msg_factory = new registermsgfactory();
+            m_msg_ptr = m_msg_factory->create_msg();
             break;
         case ERROR:
-            fac = new errormsgfactory();
-            msg = fac->create_msg();
+            m_msg_factory = new errormsgfactory();
+            m_msg_ptr = m_msg_factory->create_msg();
             break;
         default:
             break;
     }
-    msg->init(m_msg_json);
-    m_msg_ptr = msg;
-    msg = NULL;
+    m_msg_ptr->init(m_msg_json);
+    m_msg_ptr->set_sender_fd(sender_fd);
 }
 
 msgtype msganalyse::get_msg_type()
@@ -84,4 +83,9 @@ void registermsg::init(const json& msg)
 void errormsg::init(const json& msg)
 {
     msg_type = ERROR;
+}
+
+void returnmsg::init(const json& msg)
+{
+    msg_type = RET;
 }

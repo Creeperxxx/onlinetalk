@@ -4,7 +4,13 @@
 #include <mutex>
 #include <memory>
 #include "msganalyse.h"
-#include "sql_connection_pool.h"
+#include "mysqlpool.h"
+#include <unordered_map>
+
+
+extern const std::string USERNAME;
+extern const std::string PASSWORD;
+extern const std::string EMAIL;
 
 
 class retmsg;
@@ -17,18 +23,34 @@ public:
     task takeTask();                                                         // 取任务
     bool empty() { return taskqueue.empty(); }
     void set_msg(abstractmsg* msg){m_msg = msg;}
-    auto generate_task();
+    auto generate_task()->std::future<std::unique_ptr<retmsg>>;
+    // static std::unordered_map<std::string,int>& get_utfmap(){return username_to_fd;}
+    // static std::string get_latest_username(){return latest_username;}
+    bool set_latest_username_flag(bool flag = true){latest_username_flag = flag;}
+    bool get_latest_username_flag(){return latest_username_flag;}
+    // int get_latest_user_socketfd();
+    void get_latest_username_fd(std::string& username, int& fd);
+    void set_result(std::future<std::unique_ptr<retmsg>>&& future){result = std::move(future);}
+
 private:
-    static std::unique_ptr<retmsg> login_handle(abstractmsg* msg,connection_pool* pool);
-    static std::unique_ptr<retmsg> register_handle(abstractmsg* msg,connection_pool* pool);
-    static std::unique_ptr<retmsg> chat_handle(abstractmsg* msg,connection_pool* pool);
-    static std::unique_ptr<retmsg> error_handle(abstractmsg* msg,connection_pool* pool);
-    static std::unique_ptr<retmsg> ret_handle(abstractmsg* msg,connection_pool* pool);
+    static std::unique_ptr<retmsg> login_handle(abstractmsg* msg,MySQLConnectionPool* pool);
+    static std::unique_ptr<retmsg> register_handle(abstractmsg* msg,MySQLConnectionPool* pool);
+    static std::unique_ptr<retmsg> chat_handle(abstractmsg* msg,MySQLConnectionPool* pool);
+    static std::unique_ptr<retmsg> error_handle(abstractmsg* msg,MySQLConnectionPool* pool);
+    static std::unique_ptr<retmsg> ret_handle();
+    static void add_username_to_fd(const std::string username,int fd);
+    // static int get_fd_by_username(const std::string& username);
+    // void login_result(bool flag);
 private:
+    static bool latest_username_flag;
+    static std::string latest_username;
+    static int latest_socketfd;
+    static std::unordered_map<std::string,int> username_to_fd;
+    static std::future<std::unique_ptr<retmsg>> result;
     std::queue<task> taskqueue; 
     std::mutex taskQueueMutex; // 互斥锁，防止多个线程同时访问任务队列
     abstractmsg* m_msg;
-    connection_pool* pool;
+    MySQLConnectionPool* pool;
 };
 
 template <typename F, typename... Args> // 可变参数模板，模板必须在头文件定义!!!

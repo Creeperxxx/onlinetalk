@@ -52,6 +52,18 @@ void Server::event_loop()
                 auto ret = task->generate_task();
                 pool->addTask(std::move(task->takeTask()));
                 
+                //将等待结果包装成一个任务
+                //1. 设置task的msg的type为ret
+                //2. 设置ret_handle，参数有ret，
+                //3. 调用generate函数，调用pool的addtask函数，将任务添加到线程池
+                abstractmsg* ret_msg = new returnmsg;
+                ret_msg->init();
+                task->set_msg(ret_msg);
+                task->set_result(std::move(ret));
+                task->generate_task();
+
+                // task->set_msg()
+                
 
 
                 
@@ -101,7 +113,7 @@ void Server::event_loop()
 void Server::add_unlogin_user()
 {
     user *newuser = new user;
-    newuser->init(connection->get_new_socketfd(), 0);
+    newuser->init(connection->get_new_socketfd());
     unlogin_user.insert({connection->get_new_socketfd(), newuser});
 }
 
@@ -121,5 +133,36 @@ void Server::deal_read_in_connsocketfd(int socketfd)
     }
     connection->recv_msg(it->second);
     m_analyser->set_msg(it->second->get_recv_msg());
+    m_analyser->set_sender_fd(socketfd);
     m_analyser->generate_msg();
+}
+
+void Server::add_login_user()
+{
+    bool flag = task->get_latest_username_flag();
+    if(flag)
+    {
+        std::string username = "";
+        int socketfd = 0;
+        task->get_latest_username_fd(username,socketfd);
+        user* add_user = new user;
+        add_user->init(socketfd,0,username);
+        login_user.insert({socketfd,add_user});
+        task->set_latest_username_flag(false);
+    }
+    return;
+    // std::string latest_username = taskpackage::get_latest_username();
+    // int socket_fd = taskpackage::get_utfmap()[latest_username];
+    // if(login_user.find(socket_fd) != login_user.end())
+    // {
+    //     //找到了直接返回
+    //     return;
+    // }
+    // else
+    // {
+    //     user* add_user = new user;
+    //     add_user->init(socket_fd);
+    //     login_user.insert({socket_fd,add_user});
+    // }
+
 }

@@ -43,3 +43,4 @@ private:
                         const std::string& database, 
                         size_t pool_size);  
 };
+

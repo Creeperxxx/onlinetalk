@@ -5,7 +5,7 @@
 class user
 {
 public:
-    void init(int socketfd,int uid);
+    void init(int socketfd,int uid = 0,std::string username = "");
     void set_recv_msg(const std::string& msg){recv_msg = msg;}
     void set_send_msg(const std::string& msg){send_msg = msg;}
     void set_isalive(int flag){is_alive = flag;}
@@ -19,4 +19,5 @@ private:
     std::string recv_msg;
     std::string send_msg; 
     int is_alive;
+    std::string username;
 };

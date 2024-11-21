@@ -27,6 +27,7 @@ private:
     msganalyse* m_analyser;
     ThreadPool* pool;
     taskpackage* task;
+    void add_login_user();
 
     //以连接并已登录用户
     std::unordered_map<int,user*> login_user;

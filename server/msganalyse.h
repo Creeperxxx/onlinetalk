@@ -20,27 +20,32 @@ class msganalyse
 {
 public:
     void set_msg(const std::string& msg){m_msg = msg;}
+    void set_sender_fd(int fd){sender_fd = fd;}
     void generate_msg();
     // msgtype get_message_type(){return m_type;}
     // void set_msg();
     abstractmsg* get_final_msg(){return m_msg_ptr;}
-private:
     msgtype get_msg_type();
 private:
     std::string m_msg;
-    abstractmsg* m_msg_ptr;
-    msgtype m_type;
     json m_msg_json;
+    abstractmsg* m_msg_ptr;
+    abstractmsgfactory* m_msg_factory;
+    msgtype m_type;
+    int sender_fd;
 };
 
 class abstractmsg
 {
 public:
     msgtype get_msg_type(){return msg_type;}
-    virtual void init(const json & msg) = 0;
+    void set_sender_fd(int fd){m_send_fd = fd;}
+    int get_sender_fd(){return m_send_fd;}
+    virtual void init(const json & msg = NULL) = 0;
 protected:
     // std::string msg_type;
     msgtype msg_type;
+    int m_send_fd;
 };
 
 
@@ -49,9 +54,11 @@ class loginmsg:public abstractmsg
 public:
     void set_username(const std::string& username){m_username = username;}
     void set_password(const std::string& password){m_password = password;}
+    // void set_sender_fd(int fd){sender_fd = fd;}
     const std::string& get_username(){return m_username;}
     const std::string& get_password(){return m_password;}
-    void init(const json& msg);
+    // int get_sender_fd(){return sender_fd;}
+    void init(const json& msg = NULL);
 private:
     std::string m_username;
     std::string m_password;
@@ -79,7 +86,7 @@ public:
     const std::string& get_username(){return m_username;}
     const std::string& get_password(){return m_password;}
     const std::string& get_email(){return m_email;}
-    void init(const json& msg);
+    void init(const json& msg = NULL);
 private:
     std::string m_username;
     std::string m_password;
@@ -89,7 +96,13 @@ private:
 class errormsg:public abstractmsg
 {
 public:
-    void init(const json& msg);
+    void init(const json& msg = NULL);
+};
+
+class returnmsg:public abstractmsg
+{
+public:
+    void init(const json& msg = NULL);
 };
 
 class abstractmsgfactory
