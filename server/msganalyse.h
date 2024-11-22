@@ -3,6 +3,9 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <string>
+// #include <unordered_map>
+#include <queue>
+#include <mutex>
 
 
 using json = nlohmann::json;
@@ -13,26 +16,33 @@ enum msgtype
     REGISTER,
     CHAT,
     ERROR,
-    RET
+    RET,
+    RECV
 };
 
 class msganalyse
 {
 public:
-    void set_msg(const std::string& msg){m_msg = msg;}
-    void set_sender_fd(int fd){sender_fd = fd;}
-    void generate_msg();
+    // void set_msg(const std::string& msg){m_msg = msg;}//将消息传入到m_msg
+    // void set_sender_fd(int fd){sender_fd = fd;}//将发送者的套接字传入到sender_fd
+    std::unique_ptr<abstractmsg> generate_msg(std::string& msg,int sender_fd);//根据m_msg和sender_fd生成包装任务所需的基础信息
     // msgtype get_message_type(){return m_type;}
     // void set_msg();
-    abstractmsg* get_final_msg(){return m_msg_ptr;}
-    msgtype get_msg_type();
+    // abstractmsg* get_final_msg(){return m_msg_ptr;}//返回基础信息
+    msgtype get_msg_type(std::string& msg);//获取消息的类型
+    //todo server初始化中要调用这个函数
+    void set_get_fd_by_username_func(std::function<int(std::string)> func){get_fd_by_username = func;}
 private:
-    std::string m_msg;
-    json m_msg_json;
-    abstractmsg* m_msg_ptr;
-    abstractmsgfactory* m_msg_factory;
-    msgtype m_type;
-    int sender_fd;
+    // std::unordered_map<std::string,int> username_to_fd;
+    // std::string m_msg;//存放从客户端接收到的json字符串
+    // json m_msg_json;//存放从json字符串解析后的json对象
+    // abstractmsg* m_msg_ptr;//任务包装模块所需的基础信息
+    // abstractmsgfactory* m_msg_factory;//生成基础信息的工厂
+    // msgtype m_type;//消息的类型
+    // int sender_fd;//发送者的套接字
+    // std::mutex queue_mutex;
+    // std::queue<std::unique_ptr<abstractmsg>> basicalmsg_queue;
+    std::function<int(std::string) > get_fd_by_username;
 };
 
 class abstractmsg
@@ -40,12 +50,16 @@ class abstractmsg
 public:
     msgtype get_msg_type(){return msg_type;}
     void set_sender_fd(int fd){m_send_fd = fd;}
+    // void set_receive_fd(int fd){m_receive_fd = fd;}
     int get_sender_fd(){return m_send_fd;}
+    int get_receive_fd(){return m_receive_fd;}
+    void set_receive_fd(int fd){m_receive_fd = fd;}
     virtual void init(const json & msg = NULL) = 0;
 protected:
     // std::string msg_type;
     msgtype msg_type;
     int m_send_fd;
+    int m_receive_fd;
 };
 
 
@@ -105,6 +119,14 @@ public:
     void init(const json& msg = NULL);
 };
 
+class receivemsg  : public abstractmsg
+{
+public:
+    void init(const json& msg = NULL);
+    // user* m_receiveuser;
+};
+
+
 class abstractmsgfactory
 {
 public:
@@ -144,5 +166,23 @@ public:
     errormsg* create_msg()
     {
         return new errormsg;
+    }
+};
+
+class returnmsgfactory:public abstractmsgfactory
+{
+public:
+    returnmsg* create_msg()
+    {
+        return new returnmsg;
+    }
+};
+
+class recvmsgfactory:public abstractmsgfactory
+{
+public:
+    receivemsg* create_msg()
+    {
+        return new receivemsg;
     }
 };

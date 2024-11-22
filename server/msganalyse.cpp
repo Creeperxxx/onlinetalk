@@ -1,39 +1,55 @@
 #include "msganalyse.h"
 
-void msganalyse::generate_msg()
+std::unique_ptr<abstractmsg> msganalyse::generate_msg(std::string& msg,int sender_fd)
 {
-    msgtype type = get_msg_type();
-    delete m_msg_factory;
-    delete m_msg_ptr;
+    msgtype type = get_msg_type(msg);
+    abstractmsgfactory* msg_factory = NULL;
+    std::unique_ptr<abstractmsg> basicalmsg_ptr = NULL;
     switch (type)
     {
         case LOGIN:
-            m_msg_factory = new loginmsgfactory();
-            m_msg_ptr = m_msg_factory->create_msg();
+            msg_factory = new loginmsgfactory();
+            basicalmsg_ptr = std::make_unique<loginmsg>(*(msg_factory->create_msg()));
             break;
         case CHAT:
-            m_msg_factory = new chatmsgfactory();
-            m_msg_ptr = m_msg_factory->create_msg();
+            msg_factory = new chatmsgfactory();
+            basicalmsg_ptr = std::make_unique<chatmsg>(*(msg_factory->create_msg()));
             break;
         case REGISTER:
-            m_msg_factory = new registermsgfactory();
-            m_msg_ptr = m_msg_factory->create_msg();
+            msg_factory = new registermsgfactory();
+            basicalmsg_ptr = std::make_unique<registermsg>(*(msg_factory->create_msg()));
             break;
         case ERROR:
-            m_msg_factory = new errormsgfactory();
-            m_msg_ptr = m_msg_factory->create_msg();
+            msg_factory = new errormsgfactory();
+            basicalmsg_ptr = std::make_unique<errormsg>(*(msg_factory->create_msg()));
+            break;
+        case RET:
+            msg_factory = new returnmsgfactory();
+            basicalmsg_ptr = std::make_unique<returnmsg>(*(msg_factory->create_msg()));
+            break;
+        case RECV:
+            msg_factory = new recvmsgfactory();
+            basicalmsg_ptr = std::make_unique<receivemsg>(*(msg_factory->create_msg()));
             break;
         default:
             break;
     }
-    m_msg_ptr->init(m_msg_json);
-    m_msg_ptr->set_sender_fd(sender_fd);
+    basicalmsg_ptr->set_sender_fd(sender_fd);
+    basicalmsg_ptr->init(json::parse(msg));
+    if(type == CHAT)
+    {
+        chatmsg* chat_msg = dynamic_cast<chatmsg*>(basicalmsg_ptr.get());
+        int receiver_fd = get_fd_by_username(chat_msg->get_reciver());
+        chat_msg->set_receive_fd(receiver_fd);
+    }
+    // std::lock_guard<std::mutex> lock(queue_mutex);
+    // basicalmsg_queue.push(std::move(basicalmsg_ptr));
 }
 
-msgtype msganalyse::get_msg_type()
+msgtype msganalyse::get_msg_type(std::string& msg)
 {
-    m_msg_json = json::parse(m_msg);
-    std::string type = m_msg_json["type"];
+    json msg_json = json::parse(msg);
+    std::string type = msg_json["type"];
     if(type == "login")
     {
         return LOGIN;
@@ -46,9 +62,13 @@ msgtype msganalyse::get_msg_type()
     {
         return REGISTER;
     }
-    else if (type == "error")
+    else if (type == "ret")
     {
-        return ERROR;
+        return RET;
+    }
+    else if(type == "recv")
+    {
+        return RECV;
     }
     else
     {
@@ -61,15 +81,17 @@ void loginmsg::init(const json& msg)
     msg_type = LOGIN;
     m_username = msg["data"]["username"];
     m_password = msg["data"]["password"];
+    m_receive_fd = m_send_fd;
     // m_username = msg["username"];
     // m_password = msg["password"];
 }
 
 void chatmsg::init(const json& msg)
 {
-    msg_type = LOGIN;
+    msg_type = CHAT;
     m_msg = msg["data"]["context"];
     m_reciver = msg["data"]["reciver"];
+    // m_receive_fd = get_fd_by_username(m_reciver);
 }
 
 void registermsg::init(const json& msg)
@@ -78,14 +100,22 @@ void registermsg::init(const json& msg)
     m_username = msg["data"]["username"];
     m_password = msg["data"]["password"];
     m_email = msg["data"]["email"];
+    m_receive_fd = m_send_fd;
 }
 
 void errormsg::init(const json& msg)
 {
     msg_type = ERROR;
+    m_receive_fd = m_send_fd;
 }
 
 void returnmsg::init(const json& msg)
 {
     msg_type = RET;
+    m_receive_fd = m_send_fd;
+}
+
+void receivemsg::init(const json& msg)
+{
+    msg_type = RECV;
 }

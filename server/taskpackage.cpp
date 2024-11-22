@@ -1,4 +1,5 @@
 #include "taskpackage.h"
+
 const std::string USERNAME = "username";
 const std::string PASSWORD = "password";
 const std::string EMAIL = "email";
@@ -16,34 +17,67 @@ taskpackage::task taskpackage::takeTask()
     return nullptr;
 }
 
-auto taskpackage::generate_task()->std::future<std::unique_ptr<retmsg>>
+auto taskpackage::generate_task(std::unique_ptr<abstractmsg> basicmsg)->std::future<std::unique_ptr<retmsg>>
 {
-    msgtype type = m_msg->get_msg_type();
-    if (type == LOGIN)
+    msgtype type = basicmsg->get_msg_type();
+    using lambdarettype = std::unique_ptr<retmsg>;
+    // using addtaskrettype = std::future<std::unique_ptr<retmsg>>;
+    std::function<lambdarettype()> lambda;
+    // addtaskrettype task;
+    switch(type)
     {
-        return addTask(taskpackage::login_handle, m_msg, MySQLConnectionPool::getInstance());
+    case LOGIN:
+        lambda = [this,ptr = std::move(basicmsg)]()mutable{return this->login_handle(std::move(ptr));};
+        break;
+    case REGISTER:
+        lambda = [this,ptr = std::move(basicmsg)]()mutable{return this->register_handle(std::move(ptr));};
+        break;
+    case CHAT:
+        lambda = [this,ptr = std::move(basicmsg)]()mutable{return this->chat_handle(std::move(ptr));};
+        break;
+    case ERROR:
+        lambda = [this,ptr = std::move(basicmsg)]()mutable{return this->error_handle(std::move(ptr));};
+        break;
+    case RET:
+        lambda = [this,ptr = std::move(basicmsg)]()mutable{return this->ret_handle(std::move(ptr));};
+        break;
+    case RECV:
+        lambda = [this,ptr = std::move(basicmsg)]()mutable{return this->recv_handle(std::move(ptr));};
+        break;
+    default:
+        std::cerr << "taskpackage::generate_task() :error" << std::endl;
+        exit(1);
+        break;
     }
-    else if (type == REGISTER)
-    {
-        return addTask(taskpackage::register_handle, m_msg, MySQLConnectionPool::getInstance());
-    }
-    else if (type == CHAT)
-    {
-        return addTask(taskpackage::chat_handle, m_msg, MySQLConnectionPool::getInstance());
-    }
-    else if (type == ERROR)
-    {
-        return addTask(taskpackage::error_handle, m_msg, MySQLConnectionPool::getInstance());
-    }
-    else if (type == RET)
-    {
-        return addTask(taskpackage::ret_handle);
-    }
+    return addTask(lambda);
+    // if (type == LOGIN)
+    // {
+    //     return addTask(taskpackage::login_handle, m_msg, MySQLConnectionPool::getInstance());
+    // }
+    // else if (type == REGISTER)
+    // {
+    //     return addTask(taskpackage::register_handle, m_msg, MySQLConnectionPool::getInstance());
+    // }
+    // else if (type == CHAT)
+    // {
+    //     return addTask(taskpackage::chat_handle, m_msg, MySQLConnectionPool::getInstance());
+    // }
+    // else if (type == ERROR)
+    // {
+    //     return addTask(taskpackage::error_handle, m_msg, MySQLConnectionPool::getInstance());
+    // }
+    // else if (type == RET)
+    // {
+    //     return addTask(taskpackage::ret_handle);
+    // }
 }
 
-std::unique_ptr<retmsg> taskpackage::login_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+// std::unique_ptr<retmsg> taskpackage::login_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+std::unique_ptr<retmsg> taskpackage::login_handle(std::unique_ptr<abstractmsg> msg)
 {
-    loginmsg *login_msg = dynamic_cast<loginmsg *>(msg);
+
+    loginmsg *login_msg = dynamic_cast<loginmsg *>(msg.get());
+    MySQLConnectionPool *pool = MySQLConnectionPool::getInstance();
     // 从连接池中获取连接
     auto conn = pool->getConnection();
     sql::Statement *stmt = conn->createStatement();
@@ -78,9 +112,11 @@ std::unique_ptr<retmsg> taskpackage::login_handle(abstractmsg *msg, MySQLConnect
     return retmessage;
 }
 
-std::unique_ptr<retmsg> taskpackage::register_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+// std::unique_ptr<retmsg> taskpackage::register_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+std::unique_ptr<retmsg> taskpackage::register_handle(std::unique_ptr<abstractmsg> msg)
 {
-    registermsg *register_msg = dynamic_cast<registermsg *>(msg);
+    registermsg *register_msg = dynamic_cast<registermsg *>(msg.get());
+    MySQLConnectionPool *pool = MySQLConnectionPool::getInstance();
     // 从连接池中获取连接
     auto conn = pool->getConnection();
     sql::Statement *stmt = conn->createStatement();
@@ -116,10 +152,12 @@ std::unique_ptr<retmsg> taskpackage::register_handle(abstractmsg *msg, MySQLConn
     return retmessage;
 }
 
-std::unique_ptr<retmsg> taskpackage::chat_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+// std::unique_ptr<retmsg> taskpackage::chat_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+std::unique_ptr<retmsg> taskpackage::chat_handle(std::unique_ptr<abstractmsg> msg)
 {
-    chatmsg *chat_msg = dynamic_cast<chatmsg *>(msg);
-    chat_msg->set_sender_fd(msg->get_sender_fd());
+    chatmsg *chat_msg = dynamic_cast<chatmsg *>(msg.get());
+    
+    chat_msg->set_sender_fd(m_msg->get_sender_fd());
     std::unique_ptr retmessage = std::make_unique<retmsg>();
     int receiver_fd = 0;
     std::string recviver_name = chat_msg->get_reciver();
@@ -139,22 +177,33 @@ std::unique_ptr<retmsg> taskpackage::chat_handle(abstractmsg *msg, MySQLConnecti
     return retmessage;
 }
 
-std::unique_ptr<retmsg> taskpackage::error_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+// std::unique_ptr<retmsg> taskpackage::error_handle(abstractmsg *msg, MySQLConnectionPool *pool)
+std::unique_ptr<retmsg> taskpackage::error_handle(std::unique_ptr<abstractmsg> msg)
 {
-    errormsg *error_msg = dynamic_cast<errormsg *>(msg);
+    errormsg *error_msg = dynamic_cast<errormsg *>(msg.get());
     std::unique_ptr retmessage = std::make_unique<retmsg>();
     retmessage->set_msg("error");//需要以json格式返回
     retmessage->set_target_fd(error_msg->get_sender_fd());
     return retmessage;
 }
 
-std::unique_ptr<retmsg> taskpackage::ret_handle()
+std::unique_ptr<retmsg> taskpackage::ret_handle(std::unique_ptr<abstractmsg> msg)
 {
     // std::unique_ptr retmessage = std::make_unique<retmsg>();
     std::unique_ptr retmsg = result.get();
     //调用网络io模块对retmsg进行发送
     //专门写一个static函数来发送服务器返回消息，记住使用代理类来控制权限，只允许只用这个静态函数
+    // user* temp_user = new user;
+    // temp_user->init(retmsg->get_target_fd(),0);
+    // temp_user->set_send_msg(retmsg->get_msg());
+    // connection->send_msg(temp_user);
+    // delete temp_user;
     return NULL;
+}
+
+std::unique_ptr<retmsg> taskpackage::recv_handle(std::unique_ptr<abstractmsg> msg)
+{
+    // connection->recv_msg()
 }
 
 void taskpackage::add_username_to_fd(const std::string username, int fd)
@@ -170,3 +219,4 @@ void taskpackage::get_latest_username_fd(std::string &username, int &fd)
     username = latest_username;
     fd = latest_socketfd;
 }
+

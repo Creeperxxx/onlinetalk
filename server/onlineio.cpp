@@ -181,17 +181,18 @@ void onlineio::deal_with_newconn()
         }
         else
         {
-            m_new_socketfd = conn_fd;
-            set_newclientconn();
-            add_unlogin_user();
+            // m_new_socketfd = conn_fd;
+            set_newclientconn(conn_fd);
+            // add_unlogin_user();
+            newsocket_queue.push(conn_fd);
         }  
     }
 }
 
-void onlineio::set_newclientconn()
+void onlineio::set_newclientconn(int socketfd)
 {
-    set_nonblocking(m_new_socketfd);
-    add_to_epoll(m_new_socketfd,EPOLLIN|EPOLLET);
+    set_nonblocking(socketfd);
+    add_to_epoll(socketfd,EPOLLIN|EPOLLET);
     // socket_queue.push(client_fd);
     // m_new_socketfd = client_fd;
 }
@@ -300,6 +301,12 @@ void onlineio::recv_msg(user* user)
     }
 }
 
+void onlineio::get_newsocketfd(std::queue<int>& socketfd_queue)
+{
+    socketfd_queue = newsocket_queue;
+}
+
+
 // void onlineio::add_unlogin_user()
 // {
 //     user* newuser = new user;
@@ -313,4 +320,9 @@ void onlineio::recv_msg(user* user)
 // {
 //     ++unlogin_user_num;
 //     return unlogin_user_num;
+// }
+
+// void onlineio::sent_return_msg(retmsg* msg)
+// {
+
 // }
