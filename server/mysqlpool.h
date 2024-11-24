@@ -29,18 +29,17 @@ private:
     static MySQLConnectionPool* m_instance;
     MySQLConnectionPool(const MySQLConnectionPool&) = delete;
     MySQLConnectionPool& operator=(const MySQLConnectionPool&) = delete;
-    MySQLConnectionPool();
     ~MySQLConnectionPool();
+    MySQLConnectionPool(){}
 public:
     static MySQLConnectionPool* getInstance();
-    ~MySQLConnectionPool();
     std::shared_ptr<sql::Connection> getConnection();
     void releaseConnection(std::shared_ptr<sql::Connection> conn);
-private:
     void initializePool(const std::string& url,
                         const std::string& user, 
                         const std::string& password,   
                         const std::string& database, 
-                        size_t pool_size);  
+                        size_t pool_size); 
+    static void destroyInstance(); 
 };
 

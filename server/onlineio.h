@@ -19,7 +19,9 @@ extern const int ACCEPT_NEW_CONN; // 一次接收的最大连接数量
 class onlineio
 {
 public:
+    void deleter();
     onlineio(int port):m_port(port){} 
+    ~onlineio(){deleter();}
     static void send_msg(user* user); //将user中存储的send消息发送出去
     static void recv_msg(user* user); //将套接字中的消息接收并放在user中
     // int get_new_socketfd(){return m_new_socketfd;}//返回新套接字
@@ -28,7 +30,8 @@ public:
     void deal_with_newconn();//调用accept函数接收指定数量的连接，并对其进行设置，然后存储起来
     // void Event_loop();
     void init();
-    void get_newsocketfd(std::queue<int>& socket_queue);//将存放新套接字的队列复制给server中的队列
+    // void get_newsocketfd(std::queue<int>& socket_queue);//将存放新套接字的队列复制给server中的队列
+    void set_newsocketfd_pushqueue(std::function<void(int)> func){newsocketfd_pushqueue = func;}
 private:
     // void newconnectiondeal();
     void set_nonblocking(int socket_fd);// 对套接字进行设置，设置为非阻塞
@@ -48,7 +51,8 @@ private:
     int epoll_fd;
     int m_port;
     // int m_new_socketfd; // 新连接的socketfd
-    std::queue<int> newsocket_queue;// 存储新连接的套接字
+    // std::queue<int> newsocket_queue;// 存储新连接的套接字
+    std::function<void(int)> newsocketfd_pushqueue;
     // std::unordered_map<int,user*> unlogin_user;
     // int unlogin_user_num;
     // std::queue<int> socket_queue;

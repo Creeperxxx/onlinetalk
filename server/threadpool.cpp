@@ -16,6 +16,7 @@ ThreadPool::ThreadPool(int threadnum) : taskqueue(std::make_unique<std::queue<ta
 
 ThreadPool::~ThreadPool() {
     shutdown = true;  // 等待线程执行完，就不在去队列取任务
+    
 }
 
 void ThreadPool::worker() {

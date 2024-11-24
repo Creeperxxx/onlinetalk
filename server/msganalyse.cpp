@@ -9,27 +9,27 @@ std::unique_ptr<abstractmsg> msganalyse::generate_msg(std::string& msg,int sende
     {
         case LOGIN:
             msg_factory = new loginmsgfactory();
-            basicalmsg_ptr = std::make_unique<loginmsg>(*(msg_factory->create_msg()));
+            basicalmsg_ptr = std::make_unique<loginmsg>(*(dynamic_cast<loginmsg*>(msg_factory->create_msg())));
             break;
         case CHAT:
             msg_factory = new chatmsgfactory();
-            basicalmsg_ptr = std::make_unique<chatmsg>(*(msg_factory->create_msg()));
+            basicalmsg_ptr = std::make_unique<chatmsg>(*(dynamic_cast<chatmsg*>(msg_factory->create_msg())));
             break;
         case REGISTER:
             msg_factory = new registermsgfactory();
-            basicalmsg_ptr = std::make_unique<registermsg>(*(msg_factory->create_msg()));
+            basicalmsg_ptr = std::make_unique<registermsg>(*(dynamic_cast<registermsg*>(msg_factory->create_msg())));
             break;
         case ERROR:
             msg_factory = new errormsgfactory();
-            basicalmsg_ptr = std::make_unique<errormsg>(*(msg_factory->create_msg()));
+            basicalmsg_ptr = std::make_unique<errormsg>(*(dynamic_cast<errormsg*>(msg_factory->create_msg())));
             break;
         case RET:
             msg_factory = new returnmsgfactory();
-            basicalmsg_ptr = std::make_unique<returnmsg>(*(msg_factory->create_msg()));
+            basicalmsg_ptr = std::make_unique<returnmsg>(*(dynamic_cast<returnmsg*>(msg_factory->create_msg())));
             break;
         case RECV:
             msg_factory = new recvmsgfactory();
-            basicalmsg_ptr = std::make_unique<receivemsg>(*(msg_factory->create_msg()));
+            basicalmsg_ptr = std::make_unique<receivemsg>(*(dynamic_cast<receivemsg*>(msg_factory->create_msg())));
             break;
         default:
             break;
@@ -42,6 +42,7 @@ std::unique_ptr<abstractmsg> msganalyse::generate_msg(std::string& msg,int sende
         int receiver_fd = get_fd_by_username(chat_msg->get_reciver());
         chat_msg->set_receive_fd(receiver_fd);
     }
+    return basicalmsg_ptr;
     // std::lock_guard<std::mutex> lock(queue_mutex);
     // basicalmsg_queue.push(std::move(basicalmsg_ptr));
 }
@@ -112,10 +113,15 @@ void errormsg::init(const json& msg)
 void returnmsg::init(const json& msg)
 {
     msg_type = RET;
-    m_receive_fd = m_send_fd;
+    // m_receive_fd = m_send_fd;
 }
 
 void receivemsg::init(const json& msg)
 {
     msg_type = RECV;
 }
+
+// void msganalyse::init()
+// {
+
+// }

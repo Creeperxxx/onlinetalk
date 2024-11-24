@@ -6,7 +6,7 @@ void user::clear()
     close(socketfd);
 }
 
-void user::init(int socketfd,std::string username = "")
+void user::init(int socketfd,std::string username)
 {
     this->socketfd = socketfd;
     // this->uid = uid;

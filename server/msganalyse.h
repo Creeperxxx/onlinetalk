@@ -19,19 +19,22 @@ enum msgtype
     RET,
     RECV
 };
-
+class abstractmsg;
 class msganalyse
 {
 public:
+    // void init();
     // void set_msg(const std::string& msg){m_msg = msg;}//将消息传入到m_msg
     // void set_sender_fd(int fd){sender_fd = fd;}//将发送者的套接字传入到sender_fd
+    //bug 不应该返回
     std::unique_ptr<abstractmsg> generate_msg(std::string& msg,int sender_fd);//根据m_msg和sender_fd生成包装任务所需的基础信息
+
     // msgtype get_message_type(){return m_type;}
     // void set_msg();
     // abstractmsg* get_final_msg(){return m_msg_ptr;}//返回基础信息
     msgtype get_msg_type(std::string& msg);//获取消息的类型
     //todo server初始化中要调用这个函数
-    void set_get_fd_by_username_func(std::function<int(std::string)> func){get_fd_by_username = func;}
+    void set_get_fd_by_username_func(std::function<int(const std::string&)> func){get_fd_by_username = func;}
 private:
     // std::unordered_map<std::string,int> username_to_fd;
     // std::string m_msg;//存放从客户端接收到的json字符串
@@ -42,7 +45,7 @@ private:
     // int sender_fd;//发送者的套接字
     // std::mutex queue_mutex;
     // std::queue<std::unique_ptr<abstractmsg>> basicalmsg_queue;
-    std::function<int(std::string) > get_fd_by_username;
+    std::function<int(const std::string&) > get_fd_by_username;
 };
 
 class abstractmsg

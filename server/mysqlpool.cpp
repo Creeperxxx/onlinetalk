@@ -1,5 +1,8 @@
 #include "mysqlpool.h"
 
+MySQLConnectionPool* MySQLConnectionPool::m_instance = NULL;
+std::mutex MySQLConnectionPool::instance_mutex;
+
 MySQLConnectionPool::~MySQLConnectionPool()
 {
     for (auto &conn : pool)
@@ -55,7 +58,18 @@ MySQLConnectionPool* MySQLConnectionPool::getInstance()
     if(NULL == m_instance)
     {
         std::lock_guard<std::mutex> lock(instance_mutex);
-        m_instance = new MySQLConnectionPool();
+        if(NULL == m_instance)
+        {
+            m_instance = new MySQLConnectionPool();
+        }
     }
     return m_instance;
+}
+
+void MySQLConnectionPool::destroyInstance()
+{
+    if(NULL!= m_instance)
+    {
+        delete m_instance;
+    }
 }

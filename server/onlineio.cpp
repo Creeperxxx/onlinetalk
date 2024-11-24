@@ -184,7 +184,7 @@ void onlineio::deal_with_newconn()
             // m_new_socketfd = conn_fd;
             set_newclientconn(conn_fd);
             // add_unlogin_user();
-            newsocket_queue.push(conn_fd);
+            newsocketfd_pushqueue(conn_fd);
         }  
     }
 }
@@ -301,10 +301,10 @@ void onlineio::recv_msg(user* user)
     }
 }
 
-void onlineio::get_newsocketfd(std::queue<int>& socketfd_queue)
-{
-    socketfd_queue = newsocket_queue;
-}
+// void onlineio::get_newsocketfd(std::queue<int>& socketfd_queue)
+// {
+//     socketfd_queue = newsocket_queue;
+// }
 
 
 // void onlineio::add_unlogin_user()
@@ -326,3 +326,9 @@ void onlineio::get_newsocketfd(std::queue<int>& socketfd_queue)
 // {
 
 // }
+
+void onlineio::deleter()
+{
+    close(epoll_fd);
+    close(listen_fd);
+}
