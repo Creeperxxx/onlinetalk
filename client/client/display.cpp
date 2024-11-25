@@ -10,6 +10,7 @@ display::display(QWidget *parent) :
 {
     ui->setupUi(this);
     client = new Client(SERVERIP,PORT);
+    // l = new login();
     setWindowTitle("main window");
     resize(400, 300);
 }

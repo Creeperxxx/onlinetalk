@@ -97,7 +97,7 @@ void onlineio::set_nonblocking(int socket_fd)
 //     }
 // }
 
-void onlineio::init_listen_fd(int port)
+void onlineio::init_listen_fd()
 {
     listen_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(listen_fd == -1)
@@ -106,11 +106,15 @@ void onlineio::init_listen_fd(int port)
         exit(1);
     }
 
+    // set_newclientconn(listen_fd);
+    set_nonblocking(listen_fd);
+    add_to_epoll(listen_fd,EPOLLIN);
+
     struct sockaddr_in address;
     memset(&address,0,sizeof(address));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = htonl(INADDR_ANY); 
-    address.sin_port = htons(port);
+    address.sin_port = htons(m_port);
 
     if(bind(listen_fd,(struct sockaddr*)&address,sizeof(address)) == -1)
     {
@@ -125,6 +129,7 @@ void onlineio::init_listen_fd(int port)
         close(listen_fd);
         exit(1);   
     }
+    // std::cout<<"Event_listen: listen_fd init success"<<std::endl;
 }
 
 void onlineio::init_epoll()
@@ -154,9 +159,8 @@ void onlineio::add_to_epoll(int fd,uint32_t events)
 
 void onlineio::init()
 {
-    init_listen_fd(m_port);
     init_epoll();
-    add_to_epoll(listen_fd,EPOLLIN);
+    init_listen_fd();
 }
 
 void onlineio::deal_with_newconn()

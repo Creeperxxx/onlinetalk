@@ -11,6 +11,7 @@
 #include <sstream>
 #include "client.h"
 #include <boost/thread.hpp>
+// #include "login.h"
 
 extern const char* SERVERIP;
 extern const int PORT;
@@ -36,6 +37,7 @@ private:
 
     QTextEdit *textEdit;
     Client *client;
+    // login *l;
 };
 
 #endif // DISPLAY_H

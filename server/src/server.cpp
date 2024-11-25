@@ -7,7 +7,7 @@ const std::string SQLPASSWD = "";
 const std::string SQLDATABASE = "onlinechat";
 const ssize_t POOLSIZE = 10;
 
-Server::Server(int port) : m_port(port), connection(new onlineio(m_port))
+Server::Server(int port) : m_port(port), connection(new onlineio(port))
 {
     init();
 }
@@ -57,8 +57,7 @@ void Server::init()
 
 Server::~Server()
 {
-    delete connection;
-    delete m_analyser;
+    delete_server();
 }
 
 void Server::event_loop()
@@ -163,7 +162,7 @@ void Server::event_loop()
         std::string temp_ret_msg = R"({"type":"ret"})";
         auto ret_basicmsg = m_analyser->generate_msg(temp_ret_msg, 0);
         task->generate_task(std::move(ret_basicmsg));
-        pool->addTask(std::move(task->takeTask()));
+        pool->addTask(std::move(task->takeTask()));//delete
     }
 }
 
@@ -370,6 +369,7 @@ void Server::delete_server()
     MySQLPool->destroyInstance();
     //threadpool
     delete pool;
+    
 }
 
 void Server::newsocketfd_queuepush(int socketfd)

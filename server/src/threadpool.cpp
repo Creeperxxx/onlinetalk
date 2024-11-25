@@ -23,7 +23,7 @@ void ThreadPool::worker() {
     while (!shutdown) \
     {
         std::unique_lock<std::mutex> uniqueLock(queuemutex);
-        notempty.wait(uniqueLock, [this] { return!taskqueue->empty() || shutdown; });
+        notempty.wait(uniqueLock, [this] { return !taskqueue->empty() || shutdown; });
         if(taskqueue->empty())
         {
             continue;
@@ -51,8 +51,10 @@ void ThreadPool::worker() {
 void ThreadPool::addTask(task&& task) 
 {
     std::unique_lock<std::mutex> uniqueLock(queuemutex);
+    // queuemutex.lock();
     taskqueue->push(std::move(task));
     uniqueLock.unlock();
+    // queuemutex.unlock();
     notempty.notify_one();
     return;
 }
@@ -64,7 +66,7 @@ void ThreadPool::addTask(task&& task)
 
 ThreadPool::task ThreadPool::taketask() {
     task task;
-    std::lock_guard<std::mutex> lockGuard(queuemutex);  // 上锁
+    // std::unique_lock<std::mutex> uniquelock(queuemutex);  // 上锁 //这里重复获取锁了，调试了一下午终于发现了
     if (!taskqueue->empty())
     {
         task = std::move(taskqueue->front());    // 取出任务

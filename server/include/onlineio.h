@@ -22,8 +22,8 @@ public:
     void deleter();
     onlineio(int port):m_port(port){} 
     ~onlineio(){deleter();}
-    static void send_msg(user* user); //将user中存储的send消息发送出去
-    static void recv_msg(user* user); //将套接字中的消息接收并放在user中
+    void send_msg(user* user); //将user中存储的send消息发送出去
+    void recv_msg(user* user); //将套接字中的消息接收并放在user中
     // int get_new_socketfd(){return m_new_socketfd;}//返回新套接字
     int get_epoll_fd(){return epoll_fd;}
     int get_listen_fd(){return listen_fd;}
@@ -36,7 +36,7 @@ private:
     // void newconnectiondeal();
     void set_nonblocking(int socket_fd);// 对套接字进行设置，设置为非阻塞
     // void set_blocking(int socket_fd);
-    void init_listen_fd(int port);// 初始化监听套接字
+    void init_listen_fd();// 初始化监听套接字
     void init_epoll();// 初始化epoll
     void add_to_epoll(int fd,uint32_t events);// 向epoll中添加一个套接字
     void set_newclientconn(int socketfd);// 初始化新连接的套接字,
