@@ -1,0 +1,4 @@
+/home/creeper/code/c++2.0/onlinetalk/client/debug/CMakeFiles/client.dir
+/home/creeper/code/c++2.0/onlinetalk/client/debug/CMakeFiles/edit_cache.dir
+/home/creeper/code/c++2.0/onlinetalk/client/debug/CMakeFiles/rebuild_cache.dir
+/home/creeper/code/c++2.0/onlinetalk/client/debug/CMakeFiles/client_autogen.dir

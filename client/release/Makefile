@@ -60,7 +60,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /home/creeper/code/c++2.0/onlinetalk/client/client
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/creeper/code/c++2.0/onlinetalk/client/debug
+CMAKE_BINARY_DIR = /home/creeper/code/c++2.0/onlinetalk/client/release
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/creeper/code/c++2.0/onlinetalk/client/debug/CMakeFiles /home/creeper/code/c++2.0/onlinetalk/client/debug//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/creeper/code/c++2.0/onlinetalk/client/release/CMakeFiles /home/creeper/code/c++2.0/onlinetalk/client/release//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/creeper/code/c++2.0/onlinetalk/client/debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/creeper/code/c++2.0/onlinetalk/client/release/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -117,61 +117,61 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named client
+# Target rules for targets named MyClient
 
 # Build rule for target.
-client: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 client
-.PHONY : client
+MyClient: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 MyClient
+.PHONY : MyClient
 
 # fast build rule for target.
-client/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/build
-.PHONY : client/fast
+MyClient/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/build
+.PHONY : MyClient/fast
 
 #=============================================================================
-# Target rules for targets named client_autogen
+# Target rules for targets named MyClient_autogen
 
 # Build rule for target.
-client_autogen: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 client_autogen
-.PHONY : client_autogen
+MyClient_autogen: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 MyClient_autogen
+.PHONY : MyClient_autogen
 
 # fast build rule for target.
-client_autogen/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client_autogen.dir/build.make CMakeFiles/client_autogen.dir/build
-.PHONY : client_autogen/fast
+MyClient_autogen/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient_autogen.dir/build.make CMakeFiles/MyClient_autogen.dir/build
+.PHONY : MyClient_autogen/fast
 
-client_autogen/mocs_compilation.o: client_autogen/mocs_compilation.cpp.o
-.PHONY : client_autogen/mocs_compilation.o
+MyClient_autogen/mocs_compilation.o: MyClient_autogen/mocs_compilation.cpp.o
+.PHONY : MyClient_autogen/mocs_compilation.o
 
 # target to build an object file
-client_autogen/mocs_compilation.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/client_autogen/mocs_compilation.cpp.o
-.PHONY : client_autogen/mocs_compilation.cpp.o
+MyClient_autogen/mocs_compilation.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/MyClient_autogen/mocs_compilation.cpp.o
+.PHONY : MyClient_autogen/mocs_compilation.cpp.o
 
-client_autogen/mocs_compilation.i: client_autogen/mocs_compilation.cpp.i
-.PHONY : client_autogen/mocs_compilation.i
+MyClient_autogen/mocs_compilation.i: MyClient_autogen/mocs_compilation.cpp.i
+.PHONY : MyClient_autogen/mocs_compilation.i
 
 # target to preprocess a source file
-client_autogen/mocs_compilation.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/client_autogen/mocs_compilation.cpp.i
-.PHONY : client_autogen/mocs_compilation.cpp.i
+MyClient_autogen/mocs_compilation.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/MyClient_autogen/mocs_compilation.cpp.i
+.PHONY : MyClient_autogen/mocs_compilation.cpp.i
 
-client_autogen/mocs_compilation.s: client_autogen/mocs_compilation.cpp.s
-.PHONY : client_autogen/mocs_compilation.s
+MyClient_autogen/mocs_compilation.s: MyClient_autogen/mocs_compilation.cpp.s
+.PHONY : MyClient_autogen/mocs_compilation.s
 
 # target to generate assembly for a file
-client_autogen/mocs_compilation.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/client_autogen/mocs_compilation.cpp.s
-.PHONY : client_autogen/mocs_compilation.cpp.s
+MyClient_autogen/mocs_compilation.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/MyClient_autogen/mocs_compilation.cpp.s
+.PHONY : MyClient_autogen/mocs_compilation.cpp.s
 
 src/client.o: src/client.cpp.o
 .PHONY : src/client.o
 
 # target to build an object file
 src/client.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/client.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/client.cpp.o
 .PHONY : src/client.cpp.o
 
 src/client.i: src/client.cpp.i
@@ -179,7 +179,7 @@ src/client.i: src/client.cpp.i
 
 # target to preprocess a source file
 src/client.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/client.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/client.cpp.i
 .PHONY : src/client.cpp.i
 
 src/client.s: src/client.cpp.s
@@ -187,7 +187,7 @@ src/client.s: src/client.cpp.s
 
 # target to generate assembly for a file
 src/client.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/client.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/client.cpp.s
 .PHONY : src/client.cpp.s
 
 src/display.o: src/display.cpp.o
@@ -195,7 +195,7 @@ src/display.o: src/display.cpp.o
 
 # target to build an object file
 src/display.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/display.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/display.cpp.o
 .PHONY : src/display.cpp.o
 
 src/display.i: src/display.cpp.i
@@ -203,7 +203,7 @@ src/display.i: src/display.cpp.i
 
 # target to preprocess a source file
 src/display.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/display.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/display.cpp.i
 .PHONY : src/display.cpp.i
 
 src/display.s: src/display.cpp.s
@@ -211,7 +211,7 @@ src/display.s: src/display.cpp.s
 
 # target to generate assembly for a file
 src/display.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/display.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/display.cpp.s
 .PHONY : src/display.cpp.s
 
 src/login.o: src/login.cpp.o
@@ -219,7 +219,7 @@ src/login.o: src/login.cpp.o
 
 # target to build an object file
 src/login.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/login.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/login.cpp.o
 .PHONY : src/login.cpp.o
 
 src/login.i: src/login.cpp.i
@@ -227,7 +227,7 @@ src/login.i: src/login.cpp.i
 
 # target to preprocess a source file
 src/login.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/login.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/login.cpp.i
 .PHONY : src/login.cpp.i
 
 src/login.s: src/login.cpp.s
@@ -235,7 +235,7 @@ src/login.s: src/login.cpp.s
 
 # target to generate assembly for a file
 src/login.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/login.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/login.cpp.s
 .PHONY : src/login.cpp.s
 
 src/main.o: src/main.cpp.o
@@ -243,7 +243,7 @@ src/main.o: src/main.cpp.o
 
 # target to build an object file
 src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/main.cpp.o
 .PHONY : src/main.cpp.o
 
 src/main.i: src/main.cpp.i
@@ -251,7 +251,7 @@ src/main.i: src/main.cpp.i
 
 # target to preprocess a source file
 src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/main.cpp.i
 .PHONY : src/main.cpp.i
 
 src/main.s: src/main.cpp.s
@@ -259,7 +259,7 @@ src/main.s: src/main.cpp.s
 
 # target to generate assembly for a file
 src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
 src/user.o: src/user.cpp.o
@@ -267,7 +267,7 @@ src/user.o: src/user.cpp.o
 
 # target to build an object file
 src/user.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/user.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/user.cpp.o
 .PHONY : src/user.cpp.o
 
 src/user.i: src/user.cpp.i
@@ -275,7 +275,7 @@ src/user.i: src/user.cpp.i
 
 # target to preprocess a source file
 src/user.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/user.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/user.cpp.i
 .PHONY : src/user.cpp.i
 
 src/user.s: src/user.cpp.s
@@ -283,7 +283,7 @@ src/user.s: src/user.cpp.s
 
 # target to generate assembly for a file
 src/user.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/user.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/user.cpp.s
 .PHONY : src/user.cpp.s
 
 src/widget.o: src/widget.cpp.o
@@ -291,7 +291,7 @@ src/widget.o: src/widget.cpp.o
 
 # target to build an object file
 src/widget.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/widget.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/widget.cpp.o
 .PHONY : src/widget.cpp.o
 
 src/widget.i: src/widget.cpp.i
@@ -299,7 +299,7 @@ src/widget.i: src/widget.cpp.i
 
 # target to preprocess a source file
 src/widget.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/widget.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/widget.cpp.i
 .PHONY : src/widget.cpp.i
 
 src/widget.s: src/widget.cpp.s
@@ -307,7 +307,7 @@ src/widget.s: src/widget.cpp.s
 
 # target to generate assembly for a file
 src/widget.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/src/widget.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyClient.dir/build.make CMakeFiles/MyClient.dir/src/widget.cpp.s
 .PHONY : src/widget.cpp.s
 
 # Help Target
@@ -318,11 +318,11 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... client_autogen"
-	@echo "... client"
-	@echo "... client_autogen/mocs_compilation.o"
-	@echo "... client_autogen/mocs_compilation.i"
-	@echo "... client_autogen/mocs_compilation.s"
+	@echo "... MyClient_autogen"
+	@echo "... MyClient"
+	@echo "... MyClient_autogen/mocs_compilation.o"
+	@echo "... MyClient_autogen/mocs_compilation.i"
+	@echo "... MyClient_autogen/mocs_compilation.s"
 	@echo "... src/client.o"
 	@echo "... src/client.i"
 	@echo "... src/client.s"
