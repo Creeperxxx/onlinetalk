@@ -17,7 +17,7 @@ taskpackage::task taskpackage::takeTask()
     return nullptr;
 }
 
-auto taskpackage::generate_task(std::unique_ptr<abstractmsg> basicmsg) -> std::future<std::unique_ptr<retmsg>>
+auto taskpackage::generate_task(std::unique_ptr<abstractmsg>&& basicmsg) -> std::future<std::unique_ptr<retmsg>>
 {
     msgtype type = basicmsg->get_msg_type();
     std::unique_ptr<abstractmsg>* ptr = &basicmsg; //延迟捕获 原因：function接收的对象必须可复制，unique_ptr不可复制
@@ -80,7 +80,7 @@ auto taskpackage::generate_task(std::unique_ptr<abstractmsg> basicmsg) -> std::f
 }
 
 // std::unique_ptr<retmsg> taskpackage::login_handle(abstractmsg *msg, MySQLConnectionPool *pool)
-std::unique_ptr<retmsg> taskpackage::login_handle(std::unique_ptr<abstractmsg> msg) // done 登录实现
+std::unique_ptr<retmsg> taskpackage::login_handle(std::unique_ptr<abstractmsg>&& msg) // done 登录实现
 {
 
     loginmsg *login_msg = dynamic_cast<loginmsg *>(msg.get());
@@ -131,7 +131,7 @@ std::unique_ptr<retmsg> taskpackage::login_handle(std::unique_ptr<abstractmsg> m
 }
 
 // std::unique_ptr<retmsg> taskpackage::register_handle(abstractmsg *msg, MySQLConnectionPool *pool)
-std::unique_ptr<retmsg> taskpackage::register_handle(std::unique_ptr<abstractmsg> msg)//done
+std::unique_ptr<retmsg> taskpackage::register_handle(std::unique_ptr<abstractmsg>&& msg)//done
 {
     registermsg *register_msg = dynamic_cast<registermsg *>(msg.get());
     std::string temp_username = register_msg->get_username();
@@ -176,7 +176,7 @@ std::unique_ptr<retmsg> taskpackage::register_handle(std::unique_ptr<abstractmsg
 }
 
 // std::unique_ptr<retmsg> taskpackage::chat_handle(abstractmsg *msg, MySQLConnectionPool *pool)
-std::unique_ptr<retmsg> taskpackage::chat_handle(std::unique_ptr<abstractmsg> msg)//done
+std::unique_ptr<retmsg> taskpackage::chat_handle(std::unique_ptr<abstractmsg>&& msg)//done
 {
     chatmsg *chat_msg = dynamic_cast<chatmsg *>(msg.get());
 
@@ -201,7 +201,7 @@ std::unique_ptr<retmsg> taskpackage::chat_handle(std::unique_ptr<abstractmsg> ms
 }
 
 // std::unique_ptr<retmsg> taskpackage::error_handle(abstractmsg *msg, MySQLConnectionPool *pool)
-std::unique_ptr<retmsg> taskpackage::error_handle(std::unique_ptr<abstractmsg> msg)
+std::unique_ptr<retmsg> taskpackage::error_handle(std::unique_ptr<abstractmsg>&& msg)
 {
     errormsg *error_msg = dynamic_cast<errormsg *>(msg.get());
     std::unique_ptr retmessage = std::make_unique<retmsg>();
@@ -210,7 +210,7 @@ std::unique_ptr<retmsg> taskpackage::error_handle(std::unique_ptr<abstractmsg> m
     return retmessage;
 }
 
-std::unique_ptr<retmsg> taskpackage::ret_handle(std::unique_ptr<abstractmsg> msg)
+std::unique_ptr<retmsg> taskpackage::ret_handle(std::unique_ptr<abstractmsg>&& msg)
 {
     // std::unique_ptr retmessage = std::make_unique<retmsg>();
     while(true)
@@ -241,7 +241,7 @@ std::unique_ptr<retmsg> taskpackage::ret_handle(std::unique_ptr<abstractmsg> msg
     return NULL;
 }
 
-std::unique_ptr<retmsg> taskpackage::recv_handle(std::unique_ptr<abstractmsg> msg)
+std::unique_ptr<retmsg> taskpackage::recv_handle(std::unique_ptr<abstractmsg>&& msg)
 {
     // connection->recv_msg()
     read_msg_to_generate_task();

@@ -62,14 +62,17 @@ Server::~Server()
 
 void Server::event_loop()
 {
-    struct epoll_event evs[MAX_EVENTS];
+    struct epoll_event evs[MAX_EVENTS];//
+    int epoll_fd = connection->get_epoll_fd();
+    int nfds;
     // char buf[1024];
     while (true)
     {
         //测试
         std::cout<<"服务器正在进行事件循环"<<std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        int nfds = epoll_wait(connection->get_epoll_fd(), evs, MAX_EVENTS, -1);
+        std::cout<<"epoll_fd:"<<epoll_fd<<std::endl;
+        // std::this_thread::sleep_for(std::chrono::seconds(2));
+        nfds = epoll_wait(epoll_fd, evs, MAX_EVENTS, -1);
         if (nfds == -1)
         {
             std::cerr << "Event_listen: epoll_wait error" << std::endl;
@@ -162,7 +165,7 @@ void Server::event_loop()
         std::string temp_ret_msg = R"({"type":"ret"})";
         auto ret_basicmsg = m_analyser->generate_msg(temp_ret_msg, 0);
         task->generate_task(std::move(ret_basicmsg));
-        pool->addTask(std::move(task->takeTask()));//delete
+        pool->addTask(std::move(task->takeTask()));//
     }
 }
 

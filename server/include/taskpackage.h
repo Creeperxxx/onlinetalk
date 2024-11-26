@@ -27,7 +27,7 @@ public:
     task takeTask();                                                         // 取任务
     // bool empty() { return taskqueue.empty(); }
     // void set_msg(abstractmsg* msg){m_msg = msg;}
-    auto generate_task(std::unique_ptr<abstractmsg> basicmsg)->std::future<std::unique_ptr<retmsg>>;
+    auto generate_task(std::unique_ptr<abstractmsg>&& basicmsg)->std::future<std::unique_ptr<retmsg>>;
     // static std::unordered_map<std::string,int>& get_utfmap(){return username_to_fd;}
     // static std::string get_latest_username(){return latest_username;}
     // bool set_latest_username_flag(bool flag = true){latest_username_flag = flag;}
@@ -47,12 +47,12 @@ public:
 
 private:
     // static std::unique_ptr<retmsg> login_handle(abstractmsg* msg,MySQLConnectionPool* pool);
-    std::unique_ptr<retmsg> login_handle(std::unique_ptr<abstractmsg> msg);
-    std::unique_ptr<retmsg> register_handle(std::unique_ptr<abstractmsg> msg);
-    std::unique_ptr<retmsg> chat_handle(std::unique_ptr<abstractmsg> msg);
-    std::unique_ptr<retmsg> error_handle(std::unique_ptr<abstractmsg> msg);
-    std::unique_ptr<retmsg> ret_handle(std::unique_ptr<abstractmsg> msg);
-    std::unique_ptr<retmsg> recv_handle(std::unique_ptr<abstractmsg> msg);
+    std::unique_ptr<retmsg> login_handle(std::unique_ptr<abstractmsg>&& msg);
+    std::unique_ptr<retmsg> register_handle(std::unique_ptr<abstractmsg>&& msg);
+    std::unique_ptr<retmsg> chat_handle(std::unique_ptr<abstractmsg>&& msg);
+    std::unique_ptr<retmsg> error_handle(std::unique_ptr<abstractmsg>&& msg);
+    std::unique_ptr<retmsg> ret_handle(std::unique_ptr<abstractmsg>&& msg);
+    std::unique_ptr<retmsg> recv_handle(std::unique_ptr<abstractmsg>&& msg);
     // static std::unique_ptr<retmsg> register_handle(abstractmsg* msg,MySQLConnectionPool* pool);
     // static std::unique_ptr<retmsg> chat_handle(abstractmsg* msg,MySQLConnectionPool* pool);
     // static std::unique_ptr<retmsg> error_handle(abstractmsg* msg,MySQLConnectionPool* pool);

@@ -42,7 +42,7 @@ std::unique_ptr<abstractmsg> msganalyse::generate_msg(std::string& msg,int sende
         int receiver_fd = get_fd_by_username(chat_msg->get_reciver());
         chat_msg->set_receive_fd(receiver_fd);
     }
-    return basicalmsg_ptr;
+    return std::move(basicalmsg_ptr);
     // std::lock_guard<std::mutex> lock(queue_mutex);
     // basicalmsg_queue.push(std::move(basicalmsg_ptr));
 }
