@@ -10,7 +10,7 @@ std::vector<uint8_t> serializationMethodV1::serialize_message(std::shared_ptr<me
                  CEREAL_NVP(msg->getHeader().getAction()),
                  CEREAL_NVP(msg->getHeader().getSenderName()),
                  CEREAL_NVP(msg->getHeader().getSenderId()),
-                 CEREAL_NVP(msg->getHeader().getMessageSize()),
+                //  CEREAL_NVP(msg->getHeader().getMessageSize()),
                  CEREAL_NVP(msg->getHeader().getSessionId()),
                  CEREAL_NVP(msg->getHeader().getGroupId()),
                  CEREAL_NVP(msg->getHeader().getReceiverId()),
@@ -35,7 +35,7 @@ std::shared_ptr<message> serializationMethodV1::deserialize_message(const std::v
         std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> action;
         std::string sender_name;
         int sender_id;
-        uint32_t message_size;
+        // uint32_t message_size;
         int session_id;
         std::optional<int> group_id;
         std::optional<int> receiver_id;
@@ -45,7 +45,7 @@ std::shared_ptr<message> serializationMethodV1::deserialize_message(const std::v
                  CEREAL_NVP(action),
                  CEREAL_NVP(sender_name),
                  CEREAL_NVP(sender_id),
-                 CEREAL_NVP(message_size),
+                //  CEREAL_NVP(message_size),
                  CEREAL_NVP(session_id),
                  CEREAL_NVP(group_id),
                  CEREAL_NVP(receiver_id),
@@ -57,7 +57,7 @@ std::shared_ptr<message> serializationMethodV1::deserialize_message(const std::v
         iarchive(CEREAL_NVP(msg_data));
         // 创建 message 对象
         
-        msg->setHeader(messageHeader(type, action, sender_name, sender_id, message_size, session_id, group_id, receiver_id, receiver_name, compressed));
+        msg->setHeader(dataHeader(type, action, sender_name, sender_id, session_id, group_id, receiver_id, receiver_name, compressed));
         msg->setData(msg_data);
     }
     return msg;

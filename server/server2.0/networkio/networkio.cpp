@@ -7,7 +7,7 @@ void NetworkIo::init(int listen_port)
     init_listenfd();
     set_blocking_mode(listen_fd,false);
     
-    serialization_method = std::make_unique<serializationMethodV1>();
+    // serialization_method = std::make_unique<serializationMethodV1>();
 }
 
 void NetworkIo::init_listenfd()
@@ -65,18 +65,20 @@ void NetworkIo::deleter()
     close(listen_fd);
 }
 
-void NetworkIo::send_data(int socket_fd, std::shared_ptr<message> msg) {
+// void NetworkIo::send_data(int socket_fd, std::shared_ptr<message> msg) {
+// void NetworkIo::send_data(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
+bool NetworkIo::send_data(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
     // 序列化
 
-    auto data = serialization_method->serialize_message(msg);
-    uint32_t length = htonl(static_cast<uint32_t>(data.size()));
-    data.insert(data.begin(),reinterpret_cast<uint8_t*>(&length),reinterpret_cast<uint8_t*>(&length) + sizeof(length));
+    // auto data = serialization_method->serialize_message(msg);
+    // uint32_t length = htonl(static_cast<uint32_t>(data->size()));
+    // data->insert(data->begin(),reinterpret_cast<uint8_t*>(&length),reinterpret_cast<uint8_t*>(&length) + sizeof(length));
     //发送数据
     int byte = 0;
     int byte_sum = 0;
-    while(byte_sum < data.size())
+    while(byte_sum < data->size())
     {
-        byte = send(socket_fd,data.data() + byte_sum,data.size() - byte_sum,0);
+        byte = send(socket_fd,data->data() + byte_sum,data->size() - byte_sum,0);
         if(byte == -1)
         {
             if(errno == EAGAIN || errno == EWOULDBLOCK)
@@ -85,13 +87,13 @@ void NetworkIo::send_data(int socket_fd, std::shared_ptr<message> msg) {
             }
             else
             {
-                perror("send");
-                return;
+                perror("send");//update send失败处理
+                return false;
             }
         }
         byte_sum += byte;
     }
-    
+    return true;
 
 
 
@@ -121,14 +123,41 @@ void NetworkIo::send_data(int socket_fd, std::shared_ptr<message> msg) {
     // }
 }
 
-std::shared_ptr<message> NetworkIo::recv_data(int socket_fd) {
+// std::vector<uint8_t> NetworkIo::recv_data(int socket_fd) {
+std::shared_ptr<std::vector<uint8_t>> NetworkIo::recv_data(int socket_fd) {
     // 接收数据
-    uint32_t length;
-    if (recv(socket_fd, &length, sizeof(length), 0) <= 0) {
-        // 处理错误
-        perror("recv");
-        return nullptr;
+    std::shared_ptr<std::vector<std::uint8_t>> data = std::make_shared<std::vector<uint8_t>>();
+    ssize_t byte = 0;
+    uint8_t buffer[1024];
+
+    while(true)
+    {
+        byte = recv(socket_fd,buffer,sizeof(buffer),0);
+        if(byte == -1)
+        {
+            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                //没有数据可读了
+                break;
+            }
+            else
+            {
+                //出现错误
+                perror("recv");
+                break;
+            }
+        }
+        else if(byte == 0)
+        {
+            //todo 连接关闭处理
+        }
+        else
+        {
+            data->insert(data->end(),buffer,buffer + byte);
+        }
     }
+    return data;
+
 
     //反序列化
 
@@ -179,26 +208,26 @@ std::shared_ptr<message> NetworkIo::recv_data(int socket_fd) {
     // return std::make_shared<DataPacket>(static_cast<DataType>(type_byte), data);
 }
 
-std::vector<uint8_t> serialize_message(const message& msg){
-    std::stringstream ss;
-    {
-        cereal::BinaryOutputArchive oarchive(ss);
+// std::vector<uint8_t> serialize_message(const message& msg){
+//     std::stringstream ss;
+//     {
+//         cereal::BinaryOutputArchive oarchive(ss);
 
-        // 序列化 messageHeader
-        oarchive(CEREAL_NVP(msg.getHeader().getType()),
-                 CEREAL_NVP(msg.getHeader().getAction()),
-                 CEREAL_NVP(msg.getHeader().getSenderName()),
-                 CEREAL_NVP(msg.getHeader().getSenderId()),
-                 CEREAL_NVP(msg.getHeader().getMessageSize()),
-                 CEREAL_NVP(msg.getHeader().getSessionId()),
-                 CEREAL_NVP(msg.getHeader().getGroupId()),
-                 CEREAL_NVP(msg.getHeader().getReceiverId()),
-                 CEREAL_NVP(msg.getHeader().getReceiverName()),
-                 CEREAL_NVP(msg.getHeader().getIsCompressed()));
+//         // 序列化 messageHeader
+//         oarchive(CEREAL_NVP(msg.getHeader().getType()),
+//                  CEREAL_NVP(msg.getHeader().getAction()),
+//                  CEREAL_NVP(msg.getHeader().getSenderName()),
+//                  CEREAL_NVP(msg.getHeader().getSenderId()),
+//                 //  CEREAL_NVP(msg.getHeader().getMessageSize()),
+//                  CEREAL_NVP(msg.getHeader().getSessionId()),
+//                  CEREAL_NVP(msg.getHeader().getGroupId()),
+//                  CEREAL_NVP(msg.getHeader().getReceiverId()),
+//                  CEREAL_NVP(msg.getHeader().getReceiverName()),
+//                  CEREAL_NVP(msg.getHeader().getIsCompressed()));
 
-        // 序列化 message 数据
-        oarchive(CEREAL_NVP(msg.getData()));
-    }
-    auto str = ss.str();
-    return std::vector<uint8_t>(str.begin(), str.end());
-}
+//         // 序列化 message 数据
+//         oarchive(CEREAL_NVP(msg.getData()));
+//     }
+//     auto str = ss.str();
+//     return std::vector<uint8_t>(str.begin(), str.end());
+// }

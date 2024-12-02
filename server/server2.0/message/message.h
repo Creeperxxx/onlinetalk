@@ -67,14 +67,14 @@ enum class noticeAction
     FRIEND_ONLINE_STATUS,
 };
 
-class messageHeader
+class dataHeader
 {
 public:
-    messageHeader(){}
-    messageHeader(messageType type,
+    dataHeader(){}
+    dataHeader(messageType type,
                   std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> action,
                   const std::string &sender_name,
-                  int sender_id, uint32_t message_size,
+                  int sender_id,
                   int session_id,
                   std::optional<int> group_id = std::nullopt,
                   std::optional<int> receiver_id = std::nullopt,
@@ -84,7 +84,6 @@ public:
                   m_action(action),
                   m_sender_name(sender_name),
                   m_sender_id(sender_id),
-                  m_message_size(message_size),
                   m_session_id(session_id),
                   m_group_id(group_id),
                   m_receiver_id(receiver_id),
@@ -97,7 +96,7 @@ public:
     const std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> &getAction() const { return m_action; }
     const std::string &getSenderName() const { return m_sender_name; }
     int getSenderId() const { return m_sender_id; }
-    uint32_t getMessageSize() const { return m_message_size; }
+    // uint32_t getMessageSize() const { return m_message_size; }
     int getSessionId() const { return m_session_id; }
     const std::optional<int> &getGroupId() const { return m_group_id; }
     const std::optional<int> &getReceiverId() const { return m_receiver_id; }
@@ -109,7 +108,7 @@ public:
     void setAction(std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> a) { m_action = a; }
     void setSenderName(const std::string &name) { m_sender_name = name; }
     void setSenderId(int id) { m_sender_id = id; }
-    void setMessageSize(uint32_t size) { m_message_size = size; }
+    // void setMessageSize(uint32_t size) { m_message_size = size; }
     void setSessionId(int id) { m_session_id = id; }
     void setGroupId(std::optional<int> id) { m_group_id = id; }
     void setReceiverId(std::optional<int> id) { m_receiver_id = id; }
@@ -121,7 +120,7 @@ private:
     std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> m_action;
     std::string m_sender_name;
     int m_sender_id;
-    uint32_t m_message_size;
+    // uint32_t m_message_size;
     int m_session_id;
     std::optional<int> m_group_id;
     std::optional<int> m_receiver_id;
@@ -132,17 +131,34 @@ private:
 class message
 {
 private:
-    messageHeader header;
+    dataHeader header;
     std::vector<uint8_t> data;
 
 public:
     message(){}
-    message(messageHeader h, std::vector<uint8_t> d) : header(h), data(d) {}
+    message(dataHeader h, std::vector<uint8_t> d) : header(h), data(d) {}
     // 获取消息头
-    const messageHeader &getHeader() const { return header; }
+    const dataHeader &getHeader() const { return header; }
     const std::vector<uint8_t> &getData() const { return data; }
 
     // 设置数据
     void setData(std::vector<uint8_t> d) { data = d; }
-    void setHeader(messageHeader h) { header = h; }
+    void setHeader(dataHeader h) { header = h; }
 };
+
+// class messageData
+// {
+// public:
+//     messageData(){}
+//     messageData(uint32_t c, uint32_t l, uint32_t s) : check_sum(c), msg_length(l), msg_sequense_num(s) {}
+//     uint32_t getCheckSum() const { return check_sum; }
+//     uint32_t getMsgLength() const { return msg_length; }
+//     uint32_t getMsgSequenseNum() const { return msg_sequense_num; }
+//     void setCheckSum(uint32_t c) { check_sum = c; }
+//     void setMsgLength(uint32_t l) { msg_length = l; }
+//     void setMsgSequenseNum(uint32_t s) { msg_sequense_num = s; }
+// private:
+//     uint32_t check_sum;
+//     uint32_t msg_length;
+//     uint32_t msg_sequense_num;
+// };

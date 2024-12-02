@@ -7,10 +7,12 @@
 #include <queue>
 #include "../requirement/moodycamel/concurrentqueue.h"
 #include "../threadPool/threadPool.h"
+#include <unordered_map>
 
 extern const int MAX_EPOLL_EVENTS;
 extern const int THREAD_NUMS;
 extern const int LISTEN_PORT;
+extern const int MAX_DEQUEUE_NUMS;
 
 extern std::atomic<bool> event_loop_running;
 void event_loop_running_signal_handler(int signal);
@@ -19,7 +21,7 @@ class IEventHandler
 {
 public:
     virtual void handle_new_connections() = 0;
-    virtual void handle_ready_connections(int socketfd) = 0;
+    // virtual void handle_ready_connections(int socketfd) = 0;
 };
 
 class ReactorEventHandler : public IEventHandler
@@ -28,20 +30,27 @@ public:
     void deleter();
     void init();
     void event_loop();
+    void handle_sockets_recv();
+    void handle_sockets_send();
 private:
     void init_epoll();
     void add_socketfd_to_epoll(int socketfd,uint32_t events);
     // void accept_new_connection();
     void handle_new_connections() override;
-    void handle_ready_sockets();
     // void handle_ready_connections(int socketfd) override;
     
 private:
     int epoll_fd;
-    std::atomic<int> handle_ready_socket_running;
+    std::atomic<int> handle_sockets_recv_running;
+    std::atomic<int> handle_sockets_send_running;
     std::shared_ptr<NetworkIo> networkio;
     std::shared_ptr<ThreadPool> threadPool;
     moodycamel::ConcurrentQueue<int> ready_sockets;
+    //这里有两种方案设计，一种是无锁队列存放二进制，另一种是无锁队列存放vector，每个vector存放一个消息的二进制
+    // std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_recv_data;
+    // std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;
+    std::unordered_map<int,moodycamel::ConcurrentQueue<uint8_t>> sockets_recv_data;
+    std::unordered_map<int,moodycamel::ConcurrentQueue<uint8_t>> sockets_send_data;
 };
 
 
