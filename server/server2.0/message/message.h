@@ -19,60 +19,92 @@ enum class messageType
     Notice,
 };
 
-enum class textAction
+// enum class textAction
+// {
+//     USER_SNED_USER = 0,
+//     USER_RECIEVE_USER,
+//     USER_SEND_GROUP,
+//     USER_RECIEVE_GROUP
+// };
+
+// enum class imageAction
+// {
+//     USER_SEND_IMAGE = 100,
+//     USER_RECIEVE_IMAGE
+// };
+
+// enum class fileAction
+// {
+//     USER_SEND_FILE = 200,
+//     USER_RECIEVE_FILE
+// };
+
+// enum class voiceAction
+// {
+//     USER_SEND_VOICE = 300,
+//     USER_RECIEVE_VOICE
+// };
+
+// enum class videoAction
+// {
+//     USER_SEND_VIDEO = 400,
+//     USER_RECIEVE_VIDEO
+// };
+
+// enum class controlAction
+// {
+//     USER_LOGIN = 500,
+//     USER_LOGOUT,
+//     USER_REGISTER,
+//     USER_ADD_FRIEND,
+//     USER_DELETE_FRIEND
+// };
+
+// enum class noticeAction
+// {
+//     USER_LOGIN_STATUS = 600,
+//     USER_ONLINE_STATUS,
+//     FRIEND_ONLINE_STATUS,
+// };
+
+enum class messageAction
 {
-    USER_SNED_USER = 0,
-    USER_RECIEVE_USER,
+    USER_SEND_USER = 0,
+    USER_RECEIVE_USER,
     USER_SEND_GROUP,
-    USER_RECIEVE_GROUP
-};
+    USER_RECEIVE_GROUP,
 
-enum class imageAction
-{
-    USER_SEND_IMAGE = 100,
-    USER_RECIEVE_IMAGE
-};
+    USER_SEND_IMAGE,
+    USER_RECEIVE_IMAGE,
 
-enum class fileAction
-{
-    USER_SEND_FILE = 200,
-    USER_RECIEVE_FILE
-};
+    USER_SEND_FILE ,
+    USER_RECEIVE_FILE,
 
-enum class voiceAction
-{
-    USER_SEND_VOICE = 300,
-    USER_RECIEVE_VOICE
-};
+    USER_SEND_VOICE  ,
+    USER_RECEIVE_VOICE,
 
-enum class videoAction
-{
-    USER_SEND_VIDEO = 400,
-    USER_RECIEVE_VIDEO
-};
+    USER_SEND_VIDEO ,
+    USER_RECEIVE_VIDEO,
 
-enum class controlAction
-{
-    USER_LOGIN = 500,
+    USER_LOGIN  ,
     USER_LOGOUT,
     USER_REGISTER,
     USER_ADD_FRIEND,
-    USER_DELETE_FRIEND
-};
+    USER_DELETE_FRIEND,
 
-enum class noticeAction
-{
-    USER_LOGIN_STATUS = 600,
+    USER_LOGIN_STATUS ,
     USER_ONLINE_STATUS,
     FRIEND_ONLINE_STATUS,
 };
+
+
 
 class dataHeader
 {
 public:
     dataHeader(){}
     dataHeader(messageType type,
-                  std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> action,
+                  messageAction action,
                   const std::string &sender_name,
                   int sender_id,
                   int session_id,
@@ -93,7 +125,7 @@ public:
 public:
     // 提供公共接口以访问私有成员
     const messageType &getType() const { return m_type; }
-    const std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> &getAction() const { return m_action; }
+    const messageAction &getAction() const { return m_action; }
     const std::string &getSenderName() const { return m_sender_name; }
     int getSenderId() const { return m_sender_id; }
     // uint32_t getMessageSize() const { return m_message_size; }
@@ -105,7 +137,7 @@ public:
 
     // 设置方法
     void setType(messageType type) { m_type = type; }
-    void setAction(std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> a) { m_action = a; }
+    void setAction(messageAction a) { m_action = a; }
     void setSenderName(const std::string &name) { m_sender_name = name; }
     void setSenderId(int id) { m_sender_id = id; }
     // void setMessageSize(uint32_t size) { m_message_size = size; }
@@ -117,7 +149,7 @@ public:
 
 private:
     messageType m_type;
-    std::variant<textAction, imageAction, fileAction, voiceAction, videoAction, controlAction, noticeAction> m_action;
+    messageAction m_action;
     std::string m_sender_name;
     int m_sender_id;
     // uint32_t m_message_size;

@@ -4,42 +4,46 @@
 class IStrategy
 {
 public:
-    virtual std::shared_ptr<DataPacket> handle() = 0;
+    virtual std::shared_ptr<message> handle(std::shared_ptr<message> msg) = 0;
 };
 
-class IUserStrategy:public IStrategy
+class ITextStrategy : public IStrategy
 {
 
 };
 
-class userLoginStrategy:public IUserStrategy
+class IImageStrategy : public IStrategy
 {
 
 };
 
-
-
-
-
-
-
-class IFriendStrategy:public IStrategy
+class IFileStrategy : public IStrategy
 {
 
 };
 
-class IGroupStrategy:public IStrategy
+class IVoiceStrategy : public IStrategy
 {
 
 };
 
-class INotifyStrategy:public IStrategy
+class IVideoStrategy : public IStrategy
 {
 
 };
 
-class IFileTransportStrategy:public IStrategy
+class IControlStrategy : public IStrategy
 {
 
 };
 
+class INoticeStrategy : public IStrategy
+{
+
+};
+
+class user_send_user : public ITextStrategy
+{
+public:
+    std::shared_ptr<message> handle(std::shared_ptr<message> msg) override;
+};

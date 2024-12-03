@@ -4,6 +4,10 @@ const int MAX_EPOLL_EVENTS = 1024;
 const int THREAD_NUMS = 10;
 const int LISTEN_PORT = 8060;
 const int MAX_DEQUEUE_NUMS = 5;
+const int MSG_IDENTIFIER_SIZE = 4;
+const uint8_t MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE] = {'M', 'S', 'G', '_'};
+const int FIND_USERNAME_FAILED = -1;
+const int FIND_USER_SOCKET_FAILED = -2;
 
 std::atomic<bool> event_loop_running(true);
 
@@ -12,6 +16,7 @@ void ReactorEventHandler::init()
     // 其余初始化
     handle_sockets_recv_running = true;
     handle_sockets_send_running = true;
+    analyze_recv_data_running = true;
     // epoll初始化
     init_epoll();
 
@@ -35,6 +40,13 @@ void ReactorEventHandler::init()
     auto lambda1 = [this]()
     { this->handle_sockets_send(); };
     threadPool->commit(lambda1); // 写线程，将就绪事件套接字中的数据发送出去
+
+    // 序列化类初始化
+    serializationMethod = std::make_shared<serializationMethodV1>();
+
+    // 消息分析初始化
+    msgAnalysis = std::make_shared<msg_analysis>();
+    msgAnalysis->init();
 }
 
 void ReactorEventHandler::event_loop()
@@ -190,9 +202,7 @@ void ReactorEventHandler::handle_sockets_recv()
 {
     int socketfd = 0;
     int listen_fd = networkio->get_listenfd();
-    std::vector<int> ready_sockets_vec;
-    int n = 0;
-    int dequeued_count = MAX_DEQUEUE_NUMS;
+    std::shared_ptr<std::vector<int>> ready_sockets_vec = std::make_shared<std::vector<int>>();
     while (handle_sockets_recv_running)
     {
         // n = ready_sockets.size_approx();
@@ -207,21 +217,12 @@ void ReactorEventHandler::handle_sockets_recv()
         //         n /= 2;
         //     }
         // }
-        do
-        {
-            n = ready_sockets.size_approx();
-            if (ready_sockets.try_dequeue_bulk(ready_sockets_vec.end(), n))
-            {
-                --dequeued_count;
-                continue;
-            }
-        } while (n > 0 && dequeued_count > 0);
+        ready_sockets_vec = data_from_concurrentQueue(ready_sockets);
 
-        if (ready_sockets_vec.size() > 0)
+        if (ready_sockets_vec->size() > 0)
         {
-            for (int i = 0; i < ready_sockets_vec.size(); ++i)
+            for (auto socketfd : *ready_sockets_vec)
             {
-                socketfd = ready_sockets_vec[i];
                 // 判断套接字类型
                 if (socketfd == listen_fd)
                 {
@@ -244,7 +245,7 @@ void ReactorEventHandler::handle_sockets_recv()
                     }
                 }
             }
-            ready_sockets_vec.clear();
+            // ready_sockets_vec->clear();无需清空，共享指针内存自动管理
         }
         else
         {
@@ -293,46 +294,162 @@ void ReactorEventHandler::handle_sockets_recv()
 void ReactorEventHandler::handle_sockets_send()
 {
     int socket = 0;
-    int n = 0;
     auto data = std::make_shared<std::vector<uint8_t>>();
-    int dequeued_count;
     while (handle_sockets_send_running)
     {
         for (auto &it : sockets_send_data)
         {
-            dequeued_count = MAX_DEQUEUE_NUMS;
             socket = it.first;
-            do
-            {
-                n = it.second.size_approx();
-                if (it.second.try_dequeue_bulk(data->end(),n))
-                {
-                    --dequeued_count;
-                    continue;
-                }
-            } while (n > 0 && dequeued_count > 0);
+            data = data_from_concurrentQueue(it.second);
 
-            if(data->size() > 0)
+            if (data->size() > 0)
             {
-                //发送数据
-                if(false == networkio->send_data(socket,data) )
+                // 发送数据
+                if (false == networkio->send_data(socket, data))
                 {
-                    //todo 发送失败
+                    // todo 发送失败
                     close(socket);
-                    epoll_ctl(epoll_fd,EPOLL_CTL_DEL,socket,nullptr);
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, nullptr);
                     continue;
                 }
                 else
                 {
-                    //todo 发送成功
-
+                    // todo 发送成功
                 }
-                data->clear();
-            }
-            else
-            {
-                continue;
             }
         }
     }
+}
+
+void ReactorEventHandler::analyze_recv_data()
+{
+    auto data = std::make_shared<std::vector<uint8_t>>();
+    int socket = 0;
+    int offset = 0;
+    int data_size = 0;
+    std::shared_ptr<std::vector<uint8_t>> msg;
+    std::shared_ptr<message> msg_ptr;
+    while (analyze_recv_data_running)
+    {
+        for (auto &it : sockets_recv_data)
+        {
+            socket = it.first;
+            offset = 0;
+            data = data_from_concurrentQueue(it.second);
+            data_size = data->size();
+            if (data_size > 0)
+            {
+                // 分7步 1. 取出标识符 2. 取出长度 3. 检查校验和 4. 取出消息序列号 5. 取出消息 6. 反序列化消息 7. 放入队列
+
+                while (offset < data_size)
+                {
+                    // 1. 取出标识符
+                    if (memcmp(data->data() + offset, MSG_IDENTIFIER, MSG_IDENTIFIER_SIZE) == 0)
+                    {
+                        offset += MSG_IDENTIFIER_SIZE;
+                        // 2. 取出长度
+                        uint32_t length = 0;
+                        memcpy(&length, data->data() + offset, sizeof(length));
+                        length = ntohl(length);
+                        offset += sizeof(length);
+                        // 3. 检查校验和
+                        uint32_t crc = 0;
+                        memcpy(&crc, data->data() + offset, sizeof(crc));
+                        crc = ntohl(crc);
+                        offset += sizeof(crc);
+                        // 4. 取出消息序列号
+                        uint32_t seq = 0;
+                        memcpy(&seq, data->data() + offset, sizeof(seq));
+                        seq = ntohl(seq);
+                        offset += sizeof(seq);
+                        // 5. 比对校验和并取出消息
+                        if (crc != calculateCRC32(data->data() + offset, length))
+                        {
+                            // todo 校验失败，重发消息
+                            continue;
+                        }
+                        // 6. 取出消息
+                        msg->assign(data->begin() + offset, data->begin() + offset + length);
+                        offset += length;
+                        // 7. 序列化
+                        msg_ptr = serializationMethod->deserialize_message(msg);
+                        if (nullptr == msg_ptr)
+                        {
+                            // todo 反序列化失败
+                            continue;
+                        }
+                        // 这里对消息调用解析函数然后commit
+                        auto lambda = [this, msg_ptr]()
+                        {
+                            auto retmsg = this->msgAnalysis->handle(msg_ptr);
+                            this->enqueue_send_message(retmsg);
+                        };
+                        threadPool->commit(lambda);
+                    }
+                    else
+                    {
+                        offset++;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// std::shared_ptr<std::vector<uint8_t>> ReactorEventHandler::data_from_concurrentQueue(moodycamel::ConcurrentQueue<uint8_t> &queue)
+// {
+//     int n = 0;
+//     int dequeued_count = MAX_DEQUEUE_NUMS;
+//     std::shared_ptr<std::vector<uint8_t>> data = std::make_shared<std::vector<uint8_t>>();
+//     do
+//     {
+//         n = queue.size_approx();
+//         if (queue.try_dequeue_bulk(data->end(), n))
+//         {
+//             --dequeued_count;
+//             continue;
+//         }
+//     } while (n > 0 && dequeued_count > 0);
+//     return data;
+// }
+
+uint32_t ReactorEventHandler::calculateCRC32(const uint8_t *data, size_t length)
+{
+    uint32_t crc = crc32(0L, Z_NULL, 0); // 初始化CRC32
+    crc = crc32(crc, data, length);      // 计算CRC32
+    return crc;
+}
+
+int ReactorEventHandler::get_socket_from_username(const std::string &name)
+{
+}
+
+void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
+{
+    std::string username;
+    auto msg = serializationMethod->serialize_message(data);
+    try
+    {
+        username = data->getHeader().getReceiverName().value();
+    } catch (const std::bad_optional_access &e)
+    {
+        std::perror("get_socket_from_username");
+        return;
+    }
+
+    int socket = get_socket_from_username(username);
+    if(socket == FIND_USERNAME_FAILED)
+    {
+        // todo 发送失败
+        std::perror("get_socket_from_username");
+        return;
+    }
+    else if (socket == FIND_USER_SOCKET_FAILED)
+    {
+        //用户未上线
+        username_send_data[username].enqueue_bulk(msg->data(), msg->size());
+        return;
+    }
+    sockets_send_data[socket].enqueue_bulk(msg->data(), msg->size());
+    return;
 }

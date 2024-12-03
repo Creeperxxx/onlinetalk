@@ -1,2 +1,0 @@
-/home/creeper/code/c++2.0/onlinetalk/server/build/CMakeFiles/edit_cache.dir
-/home/creeper/code/c++2.0/onlinetalk/server/build/CMakeFiles/rebuild_cache.dir

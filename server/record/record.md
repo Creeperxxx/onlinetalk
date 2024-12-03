@@ -1533,3 +1533,53 @@ void receiveData(int socket) {
 更复杂的方法是给每个消息分配一个唯一的序列号，并且在接收方成功处理消息后发送确认。如果发送方没有收到确认，它会重新发送消息。这需要额外的协议支持，但可以提高可靠性。
 
 通过这些方法，你可以有效地处理由于网络问题导致的部分消息丢失情况，从而保证消息的完整性和正确性。
+
+
+using json = nlohmann::json;
+
+enum msgType
+{
+    USER,
+    FRIEND,
+    GROUP,
+    NOTIFY,
+    FILETRANPORT
+};
+
+enum msgAction
+{
+    LOGIN,
+    LOGOUT,
+    REGISTER,
+    DEREGISTER,
+    MODY_PER_INFO,
+    RESET_PASSWORD,
+    CHECK_PER_INFO,
+    
+    ADD_FRIEND,
+    DEAL_FRIEND_REQUEST,
+    DELETE_FRIEND,
+    SEARCH_FRIEND,
+    SEND_MESSAGE,
+    CHECK_FRIEND_STATUS,
+    SHIELD_FRIEND,
+    CHECK_FRIEND_LISTS,
+
+    CREATE_GROUP,
+    JOIN_GROUP,
+    QUIT_GROUP,
+    DELETE_GROUP,
+    INVITE_TO_JOIN_GROUP,
+    KICK_OFF_GROUP,
+    SET_MANAGET,
+    MODI_GROUP_INFO,
+    UPDATE_GROUP_NOTICE,
+    CHECK_MEMBER_LIST,
+    CHECK_HISTORY_MESSAGE,
+
+    MSG_STATUS_NOTICE,
+    
+    UPLOAD_FILE,
+    DOWNLOAD_FILE,
+
+};
