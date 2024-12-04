@@ -1,3 +1,16 @@
+# 待完成
+1. mysql方法模块MysqlPool
+2. redis方法模块RedisPool
+3. 整合数据库模块dataBase
+4. 消息处理策略msgAnalysisStrategy
+4. 
+
+
+
+
+
+
+
 # 框架思路
     server初始化后调用eventloop()开启循环。每次处理两种事
 
@@ -175,3 +188,4 @@
 
 # 消息构成
 消息标识符 消息校验和 消息长度 消息序列号 消息体
+

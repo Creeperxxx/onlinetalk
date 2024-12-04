@@ -39,7 +39,12 @@ void ReactorEventHandler::init()
 
     auto lambda1 = [this]()
     { this->handle_sockets_send(); };
-    threadPool->commit(lambda1); // 写线程，将就绪事件套接字中的数据发送出去
+    threadPool->commit(lambda1); // 写线程，将就绪事件套接字中的数据发送
+
+    auto lambda2 = [this](){
+        this->analyze_recv_data();
+    }
+    threadPool->commit(lambda2); // 分析线程，将就绪事件套接字中的数据分析
 
     // 序列化类初始化
     serializationMethod = std::make_shared<serializationMethodV1>();
