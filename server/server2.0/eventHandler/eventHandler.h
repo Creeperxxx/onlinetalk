@@ -16,8 +16,7 @@ extern const int MAX_EPOLL_EVENTS;
 extern const int THREAD_NUMS;
 extern const int LISTEN_PORT;
 extern const int MAX_DEQUEUE_NUMS;
-extern const int MSG_IDENTIFIER_SIZE;
-extern const char MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE];
+
 extern const int FIND_USERNAME_FAILED;
 extern const int FIND_USER_SOCKET_FAILED;
 

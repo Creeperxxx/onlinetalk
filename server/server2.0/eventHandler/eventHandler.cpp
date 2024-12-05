@@ -4,8 +4,7 @@ const int MAX_EPOLL_EVENTS = 1024;
 const int THREAD_NUMS = 10;
 const int LISTEN_PORT = 8060;
 const int MAX_DEQUEUE_NUMS = 5;
-const int MSG_IDENTIFIER_SIZE = 4;
-const uint8_t MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE] = {'M', 'S', 'G', '_'};
+
 const int FIND_USERNAME_FAILED = -1;
 const int FIND_USER_SOCKET_FAILED = -2;
 
@@ -43,7 +42,7 @@ void ReactorEventHandler::init()
 
     auto lambda2 = [this](){
         this->analyze_recv_data();
-    }
+    };
     threadPool->commit(lambda2); // 分析线程，将就绪事件套接字中的数据分析
 
     // 序列化类初始化

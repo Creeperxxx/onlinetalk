@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "../requirement/moodycamel/concurrentqueue.h"
+#include <cstddef>
 
 const std::string address;
 const int port;
@@ -32,4 +33,4 @@ private:
     std::string m_address;
     int m_port;
     
-}
+};

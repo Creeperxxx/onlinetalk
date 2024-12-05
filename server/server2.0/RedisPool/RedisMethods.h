@@ -1,4 +1,4 @@
-#include "RedisPool.h"
+#include "Redispool.h"
 
 class IredisMethods
 {
