@@ -1,7 +1,7 @@
 #include "Redispool.h"
 const std::string address = "127.0.0.1";
 const int port = 6379;
-cosnt size_t pool_size = 10;
+const size_t pool_size = 10;
 
 void redisPool::initialize_pool(const std::string &address, int port, size_t pool_size)
 {

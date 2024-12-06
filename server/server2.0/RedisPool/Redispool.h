@@ -1,3 +1,4 @@
+#pragma once
 #include <hiredis/hiredis.h>
 #include <memory>
 #include <queue>
@@ -32,5 +33,4 @@ private:
     size_t m_pool_size;
     std::string m_address;
     int m_port;
-    
 };

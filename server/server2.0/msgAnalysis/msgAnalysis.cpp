@@ -15,41 +15,41 @@ std::shared_ptr<IStrategy> strategy_registry::get_strategy(messageType type,mess
     return nullptr;
 }
 
-void msg_analysis::text_init()
+void msgAnalysis::text_init()
 {
     strategy_registry_->register_strategy<user_send_user>(messageType::Text,messageAction::USER_SEND_USER);
 }
 
-void msg_analysis::image_init()
+void msgAnalysis::image_init()
 {
 
 }
 
-void msg_analysis::file_init()
+void msgAnalysis::file_init()
 {
 
 }
 
-void msg_analysis::voice_init()
+void msgAnalysis::voice_init()
 {
 
 }
 
-void msg_analysis::video_init()
+void msgAnalysis::video_init()
 {
 
 }
 
-void msg_analysis::control_init()
+void msgAnalysis::control_init()
 {
 
 }
-void msg_analysis::notice_init()
+void msgAnalysis::notice_init()
 {
 
 }
 
-std::shared_ptr<message> msg_analysis::handle(std::shared_ptr<message> msg)
+std::shared_ptr<message> msgAnalysis::handle(std::shared_ptr<message> msg)
 {
     auto strategy = strategy_registry_->get_strategy(msg->getHeader().getType(),msg->getHeader().getAction());
     if(strategy)

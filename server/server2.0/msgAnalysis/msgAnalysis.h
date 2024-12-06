@@ -57,7 +57,7 @@ class strategy_registry;
 //思路：
 //x 使用策略模式加抽象工厂模式，每种消息下的每个动作都专门设计一个处理策略。然后由抽象工厂来生产策略。
 //√ 使用注册表加策略模式，每种消息下的每个动作都专门设计一个处理策略。将策略注册到注册表中。
-class msg_analysis
+class msgAnalysis
 {
 public:
     void init();
@@ -72,6 +72,7 @@ private:
     void notice_init();
 private:
     std::shared_ptr<strategy_registry> strategy_registry_;
+
 };
 
 class strategy_registry

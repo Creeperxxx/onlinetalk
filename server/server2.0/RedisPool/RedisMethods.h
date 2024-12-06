@@ -1,3 +1,4 @@
+#pragma once
 #include "Redispool.h"
 
 class IredisMethods

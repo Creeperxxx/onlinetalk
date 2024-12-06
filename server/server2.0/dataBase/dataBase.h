@@ -1,2 +1,13 @@
+#pragma once
 #include "../RedisPool/RedisMethods.h"
-#include 
+#include "../MysqlPool/mysqlMethods.h"
+
+class database
+{
+
+};
+
+class databaseV1 : public database
+{
+
+};

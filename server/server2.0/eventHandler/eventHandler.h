@@ -9,8 +9,7 @@
 #include "../serializationMethod/serializationMethod.h"
 #include "../threadPool/threadPool.h"
 #include <unordered_map>
-#include <zlib.h>
-#include "../msgAnalysis/msgAnalysis.h"
+#include "../msgAnalysis/msgAnalysisFSM.h"
 
 extern const int MAX_EPOLL_EVENTS;
 extern const int THREAD_NUMS;
@@ -50,9 +49,9 @@ private:
     // void handle_ready_connections(int socketfd) override;
     template <typename T>
     std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
-    uint32_t calculateCRC32(const uint8_t *data, size_t length);
-    int get_socket_from_username(const std::string& username);
-    int get_socket_from_userid(int userid);
+    // uint32_t calculateCRC32(const uint8_t *data, size_t length);
+    // int get_socket_from_username(const std::string& username);
+    // int get_socket_from_userid(int userid);
 
 private:
     int epoll_fd;
@@ -60,13 +59,12 @@ private:
     std::atomic<int> handle_sockets_send_running;
     std::atomic<int> analyze_recv_data_running;
     std::shared_ptr<NetworkIo> networkio;
-    std::shared_ptr<ThreadPool> threadPool;
-    std::shared_ptr<msg_analysis> msgAnalysis;
+    std::shared_ptr<ThreadPool> thread_pool;
+    std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
+    // std::shared_ptr<msgAnalysis> msgAnalysis;
+    
     std::shared_ptr<IserializationMethod> serializationMethod;
     moodycamel::ConcurrentQueue<int> ready_sockets;
-    
-
-
     // 这里有两种方案设计，一种是无锁队列存放二进制，另一种是无锁队列存放vector，每个vector存放一个消息的二进制
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_recv_data;
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;

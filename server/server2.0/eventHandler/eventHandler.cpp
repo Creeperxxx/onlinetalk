@@ -30,27 +30,27 @@ void ReactorEventHandler::init()
     add_socketfd_to_epoll(networkio->get_listenfd(), EPOLLIN | EPOLLET);
 
     // 线程池初始化
-    threadPool = std::make_shared<ThreadPool>(THREAD_NUMS);
+    thread_pool = std::make_shared<ThreadPool>(THREAD_NUMS);
 
     auto lambda = [this]()
     { this->handle_sockets_recv(); };
-    threadPool->commit(lambda); // 读线程，将就绪事件套接字中的数据读取到对应无锁队列中
+    thread_pool->commit(lambda); // 读线程，将就绪事件套接字中的数据读取到对应无锁队列中
 
     auto lambda1 = [this]()
     { this->handle_sockets_send(); };
-    threadPool->commit(lambda1); // 写线程，将就绪事件套接字中的数据发送
+    thread_pool->commit(lambda1); // 写线程，将就绪事件套接字中的数据发送
 
     auto lambda2 = [this](){
         this->analyze_recv_data();
     };
-    threadPool->commit(lambda2); // 分析线程，将就绪事件套接字中的数据分析
+    thread_pool->commit(lambda2); // 分析线程，将就绪事件套接字中的数据分析
 
     // 序列化类初始化
     serializationMethod = std::make_shared<serializationMethodV1>();
 
     // 消息分析初始化
-    msgAnalysis = std::make_shared<msg_analysis>();
-    msgAnalysis->init();
+    msg_analysis_fsm = std::make_shared<msgAnalysisFSM>();
+    msg_analysis_fsm->init(serializationMethod,this,thread_pool);
 }
 
 void ReactorEventHandler::event_loop()
@@ -328,74 +328,75 @@ void ReactorEventHandler::handle_sockets_send()
 void ReactorEventHandler::analyze_recv_data()
 {
     auto data = std::make_shared<std::vector<uint8_t>>();
-    int socket = 0;
-    int offset = 0;
-    int data_size = 0;
-    std::shared_ptr<std::vector<uint8_t>> msg;
-    std::shared_ptr<message> msg_ptr;
+    // int socket = 0;
+    // int offset = 0;
+    // int data_size = 0;
+    // std::shared_ptr<std::vector<uint8_t>> msg;
+    // std::shared_ptr<message> msg_ptr;
     while (analyze_recv_data_running)
     {
         for (auto &it : sockets_recv_data)
         {
             socket = it.first;
-            offset = 0;
+            // offset = 0;
             data = data_from_concurrentQueue(it.second);
-            data_size = data->size();
-            if (data_size > 0)
-            {
-                // 分7步 1. 取出标识符 2. 取出长度 3. 检查校验和 4. 取出消息序列号 5. 取出消息 6. 反序列化消息 7. 放入队列
+            msg_analysis_fsm->process_data(data)
+            // data_size = data->size();
+            // if (data_size > 0)
+            // {
+            //     // 分7步 1. 取出标识符 2. 取出长度 3. 检查校验和 4. 取出消息序列号 5. 取出消息 6. 反序列化消息 7. 放入队列
 
-                while (offset < data_size)
-                {
-                    // 1. 取出标识符
-                    if (memcmp(data->data() + offset, MSG_IDENTIFIER, MSG_IDENTIFIER_SIZE) == 0)
-                    {
-                        offset += MSG_IDENTIFIER_SIZE;
-                        // 2. 取出长度
-                        uint32_t length = 0;
-                        memcpy(&length, data->data() + offset, sizeof(length));
-                        length = ntohl(length);
-                        offset += sizeof(length);
-                        // 3. 检查校验和
-                        uint32_t crc = 0;
-                        memcpy(&crc, data->data() + offset, sizeof(crc));
-                        crc = ntohl(crc);
-                        offset += sizeof(crc);
-                        // 4. 取出消息序列号
-                        uint32_t seq = 0;
-                        memcpy(&seq, data->data() + offset, sizeof(seq));
-                        seq = ntohl(seq);
-                        offset += sizeof(seq);
-                        // 5. 比对校验和并取出消息
-                        if (crc != calculateCRC32(data->data() + offset, length))
-                        {
-                            // todo 校验失败，重发消息
-                            continue;
-                        }
-                        // 6. 取出消息
-                        msg->assign(data->begin() + offset, data->begin() + offset + length);
-                        offset += length;
-                        // 7. 序列化
-                        msg_ptr = serializationMethod->deserialize_message(msg);
-                        if (nullptr == msg_ptr)
-                        {
-                            // todo 反序列化失败
-                            continue;
-                        }
-                        // 这里对消息调用解析函数然后commit
-                        auto lambda = [this, msg_ptr]()
-                        {
-                            auto retmsg = this->msgAnalysis->handle(msg_ptr);
-                            this->enqueue_send_message(retmsg);
-                        };
-                        threadPool->commit(lambda);
-                    }
-                    else
-                    {
-                        offset++;
-                    }
-                }
-            }
+            //     while (offset < data_size)
+            //     {
+            //         // 1. 取出标识符
+            //         if (memcmp(data->data() + offset, MSG_IDENTIFIER, MSG_IDENTIFIER_SIZE) == 0)
+            //         {
+            //             offset += MSG_IDENTIFIER_SIZE;
+            //             // 2. 取出长度
+            //             uint32_t length = 0;
+            //             memcpy(&length, data->data() + offset, sizeof(length));
+            //             length = ntohl(length);
+            //             offset += sizeof(length);
+            //             // 3. 检查校验和
+            //             uint32_t crc = 0;
+            //             memcpy(&crc, data->data() + offset, sizeof(crc));
+            //             crc = ntohl(crc);
+            //             offset += sizeof(crc);
+            //             // 4. 取出消息序列号
+            //             uint32_t seq = 0;
+            //             memcpy(&seq, data->data() + offset, sizeof(seq));
+            //             seq = ntohl(seq);
+            //             offset += sizeof(seq);
+            //             // 5. 比对校验和并取出消息
+            //             if (crc != calculateCRC32(data->data() + offset, length))
+            //             {
+            //                 // todo 校验失败，重发消息
+            //                 continue;
+            //             }
+            //             // 6. 取出消息
+            //             msg->assign(data->begin() + offset, data->begin() + offset + length);
+            //             offset += length;
+            //             // 7. 序列化
+            //             msg_ptr = serializationMethod->deserialize_message(msg);
+            //             if (nullptr == msg_ptr)
+            //             {
+            //                 // todo 反序列化失败
+            //                 continue;
+            //             }
+            //             // 这里对消息调用解析函数然后commit
+            //             auto lambda = [this, msg_ptr]()
+            //             {
+            //                 auto retmsg = this->msgAnalysis->handle(msg_ptr);
+            //                 this->enqueue_send_message(retmsg);
+            //             };
+            //             thread_pool->commit(lambda);
+            //         }
+            //         else
+            //         {
+            //             offset++;
+            //         }
+                // }
+            // }
         }
     }
 }
