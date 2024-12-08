@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "../message/message.h"
-#include "serializationMethod.h"
+// #include "serializationMethod.h"
 
 extern const int FULL_CONNECT_LENGTH;
 

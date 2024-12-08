@@ -3,7 +3,7 @@
 
 class IredisMethods
 {
-    virtual bool insert(const std::string& key, const std::string& value) = 0;
+    
 
 };
 /*
@@ -16,5 +16,5 @@ redis方法
 */
 class redisMethodsV1 : public IredisMethods
 {
-    bool insert(const std::string &key, const std::string &value) override;
+    // bool insert(const std::string &key, const std::string &value) override;
 };
