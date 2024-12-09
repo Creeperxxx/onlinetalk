@@ -1,5 +1,6 @@
 #pragma once
 #include "../networkio/networkio.h"
+#include "../logSystem/log.h"
 
 class IStrategy
 {

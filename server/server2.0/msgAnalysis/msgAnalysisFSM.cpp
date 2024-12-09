@@ -1,7 +1,7 @@
 #include "msgAnalysisFSM.h"
 
-const int MSG_IDENTIFIER_SIZE = 4;
-const uint8_t MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE] = {'M', 'S', 'G', '_'};
+// const int MSG_IDENTIFIER_SIZE = 4;
+const uint8_t MSG_IDENTIFIER[4] = {'M', 'S', 'G', '_'};
 const uint32_t MSG_MAX_LENGHT = 2048;
 
 void msgAnalysisFSM::process()
@@ -56,9 +56,9 @@ void msgAnalysisFSM::initial_state()
 
 void msgAnalysisFSM::check_identifier()
 {
-    if(memcmp(data->data() + offset, MSG_IDENTIFIER, MSG_IDENTIFIER_SIZE) == 0)
+    if(memcmp(data->data() + offset,MSG_IDENTIFIER, sizeof(MSG_IDENTIFIER)) == 0)
     {
-        offset += MSG_IDENTIFIER_SIZE;
+        offset += sizeof(MSG_IDENTIFIER);
         current_state = analysisState::extract_length_state;
     }
     else
@@ -114,7 +114,7 @@ void msgAnalysisFSM::check_crc()
 {
     memcpy(&crc,data->data() + offset,sizeof(crc));
     crc = ntohl(crc);
-    if(crc == calculateCRC32(data->data() + offset - length,length))
+    if(crc == std::static_pointer_cast<serializationMethodV1>(serialization_method)->calculateCRC32(data->data() + offset - length,length))
     {
         // 校验通过
         offset += sizeof(crc);
@@ -130,7 +130,7 @@ void msgAnalysisFSM::check_crc()
 
 void msgAnalysisFSM::deserialize()
 {
-    msg = serialization_method->deserialize(message_data);
+    msg = serialization_method->deserialize_message(message_data);
     if(msg == nullptr)
     {
         // 错误处理
@@ -148,7 +148,7 @@ void msgAnalysisFSM::process_msg()
     auto lambda = [this](std::shared_ptr<message> msg){
         auto retmsg = this->msg_analysis_handle(msg);
         this->enqueue_send_msg(retmsg);
-    } 
+    };
     pool->commit(lambda,msg);
     current_state = analysisState::initial_state;
 }
@@ -162,7 +162,7 @@ void msgAnalysisFSM::process_data(std::shared_ptr<std::vector<uint8_t>> data)
 void msgAnalysisFSM::init(std::shared_ptr<IserializationMethod> serialization_method,IEventHandler* eventHandler,std::shared_ptr<ThreadPool> threadPool)
 {
     this->serialization_method = serialization_method;
-    this->eventHandler = eventHandler;
+    this->event_handler = eventHandler;
     this->pool = threadPool;
     current_state = analysisState::initial_state;
     msg_analysis = std::make_shared<msgAnalysis>();
@@ -181,6 +181,11 @@ std::shared_ptr<message> msgAnalysisFSM::msg_analysis_handle(std::shared_ptr<mes
 
 void msgAnalysisFSM::enqueue_send_msg(std::shared_ptr<message> msg)
 {
-    auto temp_event_handler = dynamic_cast<ReactorEventHandler*>(eventHandler);
+    auto temp_event_handler = dynamic_cast<ReactorEventHandler*>(event_handler);
     temp_event_handler->enqueue_send_message(msg);
 }
+
+// uint32_t msgAnalysisFSM::calculateCRC32(const uint8_t *data, size_t length)
+// {
+//     return 
+// }

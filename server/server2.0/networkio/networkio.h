@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "../logSystem/log.h"
 #include "../message/message.h"
 // #include "serializationMethod.h"
 

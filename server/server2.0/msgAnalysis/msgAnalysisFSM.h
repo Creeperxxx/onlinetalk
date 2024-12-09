@@ -8,8 +8,8 @@
 #include "../msgAnalysis/msgAnalysis.h"
 #include "../threadPool/threadPool.h"
 
-extern const int MSG_IDENTIFIER_SIZE;
-extern const char MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE];
+// extern const int MSG_IDENTIFIER_SIZE;
+extern const char MSG_IDENTIFIER[4];
 extern const uint32_t MSG_MAX_LENGHT;
 
 enum class analysisState
@@ -44,7 +44,7 @@ public:
     std::shared_ptr<message> msg_analysis_handle(std::shared_ptr<message> msg);
     // std::shared_ptr<message> get_deserialized_msg();
     void enqueue_send_msg(std::shared_ptr<message> msg);
-    void threadpool_commit()
+    void threadpool_commit();
 private:
     void process();
     void initial_state();
@@ -56,6 +56,7 @@ private:
     void process_msg();
     void deserialize();
     void error_handling();
+    // uint32_t calculateCRC32(const uint8_t *data, size_t length);
 private:
     uint32_t length;
     analysisState current_state;

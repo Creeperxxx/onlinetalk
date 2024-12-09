@@ -7,6 +7,7 @@
 #include <string>
 #include "../requirement/moodycamel/concurrentqueue.h"
 #include <cstddef>
+#include "../logSystem/log.h"
 #include <iostream>
 
 extern const std::string REDIS_ADDRESS;

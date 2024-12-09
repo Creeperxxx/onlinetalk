@@ -12,6 +12,8 @@ std::atomic<bool> event_loop_running(true);
 
 void ReactorEventHandler::init()
 {
+    // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
+    LOG_INFO("%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
     // 其余初始化
     handle_sockets_recv_running = true;
     handle_sockets_send_running = true;
@@ -40,7 +42,8 @@ void ReactorEventHandler::init()
     { this->handle_sockets_send(); };
     thread_pool->commit(lambda1); // 写线程，将就绪事件套接字中的数据发送
 
-    auto lambda2 = [this](){
+    auto lambda2 = [this]()
+    {
         this->analyze_recv_data();
     };
     thread_pool->commit(lambda2); // 分析线程，将就绪事件套接字中的数据分析
@@ -50,7 +53,10 @@ void ReactorEventHandler::init()
 
     // 消息分析初始化
     msg_analysis_fsm = std::make_shared<msgAnalysisFSM>();
-    msg_analysis_fsm->init(serializationMethod,this,thread_pool);
+    msg_analysis_fsm->init(serializationMethod, this, thread_pool);
+    // 日志初始化
+    // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
+    LOG_INFO("%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
 }
 
 void ReactorEventHandler::event_loop()
@@ -58,26 +64,32 @@ void ReactorEventHandler::event_loop()
     struct epoll_event events[MAX_EPOLL_EVENTS];
     int listen_fd = networkio->get_listenfd();
     int nfds = 0;
-    std::vector<int> ready_sockets_vec;
+    // std::queue<int> ready_sockets_que;
+    LOG_INFO("%s:%s:%d // 开始事件循环", __FILE__, __FUNCTION__, __LINE__);
     while (event_loop_running)
     {
         nfds = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS, -1);
         if (nfds == -1)
         {
-            perror("epoll_wait");
+            LOG_ERROR("%s:%s:%d // epoll_wait返回-1", __FILE__, __FUNCTION__, __LINE__);
             deleter();
             exit(EXIT_FAILURE);
         }
         else
         {
+            LOG_INFO("%s:%s:%d // 事件循环，就绪事件数量为：%d", __FILE__, __FUNCTION__, __LINE__, nfds);
             // 专门让一个读线程处理ready_sockets
+            std::lock_guard<std::mutex> lock(ready_sockets_mutex);
             for (int i = 0; i < nfds; ++i)
             {
                 // ready_sockets.enqueue(events[i].data.fd);
-                ready_sockets_vec.push_back(events[i].data.fd);
+                // ready_sockets_vec.push_back(events[i].data.fd);
+                // ready_sockets_que.push(events[i].data.fd);
+                ready_sockets.push(events[i].data.fd);
             }
-            ready_sockets.enqueue_bulk(ready_sockets_vec.begin(), ready_sockets_vec.size());
-            ready_sockets_vec.clear();
+            ready_sockets_cv.notify_one();
+            // ready_sockets.enqueue_bulk(ready_sockets_vec.begin(), ready_sockets_vec.size());
+
             // // std::lock_guard<std::mutex> lock(ready_sockets_mutex);//用无锁队列代替了锁
             // for(int i = 0;i < nfds;i++)
             // {
@@ -108,7 +120,7 @@ void ReactorEventHandler::init_epoll()
     this->epoll_fd = epoll_create(1);
     if (epoll_fd == -1)
     {
-        perror("epoll_create");
+        LOG_ERROR("%s:%s:%d // epoll_create返回-1", __FILE__, __FUNCTION__, __LINE__);
         deleter();
         exit(EXIT_FAILURE);
     }
@@ -126,7 +138,7 @@ void ReactorEventHandler::add_socketfd_to_epoll(int socketfd, uint32_t events)
     event.events = events;
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socketfd, &event) == -1)
     {
-        perror("epoll_ctl");
+        LOG_ERROR("%s:%s:%d // epoll_ctl返回-1", __FILE__, __FUNCTION__, __LINE__);
         deleter();
         exit(EXIT_FAILURE);
     }
@@ -177,6 +189,7 @@ void ReactorEventHandler::handle_new_connections()
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     int client_fd;
+    LOG_INFO("%s:%s:%d // 循环处理新连接", __FILE__, __FUNCTION__, __LINE__);
     while (true)
     {
         client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_addr_len);
@@ -188,7 +201,7 @@ void ReactorEventHandler::handle_new_connections()
             }
             else
             {
-                perror("accept");
+                LOG_ERROR("%s:%s:%d // accept返回-1且errno不为eagain ewouldblock", __FILE__, __FUNCTION__, __LINE__);
                 deleter();
                 exit(EXIT_FAILURE);
             }
@@ -204,9 +217,12 @@ void ReactorEventHandler::handle_new_connections()
 
 void ReactorEventHandler::handle_sockets_recv()
 {
-    int socketfd = 0;
+    // int socketfd = 0;
     int listen_fd = networkio->get_listenfd();
-    std::shared_ptr<std::vector<int>> ready_sockets_vec = std::make_shared<std::vector<int>>();
+    // std::shared_ptr<std::vector<int>> ready_sockets_vec = std::make_shared<std::vector<int>>();
+    // std::queue<int> ready_sockets_temp;
+    std::vector<int> ready_sockets_temp;
+    LOG_INFO("%s:%s:%d // 循环处理就绪连接", __FILE__, __FUNCTION__, __LINE__);
     while (handle_sockets_recv_running)
     {
         // n = ready_sockets.size_approx();
@@ -221,41 +237,43 @@ void ReactorEventHandler::handle_sockets_recv()
         //         n /= 2;
         //     }
         // }
-        ready_sockets_vec = data_from_concurrentQueue(ready_sockets);
-
-        if (ready_sockets_vec->size() > 0)
+        // ready_sockets_vec = data_from_concurrentQueue(ready_sockets);
+        std::unique_lock<std::mutex> lock(ready_sockets_mutex);
+        while (ready_sockets.empty())
         {
-            for (auto socketfd : *ready_sockets_vec)
+            ready_sockets_cv.wait(lock);
+        }
+        // ready_sockets_temp = std::move(ready_sockets);
+        // ready_sockets_temp.swap(ready_sockets);
+        ready_sockets_temp = std::move(ready_sockets);
+        lock.unlock();
+
+        for (auto socketfd : ready_sockets_temp)
+        {
+            // 判断套接字类型
+            if (socketfd == listen_fd)
             {
-                // 判断套接字类型
-                if (socketfd == listen_fd)
+                // 处理新连接
+                handle_new_connections();
+            }
+            else
+            {
+                // 读取就绪套接字的数据并放入对应缓冲区中
+                auto recvmsg = networkio->recv_data(socketfd);
+                if (recvmsg->empty())
                 {
-                    // 处理新连接
-                    handle_new_connections();
+                    // todo 关闭连接
+                    LOG_WARING("%s:%s:%d // 客户端断开连接", __FILE__, __FUNCTION__, __LINE__);
+                    close(socketfd);
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socketfd, nullptr);
                 }
                 else
                 {
-                    // 读取就绪套接字的数据并放入对应缓冲区中
-                    auto recvmsg = networkio->recv_data(socketfd);
-                    if (recvmsg->empty())
-                    {
-                        // todo 关闭连接
-                        close(socketfd);
-                        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socketfd, nullptr);
-                    }
-                    else
-                    {
-                        sockets_recv_data[socketfd].enqueue_bulk(recvmsg->data(), recvmsg->size());
-                    }
+                    sockets_recv_data[socketfd].enqueue_bulk(recvmsg->data(), recvmsg->size());
                 }
             }
-            // ready_sockets_vec->clear();无需清空，共享指针内存自动管理
         }
-        else
-        {
-            // 等待新数据到来
-            std::this_thread::yield();
-        }
+        ready_sockets_temp.clear();
         // int dequeued_count = 0;
         // while(true)
         // {
@@ -312,6 +330,7 @@ void ReactorEventHandler::handle_sockets_send()
                 if (false == networkio->send_data(socket, data))
                 {
                     // todo 发送失败
+                    LOG_ERROR("%s:%s:%d // 向客户端发送消息发送失败", __FILE__, __FUNCTION__, __LINE__);
                     close(socket);
                     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, nullptr);
                     continue;
@@ -328,11 +347,14 @@ void ReactorEventHandler::handle_sockets_send()
 void ReactorEventHandler::analyze_recv_data()
 {
     auto data = std::make_shared<std::vector<uint8_t>>();
-    // int socket = 0;
+    int socket = 0;
     // int offset = 0;
     // int data_size = 0;
     // std::shared_ptr<std::vector<uint8_t>> msg;
     // std::shared_ptr<message> msg_ptr;
+    LOG_INFO("%s:%s:%d // 开始分析接收到的数据", __FILE__, __FUNCTION__, __LINE__);
+    // todo 这里忙等待是否可以优化？
+    // 还是回归条件变量+共享状态的方式
     while (analyze_recv_data_running)
     {
         for (auto &it : sockets_recv_data)
@@ -340,7 +362,11 @@ void ReactorEventHandler::analyze_recv_data()
             socket = it.first;
             // offset = 0;
             data = data_from_concurrentQueue(it.second);
-            msg_analysis_fsm->process_data(data)
+            if (data->empty())
+            {
+                continue;
+            }
+            msg_analysis_fsm->process_data(data);
             // data_size = data->size();
             // if (data_size > 0)
             // {
@@ -395,7 +421,7 @@ void ReactorEventHandler::analyze_recv_data()
             //         {
             //             offset++;
             //         }
-                // }
+            // }
             // }
         }
     }
@@ -418,12 +444,12 @@ void ReactorEventHandler::analyze_recv_data()
 //     return data;
 // }
 
-uint32_t ReactorEventHandler::calculateCRC32(const uint8_t *data, size_t length)
-{
-    uint32_t crc = crc32(0L, Z_NULL, 0); // 初始化CRC32
-    crc = crc32(crc, data, length);      // 计算CRC32
-    return crc;
-}
+// uint32_t ReactorEventHandler::calculateCRC32(const uint8_t *data, size_t length)
+// {
+//     uint32_t crc = crc32(0L, Z_NULL, 0); // 初始化CRC32
+//     crc = crc32(crc, data, length);      // 计算CRC32
+//     return crc;
+// }
 
 int ReactorEventHandler::get_socket_from_username(const std::string &name)
 {
@@ -436,14 +462,15 @@ void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
     try
     {
         username = data->getHeader().getReceiverName().value();
-    } catch (const std::bad_optional_access &e)
+    }
+    catch (const std::bad_optional_access &e)
     {
         std::perror("get_socket_from_username");
         return;
     }
 
     int socket = get_socket_from_username(username);
-    if(socket == FIND_USERNAME_FAILED)
+    if (socket == FIND_USERNAME_FAILED)
     {
         // todo 发送失败
         std::perror("get_socket_from_username");
@@ -451,7 +478,7 @@ void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
     }
     else if (socket == FIND_USER_SOCKET_FAILED)
     {
-        //用户未上线
+        // 用户未上线
         username_send_data[username].enqueue_bulk(msg->data(), msg->size());
         return;
     }

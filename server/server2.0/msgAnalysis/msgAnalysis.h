@@ -2,6 +2,7 @@
 // #include <nlohmann/json.hpp>
 #include "../msgHandleStrategy/msgHandleStrategy.h"
 #include <unordered_map>
+#include "../logSystem/log.h"
 
 
 // using json = nlohmann::json;

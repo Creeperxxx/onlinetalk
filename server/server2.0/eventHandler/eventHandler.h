@@ -10,6 +10,10 @@
 #include "../threadPool/threadPool.h"
 #include <unordered_map>
 #include "../msgAnalysis/msgAnalysisFSM.h"
+#include "../logSystem/log.h"
+#include <string>
+#include "../socketManager/socketManager.h"
+
 
 extern const int MAX_EPOLL_EVENTS;
 extern const int THREAD_NUMS;
@@ -50,7 +54,7 @@ private:
     template <typename T>
     std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
     // uint32_t calculateCRC32(const uint8_t *data, size_t length);
-    // int get_socket_from_username(const std::string& username);
+    int get_socket_from_username(const std::string& username);
     // int get_socket_from_userid(int userid);
 
 private:
@@ -64,7 +68,11 @@ private:
     // std::shared_ptr<msgAnalysis> msgAnalysis;
     
     std::shared_ptr<IserializationMethod> serializationMethod;
-    moodycamel::ConcurrentQueue<int> ready_sockets;
+    // moodycamel::ConcurrentQueue<int> ready_sockets;
+    // std::queue<int> ready_sockets;
+    std::vector<int> ready_sockets;
+    std::mutex ready_sockets_mutex;
+    std::condition_variable ready_sockets_cv;
     // 这里有两种方案设计，一种是无锁队列存放二进制，另一种是无锁队列存放vector，每个vector存放一个消息的二进制
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_recv_data;
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;

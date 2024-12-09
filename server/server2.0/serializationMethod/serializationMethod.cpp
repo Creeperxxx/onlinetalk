@@ -92,3 +92,10 @@ std::shared_ptr<message> serializationMethodV1::deserialize_message(std::shared_
         return nullptr;
     }
 }
+
+uint32_t serializationMethodV1::calculateCRC32(const uint8_t *data, size_t length)
+{
+    uint32_t crc = crc32(0L, Z_NULL, 0); // 初始化CRC32
+    crc = crc32(crc, data, length);      // 计算CRC32
+    return crc;
+}

@@ -1,6 +1,3 @@
-/** Created by Jiale on 2022/3/14 10:19.
- *  Decryption: 任务队列头文件
- **/
 
 #ifndef THREADPOOL_TASKQUEUE_H
 #define THREADPOOL_TASKQUEUE_H
@@ -9,6 +6,7 @@
 #include <functional>
 #include <mutex>
 #include <future>
+#include "../logSystem/log.h"
 #include <iostream>
 
 class TaskQueue
