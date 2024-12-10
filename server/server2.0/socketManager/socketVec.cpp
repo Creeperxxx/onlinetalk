@@ -42,11 +42,22 @@ std::mutex& socketVector::get_send_data_mutex()
     return send_data_mutex;
 }
 
-std::condition_variable& socketVector::get_recv_data_cv()
+// std::condition_variable& socketVector::get_recv_data_cv()
+// {
+//     return recv_data_cv;
+// }
+// std::condition_variable& socketVector::get_send_data_cv()
+// {
+//     return send_data_cv;
+// }
+
+bool socketVector::is_recv_data_empty()
 {
-    return recv_data_cv;
+    return recv_data.empty();
 }
-std::condition_variable& socketVector::get_send_data_cv()
+
+bool socketVector::is_send_data_empty()
 {
-    return send_data_cv;
+    return send_data.empty();
 }
+

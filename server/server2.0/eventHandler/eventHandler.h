@@ -73,12 +73,14 @@ private:
     std::vector<int> ready_sockets;
     std::mutex ready_sockets_mutex;
     std::condition_variable ready_sockets_cv;
+
+    std::shared_ptr<socketManager> socket_manager;
     // 这里有两种方案设计，一种是无锁队列存放二进制，另一种是无锁队列存放vector，每个vector存放一个消息的二进制
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_recv_data;
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;
-    std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_recv_data;
-    std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_send_data;
-    std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> username_send_data;
+    // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_recv_data;
+    // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_send_data;
+    std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> username_send_data;//这里真的有必要用无锁队列吗，还是用条件变量呢？
 };
 
 template <typename T>

@@ -85,7 +85,8 @@ void ReactorEventHandler::event_loop()
                 // ready_sockets.enqueue(events[i].data.fd);
                 // ready_sockets_vec.push_back(events[i].data.fd);
                 // ready_sockets_que.push(events[i].data.fd);
-                ready_sockets.push(events[i].data.fd);
+                // ready_sockets.push(events[i].data.fd);
+                ready_sockets.push_back(events[i].data.fd);
             }
             ready_sockets_cv.notify_one();
             // ready_sockets.enqueue_bulk(ready_sockets_vec.begin(), ready_sockets_vec.size());
@@ -269,7 +270,8 @@ void ReactorEventHandler::handle_sockets_recv()
                 }
                 else
                 {
-                    sockets_recv_data[socketfd].enqueue_bulk(recvmsg->data(), recvmsg->size());
+                    // sockets_recv_data[socketfd].enqueue_bulk(recvmsg->data(), recvmsg->size());
+                    socket_manager->enqueue_recv_data(socketfd, recvmsg);
                 }
             }
         }
@@ -315,39 +317,63 @@ void ReactorEventHandler::handle_sockets_recv()
 
 void ReactorEventHandler::handle_sockets_send()
 {
-    int socket = 0;
+    // int socket = 0;
     auto data = std::make_shared<std::vector<uint8_t>>();
     while (handle_sockets_send_running)
     {
-        for (auto &it : sockets_send_data)
+        auto set = socket_manager->get_updated_socket_send_set();
+        for(auto &socket : *set)
         {
-            socket = it.first;
-            data = data_from_concurrentQueue(it.second);
-
-            if (data->size() > 0)
+            data = socket_manager->dequeue_send_data(socket);
+            if(data == nullptr || data->empty())
             {
-                // 发送数据
-                if (false == networkio->send_data(socket, data))
+                continue;
+            }
+            else
+            {
+                if(false == networkio->send_data(socket,data))
                 {
-                    // todo 发送失败
-                    LOG_ERROR("%s:%s:%d // 向客户端发送消息发送失败", __FILE__, __FUNCTION__, __LINE__);
+                    //发送失败
+                    LOG_ERROR("%s:%s:%d // 发送失败",__FILE__,__FUNCTION__,__LINE__);
                     close(socket);
                     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, nullptr);
                     continue;
                 }
                 else
                 {
-                    // todo 发送成功
+                    //todo 发送成功
                 }
             }
         }
+        // for (auto &it : sockets_send_data)
+        // {
+        //     socket = it.first;
+        //     data = data_from_concurrentQueue(it.second);
+
+        //     if (data->size() > 0)
+        //     {
+        //         // 发送数据
+        //         if (false == networkio->send_data(socket, data))
+        //         {
+        //             // todo 发送失败
+        //             LOG_ERROR("%s:%s:%d // 向客户端发送消息发送失败", __FILE__, __FUNCTION__, __LINE__);
+        //             close(socket);
+        //             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, nullptr);
+        //             continue;
+        //         }
+        //         else
+        //         {
+        //             // todo 发送成功
+        //         }
+        //     }
+        // }
     }
 }
 
 void ReactorEventHandler::analyze_recv_data()
 {
     auto data = std::make_shared<std::vector<uint8_t>>();
-    int socket = 0;
+    // int socket = 0;
     // int offset = 0;
     // int data_size = 0;
     // std::shared_ptr<std::vector<uint8_t>> msg;
@@ -357,16 +383,34 @@ void ReactorEventHandler::analyze_recv_data()
     // 还是回归条件变量+共享状态的方式
     while (analyze_recv_data_running)
     {
-        for (auto &it : sockets_recv_data)
+        auto it = socket_manager->get_updated_socket_recv_set();
+        // 处理接收到的数据
+        for (auto &socket : *it)
         {
-            socket = it.first;
-            // offset = 0;
-            data = data_from_concurrentQueue(it.second);
-            if (data->empty())
+            // 处理接收到的数据
+            data = socket_manager->dequeue_recv_data(socket);
+            if( nullptr == data || data->empty())
             {
                 continue;
             }
-            msg_analysis_fsm->process_data(data);
+            else
+            {
+                // 处理接收到的数据
+                msg_analysis_fsm->process_data(data);
+            }
+        }
+
+
+        // for (auto &it : sockets_recv_data)
+        // {
+        //     socket = it.first;
+        //     // offset = 0;
+        //     data = data_from_concurrentQueue(it.second);
+        //     if (data->empty())
+        //     {
+        //         continue;
+        //     }
+        //     msg_analysis_fsm->process_data(data);
             // data_size = data->size();
             // if (data_size > 0)
             // {
@@ -423,7 +467,7 @@ void ReactorEventHandler::analyze_recv_data()
             //         }
             // }
             // }
-        }
+        // }
     }
 }
 
@@ -453,6 +497,7 @@ void ReactorEventHandler::analyze_recv_data()
 
 int ReactorEventHandler::get_socket_from_username(const std::string &name)
 {
+
 }
 
 void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
@@ -472,16 +517,18 @@ void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
     int socket = get_socket_from_username(username);
     if (socket == FIND_USERNAME_FAILED)
     {
-        // todo 发送失败
-        std::perror("get_socket_from_username");
-        return;
+        // // todo 没找到对应用户
+        // std::perror("get_socket_from_username");
+        // return;
     }
     else if (socket == FIND_USER_SOCKET_FAILED)
     {
         // 用户未上线
-        username_send_data[username].enqueue_bulk(msg->data(), msg->size());
-        return;
+        // username_send_data[username].enqueue_bulk(msg->data(), msg->size());
+        socket_manager->enqueue_willsend_data(username,msg);
+        // return;
     }
-    sockets_send_data[socket].enqueue_bulk(msg->data(), msg->size());
+    // sockets_send_data[socket].enqueue_bulk(msg->data(), msg->size());
+    socket_manager->enqueue_send_data(socket,msg);
     return;
 }
