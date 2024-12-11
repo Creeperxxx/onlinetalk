@@ -53,7 +53,7 @@ void ReactorEventHandler::init()
 
     // 消息分析初始化
     msg_analysis_fsm = std::make_shared<msgAnalysisFSM>();
-    msg_analysis_fsm->init(serializationMethod, this, thread_pool);
+    msg_analysis_fsm->init(serializationMethod);
     // 日志初始化
     // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
     LOG_INFO("%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
@@ -497,13 +497,14 @@ void ReactorEventHandler::analyze_recv_data()
 
 int ReactorEventHandler::get_socket_from_username(const std::string &name)
 {
-
+    
 }
 
 void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
 {
     std::string username;
     auto msg = serializationMethod->serialize_message(data);
+
     try
     {
         username = data->getHeader().getReceiverName().value();
@@ -526,9 +527,15 @@ void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
         // 用户未上线
         // username_send_data[username].enqueue_bulk(msg->data(), msg->size());
         socket_manager->enqueue_willsend_data(username,msg);
+        return;
         // return;
     }
     // sockets_send_data[socket].enqueue_bulk(msg->data(), msg->size());
     socket_manager->enqueue_send_data(socket,msg);
     return;
+}
+
+void ReactorEventHandler::task_commit(std::function<void()> task)
+{
+    thread_pool->commit(task);
 }

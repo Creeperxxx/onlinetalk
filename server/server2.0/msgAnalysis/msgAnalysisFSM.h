@@ -7,10 +7,15 @@
 #include "../eventHandler/eventHandler.h"
 #include "../msgAnalysis/msgAnalysis.h"
 #include "../threadPool/threadPool.h"
+#include "../eventManager/eventManager.h"
+#include <any>
 
 // extern const int MSG_IDENTIFIER_SIZE;
 extern const char MSG_IDENTIFIER[4];
 extern const uint32_t MSG_MAX_LENGHT;
+
+extern const char* ENQUEUE_SEND_DATA;
+extern const char* TASK_COMMIT;
 
 enum class analysisState
 {
@@ -22,7 +27,8 @@ enum class analysisState
     check_crc_state,
     deserialize_state,
     process_msg_state,
-    error_handling_state
+    error_handling_state,
+    end_state
 };
 
 enum class FSMErrorType
@@ -32,6 +38,7 @@ enum class FSMErrorType
     crc_failed,
     deserialize_failed,
     invalid_sequence,
+    
 };
 
 
@@ -39,12 +46,17 @@ class msgAnalysisFSM
 {
 public:
     msgAnalysisFSM(){}
-    void init(std::shared_ptr<IserializationMethod> serialization_method,IEventHandler* eventHandler,std::shared_ptr<ThreadPool> threadPool);
+    // void init(std::shared_ptr<IserializationMethod> serialization_method,IEventHandler* eventHandler,std::shared_ptr<ThreadPool> threadPool);
+    void init(std::shared_ptr<IserializationMethod> serialization_method);
     void process_data(std::shared_ptr<std::vector<uint8_t>> data);
     std::shared_ptr<message> msg_analysis_handle(std::shared_ptr<message> msg);
     // std::shared_ptr<message> get_deserialized_msg();
-    void enqueue_send_msg(std::shared_ptr<message> msg);
-    void threadpool_commit();
+    // void enqueue_send_msg(std::shared_ptr<message> msg);
+
+    msgAnalysisFSM* register_event(const std::string& event_name,std::any callback);
+    std::shared_ptr<message> get_deserialized_msg();
+    std::any get_event_callback(const std::string& event_name);
+    // void threadpool_commit();
 private:
     void process();
     void initial_state();
@@ -68,7 +80,9 @@ private:
     std::shared_ptr<std::vector<uint8_t>> message_data;
     std::shared_ptr<message> msg;
     std::shared_ptr<msgAnalysis> msg_analysis;
-    std::shared_ptr<ThreadPool> pool;
-    IEventHandler* event_handler;
+    // std::shared_ptr<ThreadPool> pool;
+    // IEventHandler* event_handler;
     FSMErrorType error_type;
+
+    std::unique_ptr<eventManager> event_manager;
 };

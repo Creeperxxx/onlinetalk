@@ -1634,3 +1634,156 @@ NoSQL 数据库提供了不同于传统关系型数据库的数据存储方式�
 Apache Hadoop：分布式计算框架，支持大规模数据集的存储和处理。
 Spark：快速通用的大规模数据处理引擎。
 Presto：高性能分布式 SQL 查询引擎。
+
+
+
+
+
+
+是的，`AnyFunction` 类可以用于编写事件管理器中的回调函数。通过 `AnyFunction`，你可以将不同签名的函数封装为统一的可调用对象，这使得事件管理器能够灵活地处理各种类型的事件和对应的回调函数。
+
+### 设计思路
+
+为了构建一个事件管理器，我们需要考虑以下几点：
+
+1. **事件类型**：定义不同的事件类型。
+2. **事件处理器**：负责注册、移除和触发事件回调。
+3. **回调函数**：这些函数会在特定事件发生时被调用，它们可以有不同的参数列表和返回值。
+4. **线程安全**：确保在多线程环境中正确地添加和移除监听器，并且能够安全地触发事件。
+
+我们将使用 `AnyFunction` 来封装回调函数，从而允许事件管理器接受任意签名的回调函数。同时，我们还会引入一些机制来确保线程安全性和灵活性。
+
+### 代码实现
+
+以下是基于 `AnyFunction` 的事件管理器设计示例：
+
+```cpp
+#include <iostream>
+#include <functional>
+#include <unordered_map>
+#include <vector>
+#include <memory>
+#include <mutex>
+#include <any>
+#include <tuple>
+#include <type_traits>
+
+// 辅助宏定义用于展开参数包
+#define APPLY_ARGS(z, n, data) std::get<n>(data).type().name(), std::any_cast<decltype(std::get<n>(data))>(std::get<n>(data))
+
+// 模板类 AnyFunction
+template<typename Ret, typename... Args>
+class AnyFunction {
+public:
+    using FuncType = std::function<Ret(Args...)>;
+
+    // 构造函数接受一个 std::function 或者可调用对象
+    template<typename Callable>
+    AnyFunction(Callable&& callable) : func(std::forward<Callable>(callable)) {}
+
+    // 调用操作符重载
+    Ret operator()(std::tuple<std::any, Args...> args) const {
+        return std::apply(func, unpackTuple(args));
+    }
+
+private:
+    FuncType func;
+
+    // 将 std::tuple<std::any, Args...> 解包为 std::tuple<Args...>
+    static std::tuple<Args...> unpackTuple(const std::tuple<std::any, Args...>& tuple) {
+        return std::apply([](auto&&... anys) -> std::tuple<Args...> {
+            return std::make_tuple(std::any_cast<Args>(anys)...);
+        }, tuple);
+    }
+};
+
+// 辅助函数 make_any_function 用于创建 AnyFunction 对象
+template<typename Ret, typename... Args>
+AnyFunction<Ret, Args...> make_any_function(std::function<Ret(Args...)> func) {
+    return AnyFunction<Ret, Args...>(func);
+}
+
+// 定义事件类型
+enum class EventType {
+    SOCKET_DATA_RECEIVED,
+    // 可以在这里添加更多事件类型
+};
+
+// 事件管理器类
+class EventManager {
+public:
+    // 注册事件监听器
+    template<typename Ret, typename... Args>
+    void registerListener(EventType type, AnyFunction<Ret, Args...> listener) {
+        std::lock_guard<std::mutex> lock(mtx);
+        listeners[type].emplace_back(std::move(listener));
+    }
+
+    // 移除所有与指定事件类型关联的监听器
+    void unregisterListeners(EventType type) {
+        std::lock_guard<std::mutex> lock(mtx);
+        listeners.erase(type);
+    }
+
+    // 触发事件
+    template<typename... Args>
+    void triggerEvent(EventType type, Args&&... args) {
+        std::lock_guard<std::mutex> lock(mtx);
+
+        auto it = listeners.find(type);
+        if (it != listeners.end()) {
+            for (auto& listener : it->second) {
+                // 使用 std::tie 和 std::forward_as_tuple 包装参数为 std::tuple<std::any, ...>
+                auto argTuple = std::tuple_cat(std::make_tuple(std::any()), std::forward_as_tuple(std::forward<Args>(args)...));
+                listener(argTuple);  // 调用监听器
+            }
+        }
+    }
+
+private:
+    std::mutex mtx;
+    std::unordered_map<EventType, std::vector<AnyFunction<void, int>>> listeners; // 假设所有监听器都是 void(int)
+};
+
+// 示例监听器函数
+void socketDataReceivedHandler(int sockfd) {
+    std::cout << "Handling SOCKET_DATA_RECEIVED from socket " << sockfd << std::endl;
+}
+
+// 测试
+int main() {
+    EventManager eventManager;
+
+    // 注册监听器
+    auto listener = make_any_function<void, int>(socketDataReceivedHandler);
+    eventManager.registerListener(EventType::SOCKET_DATA_RECEIVED, listener);
+
+    // 触发事件
+    eventManager.triggerEvent(EventType::SOCKET_DATA_RECEIVED, 123);
+
+    // 移除监听器（如果需要）
+    // eventManager.unregisterListeners(EventType::SOCKET_DATA_RECEIVED);
+
+    return 0;
+}
+```
+
+### 关键点解释
+
+- **`EventManager` 类**：这是事件管理器的核心，它维护了一个从 `EventType` 到 `AnyFunction` 列表的映射。每个 `AnyFunction` 都代表一个监听器（即回调函数），它可以有任意的参数列表和返回类型。
+
+- **`registerListener` 方法**：用于向事件管理器中添加新的监听器。这里我们使用了模板方法来支持不同类型和签名的回调函数。
+
+- **`triggerEvent` 方法**：当某个事件发生时，调用此方法来通知所有已注册的监听器。注意，我们使用了 `std::tie` 和 `std::forward_as_tuple` 来包装参数为 `std::tuple<std::any, ...>`，然后传递给 `AnyFunction` 进行解包和调用。
+
+- **线程安全性**：所有对共享资源（如 `listeners`）的操作都使用了互斥锁 `mtx` 来保护，确保在多线程环境下的正确性。
+
+### 注意事项
+
+- 在上面的例子中，为了简化说明，我们假设所有的监听器都是 `void(int)` 签名的。实际上，你应该根据实际需求调整 `listeners` 的类型，使其能够存储多种不同签名的 `AnyFunction`。
+
+- 如果你希望支持更复杂的事件参数或返回值，可能需要进一步扩展 `AnyFunction` 类和支持的基础设施，例如通过变长模板参数或其他方式来动态处理参数和返回值。
+
+- 由于 C++ 标准库并不直接支持反射，因此完全通用的解决方案可能会比较复杂。如果你的应用场景允许，考虑使用第三方库（如 Boost.TypeErasure 或者其他提供了类似功能的库）来简化实现。
+
+这个例子展示了如何使用 `AnyFunction` 来构建一个灵活且强大的事件管理器。如果你还有其他问题或需要进一步的帮助，请随时告诉我！

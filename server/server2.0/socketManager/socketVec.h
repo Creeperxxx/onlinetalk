@@ -7,11 +7,11 @@
 class socketVector
 {
 private:
-    std::vector<uint8_t> recv_data;
+    std::shared_ptr<std::vector<uint8_t>> recv_data;
     std::mutex recv_data_mutex;
     // std::condition_variable recv_data_cv;
 
-    std::vector<uint8_t> send_data;
+    std::shared_ptr<std::vector<uint8_t>> send_data;
     std::mutex send_data_mutex;
     // std::condition_variable send_data_cv;
 public:

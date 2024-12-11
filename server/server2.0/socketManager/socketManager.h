@@ -10,6 +10,7 @@ class socketManager
 {
 private:
     std::unordered_map<int,std::shared_ptr<socketVector>> socket_vecs;
+    std::mutex mutex_socket_vecs;
     // std::condition_variable socket_vecs_cv;
     std::unordered_set<int> updated_socket_recv_set;
     std::mutex mutex_recv_set;
@@ -20,9 +21,12 @@ private:
     std::mutex mutex_send_set;
     std::condition_variable send_set_cv;
 
-    std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> sendto_offline_user_data;
+    // std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> sendto_offline_user_data;
+    std::unordered_map<std::string,std::unique_ptr<std::vector<uint8_t>>> sendto_offline_user_data;
+    std::mutex mutex_offline_user_data;
+    // std::unordered_map<std::string,int> username_socketfd;
 public:
-    void add_socket_vec(int socketfd);
+    void add_socket_vec(const std::string& username,int socketfd);
     bool delete_socket_vec(int socketfd);
     void enqueue_recv_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);   
     void enqueue_send_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);

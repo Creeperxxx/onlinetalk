@@ -26,7 +26,6 @@ extern const int FIND_USER_SOCKET_FAILED;
 extern std::atomic<bool> event_loop_running;
 void event_loop_running_signal_handler(int signal);
 
-
 class IEventHandler
 {
 public:
@@ -44,6 +43,7 @@ public:
     void handle_sockets_send();//todo 同时检查是否有要发给为上线用户的消息。
     void analyze_recv_data();
     void enqueue_send_message(std::shared_ptr<message> data);
+    void task_commit(std::function<void()> task);
 
 private:
     void init_epoll();
@@ -51,8 +51,8 @@ private:
     // void accept_new_connection();
     void handle_new_connections() override;
     // void handle_ready_connections(int socketfd) override;
-    template <typename T>
-    std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
+    // template <typename T>
+    // std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
     // uint32_t calculateCRC32(const uint8_t *data, size_t length);
     int get_socket_from_username(const std::string& username);
     // int get_socket_from_userid(int userid);
@@ -80,26 +80,26 @@ private:
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;
     // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_recv_data;
     // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_send_data;
-    std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> username_send_data;//这里真的有必要用无锁队列吗，还是用条件变量呢？
+    // std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> username_send_data;//这里真的有必要用无锁队列吗，还是用条件变量呢？
 };
 
-template <typename T>
-std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue)
-{
-    int n = 0;
-    int dequeued_count = MAX_DEQUEUE_NUMS;
-    std::shared_ptr<std::vector<T>> data = std::make_shared<std::vector<T>>();
-    do
-    {
-        n = queue.size_approx();
-        if (queue.try_dequeue_bulk(data->end(), n))
-        {
-            --dequeued_count;
-            continue;
-        }
-    } while (n > 0 && dequeued_count > 0);
-    return data;
-}
+// template <typename T>
+// std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue)
+// {
+//     int n = 0;
+//     int dequeued_count = MAX_DEQUEUE_NUMS;
+//     std::shared_ptr<std::vector<T>> data = std::make_shared<std::vector<T>>();
+//     do
+//     {
+//         n = queue.size_approx();
+//         if (queue.try_dequeue_bulk(data->end(), n))
+//         {
+//             --dequeued_count;
+//             continue;
+//         }
+//     } while (n > 0 && dequeued_count > 0);
+//     return data;
+// }
 
 class ProactorEventHandler : public IEventHandler
 {
