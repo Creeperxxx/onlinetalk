@@ -55,3 +55,9 @@ std::shared_ptr<message> msgAnalysis::handle(std::shared_ptr<message> msg)
         return nullptr;
     }
 }
+
+void msgAnalysis::init()
+{
+    strategy_registry_ = std::make_unique<strategy_registry>();
+    
+}

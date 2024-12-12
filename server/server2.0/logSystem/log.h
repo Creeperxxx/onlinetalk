@@ -3,6 +3,8 @@
 #include <string>
 #include <mutex>
 #include <stdarg.h>
+#include <queue>
+#include <condition_variable>
 
 // #define LOG_WRITE(level,format,...) \
 //     log::get_instance().write_Log(level,format,##__VA_ARGS__)
@@ -28,14 +30,21 @@ class log
 public:
     // void init(logTarget target);
     // static std::shared_ptr<log> getInstance();
-    static log get_instance();
+    static log& get_instance();
     // bool write_log(logLevel level,const std::string& filename,const std::string& function,size_t line_num,const std::string& format,...);
     bool write_log(logLevel level,const std::string& format,...);
-    ~log(){};
+    void flush_log();
+    ~log(){ flushing = false;};
     // void output_log();
+    log(const log&) = delete;
+    log& operator=(const log&) = delete;
 private:
     log(){};
-    
+private:
+    std::queue<std::string> m_log_queue;
+    std::mutex m_log_mutex;
+    std::condition_variable m_log_cond;
+    bool flushing = true;
 // private:
     //文件路径
     // std::string m_file_path;

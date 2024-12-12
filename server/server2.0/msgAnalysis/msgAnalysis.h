@@ -72,8 +72,8 @@ private:
     void control_init();
     void notice_init();
 private:
-    std::shared_ptr<strategy_registry> strategy_registry_;
-
+    // std::shared_ptr<strategy_registry> strategy_registry_;
+    std::unique_ptr<strategy_registry> strategy_registry_;
 };
 
 class strategy_registry

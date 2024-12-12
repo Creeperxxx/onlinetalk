@@ -4,9 +4,20 @@
 #include <condition_variable>
 #include <vector>
 #include "../logSystem/log.h"
+#include <time.h>
+#include <atomic>
+
+extern const int TIME_OUT;
+
 class socketVector
 {
 private:
+    int fd;
+    std::string username;
+    std::atomic<time_t> last_interaction_time;
+    // std::priority_queue<socketVector*, std::vector<socketVector*>, compareSocketVec> pq;
+    
+    
     std::shared_ptr<std::vector<uint8_t>> recv_data;
     std::mutex recv_data_mutex;
     // std::condition_variable recv_data_cv;
@@ -15,7 +26,9 @@ private:
     std::mutex send_data_mutex;
     // std::condition_variable send_data_cv;
 public:
+    socketVector(int socketfd, std::string name):fd(socketfd), username(name) , last_interaction_time(time(NULL)),recv_data(new std::vector<uint8_t>),send_data(new std::vector<uint8_t>){}
     //要不要将互斥量和条件变量放这？
+    time_t get_last_interaction_time() const;
     void enqueue_recv_data(std::shared_ptr<std::vector<uint8_t>> data);
     void enqueue_send_data(std::shared_ptr<std::vector<uint8_t>> data);
     std::shared_ptr<std::vector<uint8_t>> dequeue_recv_data();
@@ -28,4 +41,28 @@ public:
     // std::condition_variable& get_send_data_cv();
     bool is_recv_data_empty();
     bool is_send_data_empty();
+    // bool operator<(const socketVector& other) const
+    // {
+    //     return this->last_interaction_time.load() < other.last_interaction_time.load();
+    // }
+    void update_last_interaction_time();
+    bool is_timeout();
+    int get_fd(){return fd;}
+    const std::string& get_username(){return username;}
+    // void set_fd(int fd){this->fd = fd;}
+};
+
+// struct compareSocketVec
+// {
+//     bool operator()(const socketVector* a, const socketVector* b) const
+//     {
+//         return a->get_last_interaction_time() > b->get_last_interaction_time();
+//     }
+// };
+struct compareSocketVec
+{
+    bool operator()(const std::shared_ptr<socketVector>& a, const std::shared_ptr<socketVector>& b) const
+    {
+        return a->get_last_interaction_time() < b->get_last_interaction_time();
+    }
 };

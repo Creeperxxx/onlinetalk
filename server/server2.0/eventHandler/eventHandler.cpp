@@ -15,9 +15,9 @@ void ReactorEventHandler::init()
     // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
     LOG_INFO("%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
     // 其余初始化
-    handle_sockets_recv_running = true;
-    handle_sockets_send_running = true;
-    analyze_recv_data_running = true;
+    handle_sockets_recv_running.store(true);
+    handle_sockets_send_running.store(true);
+    analyze_recv_data_running.store(true);
     // epoll初始化
     init_epoll();
 
@@ -53,8 +53,29 @@ void ReactorEventHandler::init()
 
     // 消息分析初始化
     msg_analysis_fsm = std::make_shared<msgAnalysisFSM>();
-    msg_analysis_fsm->init(serializationMethod);
+    msg_analysis_fsm->init();
+    std::function<void(std::string,std::shared_ptr<std::vector<uint8_t>>)> lambda3 = [this](std::string username,std::shared_ptr<std::vector<uint8_t>> data){
+        this->enqueue_send_message(username , data);
+    };
+    msg_analysis_fsm->register_event(ENQUEUE_SEND_DATA,std::any(lambda3));
+    std::function<void(std::function<void()>)> lambda4 = [this](std::function<void()> lambda){
+        this->task_commit(lambda);
+    };
+    msg_analysis_fsm->register_event(TASK_COMMIT,std::any(lambda4));
+    
     // 日志初始化
+    auto lambda5 = [this](){
+        log::get_instance().flush_log();
+    };
+    thread_pool->commit(lambda5);
+
+    //心跳初始化
+    heartbeat_running.store(true);
+    auto lambda6 = [this](){
+        this->heartbeat();
+    };
+    thread_pool->commit(lambda6);
+
     // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
     LOG_INFO("%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
 }
@@ -319,10 +340,11 @@ void ReactorEventHandler::handle_sockets_send()
 {
     // int socket = 0;
     auto data = std::make_shared<std::vector<uint8_t>>();
+    std::shared_ptr<std::vector<int>> willbesend_sockets;
     while (handle_sockets_send_running)
     {
-        auto set = socket_manager->get_updated_socket_send_set();
-        for(auto &socket : *set)
+        willbesend_sockets = socket_manager->get_updated_socket_send_vec();
+        for(auto &socket : *willbesend_sockets)
         {
             data = socket_manager->dequeue_send_data(socket);
             if(data == nullptr || data->empty())
@@ -373,6 +395,7 @@ void ReactorEventHandler::handle_sockets_send()
 void ReactorEventHandler::analyze_recv_data()
 {
     auto data = std::make_shared<std::vector<uint8_t>>();
+    std::shared_ptr<std::vector<int>> ready_sockets;
     // int socket = 0;
     // int offset = 0;
     // int data_size = 0;
@@ -383,9 +406,9 @@ void ReactorEventHandler::analyze_recv_data()
     // 还是回归条件变量+共享状态的方式
     while (analyze_recv_data_running)
     {
-        auto it = socket_manager->get_updated_socket_recv_set();
+        ready_sockets = socket_manager->get_updated_socket_recv_vec();
         // 处理接收到的数据
-        for (auto &socket : *it)
+        for (auto &socket : *ready_sockets)
         {
             // 处理接收到的数据
             data = socket_manager->dequeue_recv_data(socket);
@@ -495,47 +518,123 @@ void ReactorEventHandler::analyze_recv_data()
 //     return crc;
 // }
 
-int ReactorEventHandler::get_socket_from_username(const std::string &name)
-{
+// int ReactorEventHandler::get_socket_from_username(const std::string &name)
+// {
     
-}
+// }
 
-void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
+void ReactorEventHandler::enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data)
 {
-    std::string username;
-    auto msg = serializationMethod->serialize_message(data);
-
-    try
-    {
-        username = data->getHeader().getReceiverName().value();
-    }
-    catch (const std::bad_optional_access &e)
-    {
-        std::perror("get_socket_from_username");
-        return;
-    }
-
     int socket = get_socket_from_username(username);
     if (socket == FIND_USERNAME_FAILED)
     {
         // // todo 没找到对应用户
-        // std::perror("get_socket_from_username");
-        // return;
+        LOG_WARING("%s:%s:%d // 没找到对应用户", __FILE__, __FUNCTION__, __LINE__);
+        return;
     }
-    else if (socket == FIND_USER_SOCKET_FAILED)
+    else if(socket == FIND_USER_SOCKET_FAILED)
     {
         // 用户未上线
-        // username_send_data[username].enqueue_bulk(msg->data(), msg->size());
-        socket_manager->enqueue_willsend_data(username,msg);
-        return;
-        // return;
+        socket_manager->enqueue_willsend_data(username,data);
     }
-    // sockets_send_data[socket].enqueue_bulk(msg->data(), msg->size());
-    socket_manager->enqueue_send_data(socket,msg);
-    return;
+    else
+    {
+        socket_manager->enqueue_send_data(socket,data);
+    }
 }
+
+// // void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
+// {
+//     std::string username;
+//     auto msg = serializationMethod->serialize_message(data);
+
+//     try
+//     {
+//         username = data->getHeader().getReceiverName().value();
+//     }
+//     catch (const std::bad_optional_access &e)
+//     {
+//         std::perror("get_socket_from_username");
+//         return;
+//     }
+
+//     int socket = get_socket_from_username(username);
+//     if (socket == FIND_USERNAME_FAILED)
+//     {
+//         // // todo 没找到对应用户
+//         // std::perror("get_socket_from_username");
+//         // return;
+//     }
+//     else if (socket == FIND_USER_SOCKET_FAILED)
+//     {
+//         // 用户未上线
+//         // username_send_data[username].enqueue_bulk(msg->data(), msg->size());
+//         socket_manager->enqueue_willsend_data(username,msg);
+//         return;
+//         // return;
+//     }
+//     // sockets_send_data[socket].enqueue_bulk(msg->data(), msg->size());
+//     socket_manager->enqueue_send_data(socket,msg);
+//     return;
+// }
 
 void ReactorEventHandler::task_commit(std::function<void()> task)
 {
     thread_pool->commit(task);
+}
+
+void ReactorEventHandler::heartbeat()
+{
+    std::shared_ptr<std::vector<uint8_t>> data;
+    int socket = 0;
+    while(heartbeat_running.load())
+    {
+        socket = socket_manager->get_tobesend_heartbeat_socketfd();
+        if(socket == -1)
+        {
+            //套接字set为空，为啥？
+            continue;
+        }
+        else if (socket == -2)
+        {
+            //set中还没有过期的socket
+            std::this_thread::sleep_for(std::chrono::seconds(TIME_OUT/2));
+        }
+        else
+        {
+            //发送心跳包
+            data = get_heartbeat_data(socket);
+            if(data == nullptr)
+            {
+                LOG_ERROR("%s:%s:%d // 序列化心跳包失败", __FILE__, __FUNCTION__, __LINE__);
+                continue;
+            }
+            else
+            {
+                socket_manager->enqueue_send_data(socket,data);
+            }
+        }
+    }
+}
+
+std::shared_ptr<std::vector<uint8_t>> ReactorEventHandler::get_heartbeat_data(int socketfd)
+{
+    auto temp_msg = std::make_shared<message>();
+    // temp_msg->getHeader().setType(messageType::Notice);
+    // temp_msg->getHeader().setAction(messageAction::HEARTBEAT);
+    dataHeader d;
+    d.setType(messageType::Notice);
+    d.setAction(messageAction::HEARTBEAT);
+    const std::string &username = socket_manager->get_username(socketfd);
+    if(username.empty())
+    {
+        LOG_ERROR("%s:%s:%d // 没找到对应用户", __FILE__, __FUNCTION__, __LINE__);
+        return nullptr;
+    }
+    else
+    {
+        d.setReceiverName(username);
+    }
+    temp_msg->setHeader(d);
+    return msg_analysis_fsm->serializa_msg(temp_msg);
 }

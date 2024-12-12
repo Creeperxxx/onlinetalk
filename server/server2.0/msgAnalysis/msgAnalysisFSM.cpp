@@ -125,7 +125,7 @@ void msgAnalysisFSM::check_crc()
 {
     memcpy(&crc, data->data() + offset, sizeof(crc));
     crc = ntohl(crc);
-    if (crc == std::static_pointer_cast<serializationMethodV1>(serialization_method)->calculateCRC32(data->data() + offset - length, length))
+    if (crc == dynamic_cast<serializationMethodV1 *>(serialization_method.get())->calculateCRC32(data->data() + offset - length, length))
     {
         // 校验通过
         offset += sizeof(crc);
@@ -156,14 +156,34 @@ void msgAnalysisFSM::deserialize()
 
 void msgAnalysisFSM::process_msg()
 {
-    std::function<std::shared_ptr<message>()> lambda = [this]() -> std::shared_ptr<message>
+    // std::function<std::shared_ptr<message>()> lambda = [this]() -> std::shared_ptr<message>*
+    std::function<void()> lambda = [this]()
     {
-        auto temp = this->msg_analysis_handle(this->get_deserialized_msg());
-        if (temp != nullptr)
+        auto returnmsg = this->msg_analysis_handle(this->get_deserialized_msg());
+        std::string receiver_name;
+        // 判断receivername是否为空
+        if (returnmsg == nullptr)
         {
-            // this->enqueue_send_msg(temp);
-            std::any_cast<std::function<void(std::shared_ptr<message>)>>(this->get_event_callback(ENQUEUE_SEND_DATA))(temp); // todo 这里要注册
+            LOG_ERROR("%s:%s:%d // 返回消息为空", __FILE__, __FUNCTION__, __LINE__);
+            return;
         }
+        else if (returnmsg->getHeader().getReceiverName().has_value())
+        {
+            receiver_name = returnmsg->getHeader().getReceiverName().value();
+        }
+        else
+        {
+            LOG_ERROR("%s:%s:%d // 接收者名字为空", __FILE__, __FUNCTION__, __LINE__);
+            return;
+        }
+        auto serialized_msg = this->serializa_msg(returnmsg);
+        std::any_cast<std::function<void(std::string username , std::shared_ptr<std::vector<uint8_t>>)>>(this->get_event_callback(ENQUEUE_SEND_DATA))(receiver_name,serialized_msg);
+        // if (returnmsg != nullptr)
+        // {
+        //     // this->enqueue_send_msg(temp);
+        //     this->serializa_msg(returnmsg);
+        //     // std::any_cast<std::function<void(std::shared_ptr<message>)>>(this->get_event_callback(ENQUEUE_SEND_DATA))(temp);
+        // }
     };
     std::any_cast<std::function<void(std::function<void()>)>>(event_manager->get_callback(TASK_COMMIT))(lambda);
     current_state = analysisState::initial_state;
@@ -176,13 +196,14 @@ void msgAnalysisFSM::process_data(std::shared_ptr<std::vector<uint8_t>> data)
 }
 
 // void msgAnalysisFSM::init(std::shared_ptr<IserializationMethod> serialization_method,IEventHandler* eventHandler,std::shared_ptr<ThreadPool> threadPool)
-void msgAnalysisFSM::init(std::shared_ptr<IserializationMethod> serialization_method)
+// void msgAnalysisFSM::init(std::shared_ptr<IserializationMethod> serialization_method)
+void msgAnalysisFSM::init()
 {
-    this->serialization_method = serialization_method;
+    this->serialization_method = std::make_unique<serializationMethodV1>();
     // this->event_handler = eventHandler;
     // this->pool = threadPool;
     current_state = analysisState::initial_state;
-    msg_analysis = std::make_shared<msgAnalysis>();
+    msg_analysis = std::make_unique<msgAnalysis>();
     msg_analysis->init();
 }
 
@@ -221,4 +242,9 @@ std::shared_ptr<message> msgAnalysisFSM::get_deserialized_msg()
 std::any msgAnalysisFSM::get_event_callback(const std::string &event_name)
 {
     return event_manager->get_callback(event_name);
+}
+
+std::shared_ptr<std::vector<uint8_t>> msgAnalysisFSM::serializa_msg(std::shared_ptr<message> msg)
+{
+    return serialization_method->serialize_message(msg);
 }

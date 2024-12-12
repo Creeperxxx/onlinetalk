@@ -3,11 +3,7 @@
 #include <variant>
 #include <optional>
 #include <vector>
-#include "../requirement/cereal/types/string.hpp"
-#include "../requirement/cereal/types/variant.hpp"
-#include "../requirement/cereal/types/optional.hpp"
-#include "../requirement/cereal/types/vector.hpp"
-#include "../requirement/cereal/archives/binary.hpp"
+
 
 enum class messageType
 {
@@ -96,6 +92,7 @@ enum class messageAction
     USER_LOGIN_STATUS ,
     USER_ONLINE_STATUS,
     FRIEND_ONLINE_STATUS,
+    HEARTBEAT,
 };
 
 

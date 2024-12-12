@@ -67,7 +67,7 @@ const std::string LOG_PATH = "./log.txt";
 //     return true;
 // }
 
-log log::get_instance()
+log& log::get_instance()
 {
     static log instance;
     return instance;
@@ -108,14 +108,43 @@ bool log::write_log(logLevel level,const std::string& format,...)
     vsnprintf(buf, sizeof(buf), format.c_str(), args);
     log_str += " [" + std::string(buf) + "]";
     log_str += "\n";
-    // 输出日志到文件中
-    FILE *fp = fopen(LOG_PATH.c_str(), "a");
-    if (fp == nullptr)
-    {
-        return false;
-    }
-    fputs(log_str.c_str(), fp);
-    fclose(fp);
+    std::lock_guard<std::mutex> lock(m_log_mutex);
+    m_log_queue.push(log_str);
+    m_log_cond.notify_one();
+    // // 输出日志到文件中
+    // FILE *fp = fopen(LOG_PATH.c_str(), "a");
+    // if (fp == nullptr)
+    // {
+    //     return false;
+    // }
+    // fputs(log_str.c_str(), fp);
+    // fclose(fp);
     va_end(args);
     return true;
+}
+
+void log::flush_log()
+{
+    std::string log_str;
+    FILE* fp = fopen(LOG_PATH.c_str(), "a");
+    if( nullptr == fp )
+    {
+        LOG_ERROR("%s:%s:%d // 打开日志文件失败，无法写日志", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
+    while(flushing)
+    {
+        std::unique_lock<std::mutex> lock(m_log_mutex);
+        while(m_log_queue.empty())
+        {
+            m_log_cond.wait(lock);
+        }
+        for( int i = 0; i < m_log_queue.size(); i++)
+        {
+            log_str = m_log_queue.front();
+            m_log_queue.pop();
+            fputs(log_str.c_str(), fp);
+        }
+    }
+    fclose(fp);
 }

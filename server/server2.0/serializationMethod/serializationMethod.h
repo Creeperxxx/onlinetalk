@@ -2,6 +2,11 @@
 #include <zlib.h>
 #include "../logSystem/log.h"
 #include "../message/message.h"
+#include "../requirement/cereal/types/string.hpp"
+#include "../requirement/cereal/types/variant.hpp"
+#include "../requirement/cereal/types/optional.hpp"
+#include "../requirement/cereal/types/vector.hpp"
+#include "../requirement/cereal/archives/binary.hpp"
 
 class IserializationMethod
 {

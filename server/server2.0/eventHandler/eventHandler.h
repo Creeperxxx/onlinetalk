@@ -5,7 +5,7 @@
 #include <atomic>
 #include <functional>
 #include <queue>
-#include "../requirement/moodycamel/concurrentqueue.h"
+// #include "../requirement/moodycamel/concurrentqueue.h"
 #include "../serializationMethod/serializationMethod.h"
 #include "../threadPool/threadPool.h"
 #include <unordered_map>
@@ -42,7 +42,9 @@ public:
     void handle_sockets_recv();
     void handle_sockets_send();//todo 同时检查是否有要发给为上线用户的消息。
     void analyze_recv_data();
-    void enqueue_send_message(std::shared_ptr<message> data);
+    void heartbeat();
+    // void enqueue_send_message(std::shared_ptr<message> data);
+    void enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data);
     void task_commit(std::function<void()> task);
 
 private:
@@ -56,12 +58,14 @@ private:
     // uint32_t calculateCRC32(const uint8_t *data, size_t length);
     int get_socket_from_username(const std::string& username);
     // int get_socket_from_userid(int userid);
+    std::shared_ptr<std::vector<uint8_t>> get_heartbeat_data(int socketfd);
 
 private:
     int epoll_fd;
     std::atomic<int> handle_sockets_recv_running;
     std::atomic<int> handle_sockets_send_running;
     std::atomic<int> analyze_recv_data_running;
+    std::atomic<int> heartbeat_running;
     std::shared_ptr<NetworkIo> networkio;
     std::shared_ptr<ThreadPool> thread_pool;
     std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;

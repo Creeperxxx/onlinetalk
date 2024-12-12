@@ -47,7 +47,7 @@ class msgAnalysisFSM
 public:
     msgAnalysisFSM(){}
     // void init(std::shared_ptr<IserializationMethod> serialization_method,IEventHandler* eventHandler,std::shared_ptr<ThreadPool> threadPool);
-    void init(std::shared_ptr<IserializationMethod> serialization_method);
+    void init();
     void process_data(std::shared_ptr<std::vector<uint8_t>> data);
     std::shared_ptr<message> msg_analysis_handle(std::shared_ptr<message> msg);
     // std::shared_ptr<message> get_deserialized_msg();
@@ -56,6 +56,7 @@ public:
     msgAnalysisFSM* register_event(const std::string& event_name,std::any callback);
     std::shared_ptr<message> get_deserialized_msg();
     std::any get_event_callback(const std::string& event_name);
+    std::shared_ptr<std::vector<uint8_t>> serializa_msg(std::shared_ptr<message> msg);
     // void threadpool_commit();
 private:
     void process();
@@ -75,11 +76,11 @@ private:
     size_t offset;
     uint32_t seq;
     uint32_t crc;
-    std::shared_ptr<IserializationMethod> serialization_method;
+    std::unique_ptr<IserializationMethod> serialization_method;
     std::shared_ptr<std::vector<uint8_t>> data;
     std::shared_ptr<std::vector<uint8_t>> message_data;
     std::shared_ptr<message> msg;
-    std::shared_ptr<msgAnalysis> msg_analysis;
+    std::unique_ptr<msgAnalysis> msg_analysis;
     // std::shared_ptr<ThreadPool> pool;
     // IEventHandler* event_handler;
     FSMErrorType error_type;

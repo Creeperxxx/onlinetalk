@@ -1,4 +1,5 @@
 #include "socketVec.h"
+const int TIME_OUT = 10;
 
 void socketVector::enqueue_recv_data(std::shared_ptr<std::vector<uint8_t>> data)
 {
@@ -66,3 +67,17 @@ bool socketVector::is_send_data_empty()
     return send_data->empty();
 }
 
+time_t socketVector::get_last_interaction_time() const
+{
+    return last_interaction_time.load();
+}
+
+void socketVector::update_last_interaction_time()
+{
+    last_interaction_time.store(time(NULL));
+}
+
+bool socketVector::is_timeout()
+{
+    return time(NULL) - last_interaction_time.load() > TIME_OUT;
+}

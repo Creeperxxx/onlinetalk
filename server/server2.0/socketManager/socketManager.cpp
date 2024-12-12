@@ -26,9 +26,9 @@ void socketManager::enqueue_recv_data(int socketfd, std::shared_ptr<std::vector<
     {
         it->enqueue_recv_data(data);
     }
-    std::unique_lock<std::mutex> lock(mutex_recv_set);
-    updated_socket_recv_set.insert(socketfd);
-    recv_set_cv.notify_one();
+    std::unique_lock<std::mutex> lock(mutex_recv_vec);
+    updated_socket_recv_vec.push_back(socketfd);
+    recv_vec_cv.notify_one();
 }
 
 void socketManager::enqueue_send_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data)
@@ -42,9 +42,10 @@ void socketManager::enqueue_send_data(int socketfd,std::shared_ptr<std::vector<u
     {
         it->enqueue_send_data(data);
     }
-    std::unique_lock<std::mutex> lock(mutex_send_set);
-    updated_socket_send_set.insert(socketfd);
-    send_set_cv.notify_one();
+    std::unique_lock<std::mutex> lock(mutex_send_vec);
+    // updated_socket_send_set.insert(socketfd);
+    updated_socket_send_vec.push_back(socketfd);
+    send_vec_cv.notify_one();
 }
 
 
@@ -117,29 +118,45 @@ std::shared_ptr<socketVector> socketManager::get_socket_vec(int socketfd)
     }
 }
 
-std::shared_ptr<std::unordered_set<int>> socketManager::get_updated_socket_recv_set()
+// std::shared_ptr<std::unordered_set<int>> socketManager::get_updated_socket_recv_vec()
+std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_recv_vec()
 {
-    std::unique_lock<std::mutex> lock(mutex_recv_set);
-    while(updated_socket_recv_set.empty())
+    std::unique_lock<std::mutex> lock(mutex_recv_vec);
+    // while(updated_socket_recv_set.empty())
+    while(updated_socket_recv_vec.empty())
     {
-        recv_set_cv.wait(lock);
+        recv_vec_cv.wait(lock);
     }
-    return std::make_shared<std::unordered_set<int>>(std::move(updated_socket_recv_set));
+    // return std::make_shared<std::unordered_set<int>>(std::move(updated_socket_recv_set));
+    return std::make_shared<std::vector<int>>(std::move(updated_socket_recv_vec));
 }
 
-std::shared_ptr<std::unordered_set<int>> socketManager::get_updated_socket_send_set()
+// std::shared_ptr<std::unordered_set<int>> socketManager::get_updated_socket_send_vec()
+std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_send_vec()
 {
-    std::unique_lock<std::mutex> lock(mutex_send_set);
-    while(updated_socket_send_set.empty())
+    std::unique_lock<std::mutex> lock(mutex_send_vec);
+    // while(updated_socket_send_set.empty())
+    while(updated_socket_send_vec.empty())
     {
-        send_set_cv.wait(lock);
+        send_vec_cv.wait(lock);
     }
-    return std::make_shared<std::unordered_set<int>>(std::move(updated_socket_send_set));
+    // return std::make_shared<std::unordered_set<int>>(std::move(updated_socket_send_set));
+    return std::make_shared<std::vector<int>>(std::move(updated_socket_send_vec));
 }
 
 void socketManager::add_socket_vec(const std::string& username,int socket)
 {
-    socket_vecs[socket] = std::make_shared<socketVector>();
+    {
+        std::lock_guard<std::mutex> lock(mutex_socket_vecs);
+        socket_vecs[socket] = std::make_shared<socketVector>(socket ,username);
+    }
+    {
+        std::lock_guard<std::mutex> lock(mutex_interact_time_set);
+        interaction_time_socketvec_set.insert(socket_vecs[socket]);
+    }
+
+    // interaction_time_socketvec_set.insert(socket_vecs[socket]);
+    // pq.push(socket_vecs[socket]);
     // username_socketfd[username] = socket;
     std::shared_ptr<std::vector<uint8_t>> temp;
     {
@@ -209,5 +226,72 @@ bool socketManager::delete_socket_vec(int socket)
             LOG_WARING("%s:%s:%d // 套接字对应的socketVector未清空", __FILE__, __FUNCTION__, __LINE__);
             return false;
         }
+    }
+}
+
+// void socketManager::init()
+// {
+
+// }
+
+void socketManager::update_socket_interaction_time(int socketfd)
+{
+    auto vec = get_socket_vec(socketfd);
+    if(vec == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 更新套接字的latesttime时找不到套接字的vec", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
+    else
+    {
+        // if(interaction_time_socketvec_set.find(it) == interaction_time_socketvec_set.end())
+        auto it = interaction_time_socketvec_set.find(vec); 
+        if(it == interaction_time_socketvec_set.end())
+        {
+            LOG_ERROR("%s:%s:%d // 更新套接字的latesttime时找不到套接字的vec", __FILE__, __FUNCTION__, __LINE__);
+            return;
+        }
+        else
+        {
+            std::lock_guard<std::mutex> lock(mutex_interact_time_set);
+            interaction_time_socketvec_set.erase(it);
+            (*it)->update_last_interaction_time();
+            interaction_time_socketvec_set.insert(vec);
+        }
+    }
+}
+
+int socketManager::get_tobesend_heartbeat_socketfd()
+{
+    std::lock_guard<std::mutex> lock(mutex_interact_time_set);
+    if(interaction_time_socketvec_set.empty())
+    {
+        LOG_WARING("%s:%s:%d // 套接字set中没有套接字", __FILE__, __FUNCTION__, __LINE__);
+        return -1;
+    }
+    else
+    {
+        if((*interaction_time_socketvec_set.begin())->is_timeout())
+        {
+            return (*interaction_time_socketvec_set.begin())->get_fd();
+        }
+        else
+        {
+            return -2;
+        }
+    }
+}
+
+const std::string& socketManager::get_username(int socketfd)
+{
+    auto it = get_socket_vec(socketfd);
+    if(it == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 未找到套接字对应的socketVector", __FILE__, __FUNCTION__, __LINE__);
+        return "";
+    }
+    else
+    {
+        return it->get_username();
     }
 }
