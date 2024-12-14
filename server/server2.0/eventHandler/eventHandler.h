@@ -71,13 +71,14 @@ private:
     std::atomic<int> handle_sockets_send_running;
     std::atomic<int> analyze_recv_data_running;
     std::atomic<int> heartbeat_running;
-    std::shared_ptr<NetworkIo> networkio;
-    std::shared_ptr<ThreadPool> thread_pool;
+    std::unique_ptr<NetworkIo> networkio;
+    std::unique_ptr<ThreadPool> thread_pool;
     // std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
-    std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
+    std::unique_ptr<msgAnalysisFSM> msg_analysis_fsm;
     // std::shared_ptr<msgAnalysis> msgAnalysis;
     
-    std::shared_ptr<IserializationMethod> serializationMethod;
+    // std::unique_ptr<IserializationMethod> serializationMethod;
+
     // moodycamel::ConcurrentQueue<int> ready_sockets;
     // std::queue<int> ready_sockets;
     std::vector<int> ready_sockets;

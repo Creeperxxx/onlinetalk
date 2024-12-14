@@ -112,7 +112,17 @@ bool log::write_log(logLevel level,const std::string format,...)
     // m_log_queue.push(log_str);
     // m_log_cond.notify_one();
 
-    m_log_queue.enqueue(log_str);
+    // m_log_queue.enqueue(log_str);
+
+    if(m_log_queue.try_enqueue(log_str))
+    {
+        return true;
+    }
+    else
+    {
+        perror("日志队列已满，无法写入日志");
+        return false;
+    }
     // // 输出日志到文件中
     // FILE *fp = fopen(LOG_PATH.c_str(), "a");
     // if (fp == nullptr)
@@ -140,11 +150,12 @@ void log::flush_log()
         if(m_log_queue.try_dequeue(log_str))
         {
             fputs(log_str.c_str(), fp);
+            fflush(fp);
         }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
+        // else
+        // {
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // }
 
         // std::unique_lock<std::mutex> lock(m_log_mutex);
         // while(m_log_queue.empty())

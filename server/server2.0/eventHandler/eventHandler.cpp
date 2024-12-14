@@ -12,6 +12,14 @@ const int FIND_USER_SOCKET_FAILED = -2;
 
 void ReactorEventHandler::init()
 {
+    // 线程池初始化
+    thread_pool = std::make_unique<ThreadPool>(THREAD_NUMS);
+    // 日志初始化
+    auto lambda = [this](){
+        log::get_instance().flush_log();
+    };
+    thread_pool->commit(lambda);
+
     // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
     LOG_INFO("%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
     // 其余初始化
@@ -26,52 +34,45 @@ void ReactorEventHandler::init()
     // signal(SIGTERM, event_loop_running_signal_handler);
 
     // 网络io模块初始化
-    networkio = std::make_shared<NetworkIo>();
+    networkio = std::make_unique<NetworkIo>();
     networkio->init(LISTEN_PORT);
     // 监听套接字加入epoll
     add_socketfd_to_epoll(networkio->get_listenfd(), EPOLLIN | EPOLLET);
 
-    // 线程池初始化
-    thread_pool = std::make_shared<ThreadPool>(THREAD_NUMS);
-
     //socketManager初始化
     socket_manager = std::make_unique<socketManager>();
 
-    auto lambda = [this]()
-    { this->handle_sockets_recv(); };
-    thread_pool->commit(lambda); // 读线程，将就绪事件套接字中的数据读取到对应无锁队列中
+        // 消息分析初始化
+    msg_analysis_fsm = std::make_unique<msgAnalysisFSM>();
+    msg_analysis_fsm->init();
+    std::function<void(std::string,std::shared_ptr<std::vector<uint8_t>>)> lambda4 = [this](std::string username,std::shared_ptr<std::vector<uint8_t>> data){
+        this->enqueue_send_message(username , data);
+    };
+    msg_analysis_fsm->register_event(ENQUEUE_SEND_DATA,std::any(lambda4));
+    std::function<void(std::function<void()>)> lambda5 = [this](std::function<void()> lambda){
+        this->task_commit(lambda);
+    };
+    msg_analysis_fsm->register_event(TASK_COMMIT,std::any(lambda5));
 
     auto lambda1 = [this]()
-    { this->handle_sockets_send(); };
-    thread_pool->commit(lambda1); // 写线程，将就绪事件套接字中的数据发送
+    { this->handle_sockets_recv(); };
+    thread_pool->commit(lambda1); // 读线程，将就绪事件套接字中的数据读取到对应无锁队列中
 
     auto lambda2 = [this]()
+    { this->handle_sockets_send(); };
+    thread_pool->commit(lambda2); // 写线程，将就绪事件套接字中的数据发送
+
+    auto lambda3 = [this]()
     {
         this->analyze_recv_data();
     };
-    thread_pool->commit(lambda2); // 分析线程，将就绪事件套接字中的数据分析
+    thread_pool->commit(lambda3); // 分析线程，将就绪事件套接字中的数据分析
 
     // 序列化类初始化
-    serializationMethod = std::make_shared<serializationMethodV1>();
+    // serializationMethod = std::make_unique<serializationMethodV1>();
 
-    // 消息分析初始化
-    msg_analysis_fsm = std::make_shared<msgAnalysisFSM>();
-    msg_analysis_fsm->init();
-    std::function<void(std::string,std::shared_ptr<std::vector<uint8_t>>)> lambda3 = [this](std::string username,std::shared_ptr<std::vector<uint8_t>> data){
-        this->enqueue_send_message(username , data);
-    };
-    msg_analysis_fsm->register_event(ENQUEUE_SEND_DATA,std::any(lambda3));
-    std::function<void(std::function<void()>)> lambda4 = [this](std::function<void()> lambda){
-        this->task_commit(lambda);
-    };
-    msg_analysis_fsm->register_event(TASK_COMMIT,std::any(lambda4));
+
     
-    // 日志初始化
-    auto lambda5 = [this](){
-        log::get_instance().flush_log();
-    };
-    thread_pool->commit(lambda5);
-
     //心跳初始化
     heartbeat_running.store(true);
     auto lambda6 = [this](){
@@ -97,8 +98,9 @@ void ReactorEventHandler::event_loop()
         if (nfds == -1)
         {
             LOG_ERROR("%s:%s:%d // epoll_wait返回-1", __FILE__, __FUNCTION__, __LINE__);
-            deleter();
-            exit(EXIT_FAILURE);
+            continue;
+            // deleter();
+            // exit(EXIT_FAILURE);
         }
         else
         {
@@ -251,6 +253,7 @@ void ReactorEventHandler::handle_new_connections()
 void ReactorEventHandler::handle_sockets_recv()
 {
     // int socketfd = 0;
+    LOG_INFO("%s:%s:%d // 处理套接字接收的线程开始运作", __FILE__, __FUNCTION__, __LINE__);
     int listen_fd = networkio->get_listenfd();
     // std::shared_ptr<std::vector<int>> ready_sockets_vec = std::make_shared<std::vector<int>>();
     // std::queue<int> ready_sockets_temp;
@@ -350,6 +353,7 @@ void ReactorEventHandler::handle_sockets_recv()
 void ReactorEventHandler::handle_sockets_send()
 {
     // int socket = 0;
+    LOG_INFO("%s:%s:%d // 处理套接字发送的线程开始运作", __FILE__, __FUNCTION__, __LINE__);
     auto data = std::make_shared<std::vector<uint8_t>>();
     std::shared_ptr<std::vector<int>> willbesend_sockets;
     while (handle_sockets_send_running)
@@ -405,6 +409,7 @@ void ReactorEventHandler::handle_sockets_send()
 
 void ReactorEventHandler::analyze_recv_data()
 {
+    LOG_INFO("%s:%s:%d // 开始分析接收到的数据", __FILE__, __FUNCTION__, __LINE__);
     auto data = std::make_shared<std::vector<uint8_t>>();
     std::shared_ptr<std::vector<int>> ready_sockets;
     // int socket = 0;
@@ -412,7 +417,7 @@ void ReactorEventHandler::analyze_recv_data()
     // int data_size = 0;
     // std::shared_ptr<std::vector<uint8_t>> msg;
     // std::shared_ptr<message> msg_ptr;
-    LOG_INFO("%s:%s:%d // 开始分析接收到的数据", __FILE__, __FUNCTION__, __LINE__);
+    // LOG_INFO("%s:%s:%d // 开始分析接收到的数据", __FILE__, __FUNCTION__, __LINE__);
     // todo 这里忙等待是否可以优化？
     // 还是回归条件变量+共享状态的方式
     while (analyze_recv_data_running)
@@ -596,6 +601,7 @@ void ReactorEventHandler::task_commit(std::function<void()> task)
 
 void ReactorEventHandler::heartbeat()
 {
+    LOG_INFO("%s:%s:%d // 心跳包线程开始运作", __FILE__, __FUNCTION__, __LINE__);
     std::shared_ptr<std::vector<uint8_t>> data;
     int socket = 0;
     while(heartbeat_running.load())
