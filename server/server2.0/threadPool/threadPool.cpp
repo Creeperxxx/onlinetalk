@@ -8,9 +8,9 @@ ThreadPool::ThreadPool(int threadnum) : taskQueue(std::make_unique<TaskQueue>())
     }
 }
 
-ThreadPool::~ThreadPool() {
-    shutdown = true;  // 等待线程执行完，就不在去队列取任务
-}
+// ThreadPool::~ThreadPool() {
+//     shutdown = true;  // 等待线程执行完，就不在去队列取任务
+// }
 
 void ThreadPool::worker() {
     while (!shutdown) {
@@ -22,4 +22,10 @@ void ThreadPool::worker() {
         currTask();  // 执行任务
         --busyThreadNum;
     }
+}
+
+void ThreadPool::deleter()
+{
+    shutdown = true;
+    notEmptyCondVar.notify_all();
 }

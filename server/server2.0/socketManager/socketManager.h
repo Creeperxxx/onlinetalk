@@ -35,6 +35,8 @@ private:
     // std::multiset<std::shared_ptr<socketVector>> interaction_time_socketvec_set;
     std::multiset<std::shared_ptr<socketVector> , compareSocketVec> interaction_time_socketvec_set;
     std::mutex mutex_interact_time_set;
+
+    static std::string error_username;
 public:
     void add_socket_vec(const std::string& username,int socketfd);
     bool delete_socket_vec(int socketfd);

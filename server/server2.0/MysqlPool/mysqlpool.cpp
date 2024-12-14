@@ -5,7 +5,7 @@ const std::string MYSQL_USER = "root";
 const std::string MYSQL_PASSWORD = "";
 const std::string MYSQL_DATABASE= "IM";
 
-std::shared_ptr<MySQLConnectionPool> MySQLConnectionPool::m_instance = NULL;
+std::unique_ptr<MySQLConnectionPool> MySQLConnectionPool::m_instance = NULL;
 // std::mutex MySQLConnectionPool::instance_mutex;
 std::once_flag MySQLConnectionPool::init_once;
 
@@ -33,13 +33,17 @@ void MySQLConnectionPool::releaseConnection(std::shared_ptr<sql::Connection> con
 }
 void MySQLConnectionPool::initialize_pool()
 {
-    std::shared_ptr<sql::Connection> conn;
+    // std::shared_ptr<sql::Connection> conn;
+    // m_instance.reset(new MySQLConnectionPool());
     sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
     for(size_t i = 0;i <  MYSQL_POOL_SIZE;++i)
     {
-        conn = std::make_shared<sql::Connection>(driver->connect(MYSQL_ADDRESS, MYSQL_USER, MYSQL_PASSWORD),[](sql::Connection *conn){
-            conn->close();
-            delete conn;
+        // auto conn = std::make_shared<sql::Connection>(*(driver->connect(MYSQL_ADDRESS, MYSQL_USER, MYSQL_PASSWORD)),[](sql::Connection *conn){
+        auto conn = std::shared_ptr<sql::Connection>(driver->connect(MYSQL_ADDRESS, MYSQL_USER, MYSQL_PASSWORD),[](sql::Connection *conn){
+            if(conn != nullptr)
+            {
+                conn->close();
+            }
         });
         conn->setSchema(MYSQL_DATABASE);
         pool.push_back(conn); 
@@ -68,12 +72,20 @@ void MySQLConnectionPool::initialize_pool()
 //     }
 // }
 
-std::shared_ptr<MySQLConnectionPool> MySQLConnectionPool::getInstance()
+// std::unique_ptr<MySQLConnectionPool> MySQLConnectionPool::getInstance()
+MySQLConnectionPool& MySQLConnectionPool::getInstance()
 {
+    // std::call_once(init_once, [](){
+        // m_instance = std::shared_ptr<MySQLConnectionPool>( new MySQLConnectionPool());
+        // m_instance = std::make_shared<MySQLConnectionPool>();
+
+    // });
+    // std::call_once(init_once,&MySQLConnectionPool::initialize_pool);
     std::call_once(init_once, [](){
-        m_instance = std::make_shared<MySQLConnectionPool>();
+        m_instance.reset(new MySQLConnectionPool());
+        m_instance->initialize_pool();
     });
-    return m_instance;
+    return *m_instance;
 }
 
 // void MySQLConnectionPool::destroyInstance()

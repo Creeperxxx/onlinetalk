@@ -1,0 +1,18 @@
+CXX ?= g++
+
+DEBUG ?= 1
+ifeq ($(DEBUG), 1)
+    CXXFLAGS += -g
+else
+    CXXFLAGS += -O2
+
+endif
+
+server: main.cpp  ./dataBase/dataBase.cpp ./eventHandler/eventHandler.cpp ./eventManager/eventManager.cpp ./logSystem/log.cpp ./msgAnalysis/msgAnalysis.cpp
+		./msgAnalysis/msgAnalysisFSM.cpp ./msgHandleStrategy/msgHandleStrategy.cpp ./MysqlPool/mysqlMethods.cpp ./MysqlPool/mysqlpool.cpp 
+		./networkio/networkio.cpp ./RedisPool/RedisMethods.cpp ./RedisPool/RedisPool.cpp ./serializationMethod/serializationMethod.cpp 
+		./socketManager/socketManager.cpp ./socketManager/socketVec.cpp ./threadPool/task.cpp ./threadPool/threadPool.cpp
+	$(CXX) -o my_server  $^ $(CXXFLAGS) -lpthread -lmysqlclient
+
+clean:
+	rm  -r server

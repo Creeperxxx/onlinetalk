@@ -1,7 +1,7 @@
 #include "../include/onlineio.h"
 
-const int SEND_BUF = 1024;
-const int RECV_BUF = 1024;
+// const int SEND_BUF = 1024;
+// const int RECV_BUF = 1024;
 const int MAX_EVETNS = 10;
 
 void clientonlineio::connectserver()

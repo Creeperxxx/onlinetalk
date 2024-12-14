@@ -81,42 +81,8 @@
 - 
 
 
-# 出现的bug
-## 1. 过了一遍event_loop后报错double free or corruption。
-### - 如下图：
 
-![alt text](Snipaste_2024.11.25_20.12.11.png)
 
-### - 解决过程
-#### 分析：
-    报错意为多重释放或者损坏。也就是内存管理出了问题，要使用使用valgrind检查。
-    valgrind命令为：valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./my_server。
-
-    结果为：
-    ==6777== Memcheck, a memory error detector
-    ==6777== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-    ==6777== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
-    ==6777== Command: ./my_server
-    ==6777== 
-    服务器正在进行事件循环
-    ==6777== Thread 11:
-    ==6777== Invalid free() / delete / delete[] / realloc()
-    ==6777==    at 0x484BB6F: operator delete(void*, unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-    ==6777==    by 0x11393D: std::default_delete<abstractmsg>::operator()(abstractmsg*) const (unique_ptr.h:85)
-    ==6777==    by 0x112273: std::unique_ptr<abstractmsg, std::default_delete<abstractmsg> >::~unique_ptr() (unique_ptr.h:361)
-    ==6777==    by 0x144167: taskpackage::generate_task(std::unique_ptr<abstractmsg, std::default_delete<abstractmsg> >)::{lambda()#6}::operator()() (taskpackage.cpp:52)
-    ==6777==    by 0x14788C: std::unique_ptr<retmsg, std::default_delete<retmsg> > std::__invoke_impl<std::unique_ptr<retmsg, std::default_delete<retmsg> >, taskpackage::generate_task(std::unique_ptr<abstractmsg, std::default_delete<abstractmsg> >)::{lambda()#6}&>(std::__invoke_other, taskpackage::generate_task(std::unique_ptr<abstractmsg, std::default_delete<abstractmsg> >)::{lambda()#6}&) (invoke.h:61)
-#### 得出原因为：
-    问题出在 std::unique_ptr<abstractmsg> 的析构函数调用时，尝试释放一个已经被释放的内存块。具体来说，std::unique_ptr<abstractmsg> 在 taskpackage::generate_task 函数中被多次释放，导致了 Invalid free() 错误。
-
-    也就是关于std::unique_ptr<abstractmsg>的那几个函数中没有使用转移语义。实际发现是taskpackage中login_handle等函数的形参列表中的问题
-
-### 解决方法
-    使用转移的方式，也就是使用std::move()。
-
-### 修改后结果
-    服务器正常运行。
-![alt text](image-1.png)
 
 # 消息格式
 ### 登录

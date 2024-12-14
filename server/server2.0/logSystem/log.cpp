@@ -73,7 +73,7 @@ log& log::get_instance()
     return instance;
 }
 
-bool log::write_log(logLevel level,const std::string& format,...)
+bool log::write_log(logLevel level,const std::string format,...)
 {
     va_list args;
     va_start(args, format);
@@ -108,9 +108,11 @@ bool log::write_log(logLevel level,const std::string& format,...)
     vsnprintf(buf, sizeof(buf), format.c_str(), args);
     log_str += " [" + std::string(buf) + "]";
     log_str += "\n";
-    std::lock_guard<std::mutex> lock(m_log_mutex);
-    m_log_queue.push(log_str);
-    m_log_cond.notify_one();
+    // std::lock_guard<std::mutex> lock(m_log_mutex);
+    // m_log_queue.push(log_str);
+    // m_log_cond.notify_one();
+
+    m_log_queue.enqueue(log_str);
     // // 输出日志到文件中
     // FILE *fp = fopen(LOG_PATH.c_str(), "a");
     // if (fp == nullptr)
@@ -129,22 +131,32 @@ void log::flush_log()
     FILE* fp = fopen(LOG_PATH.c_str(), "a");
     if( nullptr == fp )
     {
-        LOG_ERROR("%s:%s:%d // 打开日志文件失败，无法写日志", __FILE__, __FUNCTION__, __LINE__);
+        // LOG_ERROR("%s:%s:%d // 打开日志文件失败，无法写日志", __FILE__, __FUNCTION__, __LINE__);
+        perror("打开日志文件失败，无法写日志");
         return;
     }
-    while(flushing)
+    while(flushing.load())
     {
-        std::unique_lock<std::mutex> lock(m_log_mutex);
-        while(m_log_queue.empty())
+        if(m_log_queue.try_dequeue(log_str))
         {
-            m_log_cond.wait(lock);
-        }
-        for( int i = 0; i < m_log_queue.size(); i++)
-        {
-            log_str = m_log_queue.front();
-            m_log_queue.pop();
             fputs(log_str.c_str(), fp);
         }
+        else
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+
+        // std::unique_lock<std::mutex> lock(m_log_mutex);
+        // while(m_log_queue.empty())
+        // {
+        //     m_log_cond.wait(lock);
+        // }
+        // for( int i = 0; i < m_log_queue.size(); i++)
+        // {
+        //     log_str = m_log_queue.front();
+        //     m_log_queue.pop();
+        //     fputs(log_str.c_str(), fp);
+        // }
     }
     fclose(fp);
 }

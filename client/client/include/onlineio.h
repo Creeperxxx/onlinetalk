@@ -8,8 +8,10 @@
 #include <fcntl.h>
 #include <string.h>
 
-extern const int SEND_BUF;
-extern const int RECV_BUF;
+// extern const int SEND_BUF;
+inline constexpr int SEND_BUF = 1024;
+inline constexpr int RECV_BUF = 1024;
+// extern const int RECV_BUF;
 extern const int MAX_EVETNS;
 
 class clientonlineio

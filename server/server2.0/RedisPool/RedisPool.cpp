@@ -1,10 +1,11 @@
-#include "Redispool.h"
+#include "RedisPool.h"
 
 const std::string REDIS_ADDRESS = "127.0.0.1";
 const int REDIS_PORT = 6379;
 const size_t REDIS_POOL_SIZE = 10;
 
-std::shared_ptr<redisPool> redisPool::m_instance = nullptr;
+// std::shared_ptr<redisPool> redisPool::m_instance = nullptr;
+std::unique_ptr<redisPool> redisPool::m_instance = nullptr;
 std::once_flag redisPool::init_once;
 
 // void redisPool::initialize_pool(const std::string &address, int port, size_t pool_size)
@@ -13,6 +14,7 @@ void redisPool::initialize_pool()
     // m_address = address;
     // m_port = port;
     // m_pool_size = pool_size;
+    // m_instance.reset(new redisPool());
     std::shared_ptr<redisContext> conn;
     for (size_t i = 0; i < REDIS_POOL_SIZE; ++i)
     {
@@ -35,14 +37,21 @@ void redisPool::initialize_pool()
     }
 }
 
-std::shared_ptr<redisPool> redisPool::getInstance()
+// std::shared_ptr<redisPool> redisPool::getInstance()
+redisPool& redisPool::getInstance()
 {
-    std::call_once(init_once, []()
-                   {
-                       m_instance = std::make_shared<redisPool>();
+    // std::call_once(init_once, []()
+                //    {
+                    //    m_instance = std::make_shared<redisPool>();
                     //    m_instance->initialize_pool(address, port, pool_size);
-                   });
-    return m_instance;
+                //    });
+    // return m_instance;
+    // std::call_once(init_once, &redisPool::initialize_pool);
+    std::call_once(init_once , [](){
+        m_instance.reset(new redisPool());
+        m_instance->initialize_pool();
+    });
+    return *m_instance;
     // if (nullptr == m_instance)
     // {
     //     std::lock_guard<std::mutex> lock(instance_mutex);

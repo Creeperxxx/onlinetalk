@@ -1,7 +1,7 @@
 #include "msgAnalysisFSM.h"
 
 // const int MSG_IDENTIFIER_SIZE = 4;
-const uint8_t MSG_IDENTIFIER[4] = {'M', 'S', 'G', '_'};
+const char MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE] = {'M', 'S', 'G', '_'};
 const uint32_t MSG_MAX_LENGHT = 2048;
 
 const char *ENQUEUE_SEND_DATA = "enqueue_send_data";
@@ -189,11 +189,11 @@ void msgAnalysisFSM::process_msg()
     current_state = analysisState::initial_state;
 }
 
-void msgAnalysisFSM::process_data(std::shared_ptr<std::vector<uint8_t>> data)
-{
-    this->data = data;
-    process();
-}
+// void msgAnalysisFSM::process_data(std::shared_ptr<std::vector<uint8_t>> data)
+// {
+//     this->data = data;
+//     process();
+// }
 
 // void msgAnalysisFSM::init(std::shared_ptr<IserializationMethod> serialization_method,IEventHandler* eventHandler,std::shared_ptr<ThreadPool> threadPool)
 // void msgAnalysisFSM::init(std::shared_ptr<IserializationMethod> serialization_method)
@@ -205,6 +205,7 @@ void msgAnalysisFSM::init()
     current_state = analysisState::initial_state;
     msg_analysis = std::make_unique<msgAnalysis>();
     msg_analysis->init();
+    event_manager = std::make_unique<eventManager>();
 }
 
 std::shared_ptr<message> msgAnalysisFSM::msg_analysis_handle(std::shared_ptr<message> msg)
@@ -247,4 +248,9 @@ std::any msgAnalysisFSM::get_event_callback(const std::string &event_name)
 std::shared_ptr<std::vector<uint8_t>> msgAnalysisFSM::serializa_msg(std::shared_ptr<message> msg)
 {
     return serialization_method->serialize_message(msg);
+}
+
+void msgAnalysisFSM::error_handling()
+{
+
 }

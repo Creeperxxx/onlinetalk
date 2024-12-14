@@ -4,14 +4,14 @@
 #include "../serializationMethod/serializationMethod.h"
 #include <zlib.h>
 #include <cstring>
-#include "../eventHandler/eventHandler.h"
+// #include "../eventHandler/eventHandler.h"
 #include "../msgAnalysis/msgAnalysis.h"
 #include "../threadPool/threadPool.h"
 #include "../eventManager/eventManager.h"
 #include <any>
 
-// extern const int MSG_IDENTIFIER_SIZE;
-extern const char MSG_IDENTIFIER[4];
+inline constexpr int MSG_IDENTIFIER_SIZE = 4;
+extern const char MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE];
 extern const uint32_t MSG_MAX_LENGHT;
 
 extern const char* ENQUEUE_SEND_DATA;
@@ -40,7 +40,6 @@ enum class FSMErrorType
     invalid_sequence,
     
 };
-
 
 class msgAnalysisFSM
 {

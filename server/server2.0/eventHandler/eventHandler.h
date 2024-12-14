@@ -23,21 +23,25 @@ extern const int MAX_DEQUEUE_NUMS;
 extern const int FIND_USERNAME_FAILED;
 extern const int FIND_USER_SOCKET_FAILED;
 
-extern std::atomic<bool> event_loop_running;
-void event_loop_running_signal_handler(int signal);
+// extern std::atomic<bool> event_loop_running;
+// void event_loop_running_signal_handler(int signal);
 
 class IEventHandler
 {
 public:
+    virtual void init() = 0;
     virtual void handle_new_connections() = 0;
+    virtual void run() = 0;
+    virtual ~IEventHandler() = default;
     // virtual void handle_ready_connections(int socketfd) = 0;
 };
 
 class ReactorEventHandler : public IEventHandler
 {
 public:
-    void deleter();
-    void init();
+    ~ReactorEventHandler() override;
+    void init() override;
+    void run() override;
     void event_loop();
     void handle_sockets_recv();
     void handle_sockets_send();//todo 同时检查是否有要发给为上线用户的消息。
@@ -48,6 +52,7 @@ public:
     void task_commit(std::function<void()> task);
 
 private:
+    void deleter();
     void init_epoll();
     void add_socketfd_to_epoll(int socketfd, uint32_t events);
     // void accept_new_connection();
@@ -68,6 +73,7 @@ private:
     std::atomic<int> heartbeat_running;
     std::shared_ptr<NetworkIo> networkio;
     std::shared_ptr<ThreadPool> thread_pool;
+    // std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
     std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
     // std::shared_ptr<msgAnalysis> msgAnalysis;
     
@@ -78,7 +84,8 @@ private:
     std::mutex ready_sockets_mutex;
     std::condition_variable ready_sockets_cv;
 
-    std::shared_ptr<socketManager> socket_manager;
+    // std::shared_ptr<socketManager> socket_manager;
+    std::unique_ptr<socketManager> socket_manager;
     // 这里有两种方案设计，一种是无锁队列存放二进制，另一种是无锁队列存放vector，每个vector存放一个消息的二进制
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_recv_data;
     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;

@@ -11,7 +11,7 @@
 # =============================================================================
 
 # =============================================================================
-# Project: Project
+# Project: MyServerProject
 # Configurations: Debug
 # =============================================================================
 
@@ -40,6 +40,158 @@ include CMakeFiles/rules.ninja
 # Logical path to working directory; prefix for absolute paths.
 
 cmake_ninja_workdir = /home/creeper/code/c++2.0/onlinetalk/server/build/
+# =============================================================================
+# Object build statements for EXECUTABLE target server2.0
+
+
+#############################################
+# Order-only phony target for server2.0
+
+build cmake_object_order_depends_target_server2.0: phony || CMakeFiles/server2.0.dir
+
+build CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlMethods.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool/mysqlMethods.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlMethods.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/MysqlPool
+
+build CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlpool.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool/mysqlpool.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlpool.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/MysqlPool
+
+build CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisMethods.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool/RedisMethods.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisMethods.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/RedisPool
+
+build CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisPool.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool/RedisPool.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisPool.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/RedisPool
+
+build CMakeFiles/server2.0.dir/server2.0/dataBase/dataBase.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase/dataBase.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/dataBase/dataBase.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/dataBase
+
+build CMakeFiles/server2.0.dir/server2.0/eventHandler/eventHandler.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler/eventHandler.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/eventHandler/eventHandler.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/eventHandler
+
+build CMakeFiles/server2.0.dir/server2.0/eventManager/eventManager.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager/eventManager.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/eventManager/eventManager.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/eventManager
+
+build CMakeFiles/server2.0.dir/server2.0/logSystem/log.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem/log.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/logSystem/log.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/logSystem
+
+build CMakeFiles/server2.0.dir/server2.0/main.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/main.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/main.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0
+
+build CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysis.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis/msgAnalysis.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysis.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/msgAnalysis
+
+build CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysisFSM.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis/msgAnalysisFSM.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysisFSM.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/msgAnalysis
+
+build CMakeFiles/server2.0.dir/server2.0/msgHandleStrategy/msgHandleStrategy.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy/msgHandleStrategy.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/msgHandleStrategy/msgHandleStrategy.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/msgHandleStrategy
+
+build CMakeFiles/server2.0.dir/server2.0/networkio/networkio.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio/networkio.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/networkio/networkio.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/networkio
+
+build CMakeFiles/server2.0.dir/server2.0/serializationMethod/serializationMethod.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod/serializationMethod.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/serializationMethod/serializationMethod.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/serializationMethod
+
+build CMakeFiles/server2.0.dir/server2.0/socketManager/socketManager.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager/socketManager.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/socketManager/socketManager.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/socketManager
+
+build CMakeFiles/server2.0.dir/server2.0/socketManager/socketVec.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager/socketVec.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/socketManager/socketVec.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/socketManager
+
+build CMakeFiles/server2.0.dir/server2.0/threadPool/task.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool/task.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/threadPool/task.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/threadPool
+
+build CMakeFiles/server2.0.dir/server2.0/threadPool/threadPool.cpp.o: CXX_COMPILER__server2.2e0_Debug /home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool/threadPool.cpp || cmake_object_order_depends_target_server2.0
+  DEP_FILE = CMakeFiles/server2.0.dir/server2.0/threadPool/threadPool.cpp.o.d
+  FLAGS = -g -g -std=gnu++20
+  INCLUDES = -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/dataBase -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventHandler -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/eventManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/logSystem -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgAnalysis -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/msgHandleStrategy -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/MysqlPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/networkio -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/RedisPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/serializationMethod -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/socketManager -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/threadPool -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/message -I/home/creeper/code/c++2.0/onlinetalk/server/server2.0/requirement/moodycamel
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  OBJECT_FILE_DIR = CMakeFiles/server2.0.dir/server2.0/threadPool
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target server2.0
+
+
+#############################################
+# Link the executable bin/server2.0
+
+build bin/server2.0: CXX_EXECUTABLE_LINKER__server2.2e0_Debug CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlMethods.cpp.o CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlpool.cpp.o CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisMethods.cpp.o CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisPool.cpp.o CMakeFiles/server2.0.dir/server2.0/dataBase/dataBase.cpp.o CMakeFiles/server2.0.dir/server2.0/eventHandler/eventHandler.cpp.o CMakeFiles/server2.0.dir/server2.0/eventManager/eventManager.cpp.o CMakeFiles/server2.0.dir/server2.0/logSystem/log.cpp.o CMakeFiles/server2.0.dir/server2.0/main.cpp.o CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysis.cpp.o CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysisFSM.cpp.o CMakeFiles/server2.0.dir/server2.0/msgHandleStrategy/msgHandleStrategy.cpp.o CMakeFiles/server2.0.dir/server2.0/networkio/networkio.cpp.o CMakeFiles/server2.0.dir/server2.0/serializationMethod/serializationMethod.cpp.o CMakeFiles/server2.0.dir/server2.0/socketManager/socketManager.cpp.o CMakeFiles/server2.0.dir/server2.0/socketManager/socketVec.cpp.o CMakeFiles/server2.0.dir/server2.0/threadPool/task.cpp.o CMakeFiles/server2.0.dir/server2.0/threadPool/threadPool.cpp.o | /usr/lib/x86_64-linux-gnu/libmysqlcppconn.so /usr/local/lib/libhiredis.so /usr/lib/x86_64-linux-gnu/libz.so
+  FLAGS = -g -g
+  LINK_LIBRARIES = -Wl,-rpath,/usr/local/lib  /usr/lib/x86_64-linux-gnu/libmysqlcppconn.so  /usr/local/lib/libhiredis.so  /usr/lib/x86_64-linux-gnu/libz.so
+  OBJECT_DIR = CMakeFiles/server2.0.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = bin/server2.0
+  TARGET_PDB = server2.0.dbg
+
 
 #############################################
 # Utility command for edit_cache
@@ -66,6 +218,8 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 # =============================================================================
 # Target aliases.
 
+build server2.0: phony bin/server2.0
+
 # =============================================================================
 # Folder targets.
 
@@ -74,12 +228,7 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 #############################################
 # Folder: /home/creeper/code/c++2.0/onlinetalk/server/build
 
-build all: phony
-
-# =============================================================================
-# Unknown Build Time Dependencies.
-# Tell Ninja that they may appear as side effects of build rules
-# otherwise ordered by order-only dependencies.
+build all: phony bin/server2.0
 
 # =============================================================================
 # Built-in targets
@@ -88,14 +237,14 @@ build all: phony
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja: RERUN_CMAKE | ../CMakeLists.txt /usr/share/cmake-3.22/Modules/CMakeCInformation.cmake /usr/share/cmake-3.22/Modules/CMakeCXXInformation.cmake /usr/share/cmake-3.22/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake-3.22/Modules/CMakeGenericSystem.cmake /usr/share/cmake-3.22/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake-3.22/Modules/CMakeLanguageInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake-3.22/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU-C.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU-C.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU.cmake /usr/share/cmake-3.22/Modules/Platform/Linux.cmake /usr/share/cmake-3.22/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/3.22.1/CMakeCCompiler.cmake CMakeFiles/3.22.1/CMakeCXXCompiler.cmake CMakeFiles/3.22.1/CMakeSystem.cmake
+build build.ninja: RERUN_CMAKE | ../CMakeLists.txt ../cmake/FindHiredis.cmake ../cmake/FindMySQLConnectorCpp.cmake /usr/share/cmake-3.22/Modules/CMakeCXXInformation.cmake /usr/share/cmake-3.22/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake-3.22/Modules/CMakeGenericSystem.cmake /usr/share/cmake-3.22/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake-3.22/Modules/CMakeLanguageInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake-3.22/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU.cmake /usr/share/cmake-3.22/Modules/FindPackageHandleStandardArgs.cmake /usr/share/cmake-3.22/Modules/FindPackageMessage.cmake /usr/share/cmake-3.22/Modules/FindZLIB.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU.cmake /usr/share/cmake-3.22/Modules/Platform/Linux.cmake /usr/share/cmake-3.22/Modules/Platform/UnixPaths.cmake /usr/share/cmake-3.22/Modules/SelectLibraryConfigurations.cmake CMakeCache.txt CMakeFiles/3.22.1/CMakeCXXCompiler.cmake CMakeFiles/3.22.1/CMakeSystem.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build ../CMakeLists.txt /usr/share/cmake-3.22/Modules/CMakeCInformation.cmake /usr/share/cmake-3.22/Modules/CMakeCXXInformation.cmake /usr/share/cmake-3.22/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake-3.22/Modules/CMakeGenericSystem.cmake /usr/share/cmake-3.22/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake-3.22/Modules/CMakeLanguageInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake-3.22/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU-C.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU-C.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU.cmake /usr/share/cmake-3.22/Modules/Platform/Linux.cmake /usr/share/cmake-3.22/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/3.22.1/CMakeCCompiler.cmake CMakeFiles/3.22.1/CMakeCXXCompiler.cmake CMakeFiles/3.22.1/CMakeSystem.cmake: phony
+build ../CMakeLists.txt ../cmake/FindHiredis.cmake ../cmake/FindMySQLConnectorCpp.cmake /usr/share/cmake-3.22/Modules/CMakeCXXInformation.cmake /usr/share/cmake-3.22/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake-3.22/Modules/CMakeGenericSystem.cmake /usr/share/cmake-3.22/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake-3.22/Modules/CMakeLanguageInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake-3.22/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake-3.22/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Compiler/GNU.cmake /usr/share/cmake-3.22/Modules/FindPackageHandleStandardArgs.cmake /usr/share/cmake-3.22/Modules/FindPackageMessage.cmake /usr/share/cmake-3.22/Modules/FindZLIB.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake-3.22/Modules/Platform/Linux-GNU.cmake /usr/share/cmake-3.22/Modules/Platform/Linux.cmake /usr/share/cmake-3.22/Modules/Platform/UnixPaths.cmake /usr/share/cmake-3.22/Modules/SelectLibraryConfigurations.cmake CMakeCache.txt CMakeFiles/3.22.1/CMakeCXXCompiler.cmake CMakeFiles/3.22.1/CMakeSystem.cmake: phony
 
 
 #############################################

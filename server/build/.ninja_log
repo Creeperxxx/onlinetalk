@@ -1,0 +1,21 @@
+# ninja log v5
+0	6	0	clean	a31eedcededa8236
+2	2948	1734147166890791168	CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisPool.cpp.o	ab6818d3dd429353
+4	4476	1734147168410791162	CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysisFSM.cpp.o	97be6b4e1806d3d9
+2566	4995	1734147168940791160	CMakeFiles/server2.0.dir/server2.0/threadPool/threadPool.cpp.o	ef9ab5d8f7b1988f
+2	3027	1734147166980791168	CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlpool.cpp.o	9fd7e4bb111b8bda
+2	2566	1734147166510791169	CMakeFiles/server2.0.dir/server2.0/dataBase/dataBase.cpp.o	57e9e442f67ed735
+1935	4888	1734147168830791161	CMakeFiles/server2.0.dir/server2.0/socketManager/socketManager.cpp.o	96510be56f7334d7
+3	2693	1734147166630791169	CMakeFiles/server2.0.dir/server2.0/eventManager/eventManager.cpp.o	80cdccd57ada5392
+5	4713	1734147168650791161	CMakeFiles/server2.0.dir/server2.0/serializationMethod/serializationMethod.cpp.o	9ff6b6279a560c40
+1	3137	1734147167080791167	CMakeFiles/server2.0.dir/server2.0/MysqlPool/mysqlMethods.cpp.o	44e617a6c3dce019
+4	2512	1734147166450791170	CMakeFiles/server2.0.dir/server2.0/msgHandleStrategy/msgHandleStrategy.cpp.o	c977433957be95f8
+2518	4489	1734147168430791162	CMakeFiles/server2.0.dir/server2.0/threadPool/task.cpp.o	907306643167266c
+2	5967	1734147169910791157	CMakeFiles/server2.0.dir/server2.0/eventHandler/eventHandler.cpp.o	b1bb58fd2ee1a758
+5967	6354	1734147170290791155	bin/server2.0	163471812dfff525
+4	2754	1734147166690791169	CMakeFiles/server2.0.dir/server2.0/msgAnalysis/msgAnalysis.cpp.o	6b6423c968a09a8f
+3	2867	1734147166810791168	CMakeFiles/server2.0.dir/server2.0/logSystem/log.cpp.o	cd940edd9d9b6a49
+2512	4759	1734147168700791161	CMakeFiles/server2.0.dir/server2.0/socketManager/socketVec.cpp.o	22cb5542b4180389
+2	1934	1734147165870791172	CMakeFiles/server2.0.dir/server2.0/RedisPool/RedisMethods.cpp.o	5aadda5140a420d0
+5	2518	1734147166450791170	CMakeFiles/server2.0.dir/server2.0/networkio/networkio.cpp.o	d1b1372dc171e29f
+3	3305	1734147167250791167	CMakeFiles/server2.0.dir/server2.0/main.cpp.o	5d00ba1ba04e2da

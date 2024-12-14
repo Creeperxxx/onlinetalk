@@ -1,0 +1,27 @@
+# project(database)
+
+# # aux_source_directory(${PROJECT_SOURCE_DIR} DB_FILES)
+
+# # add_library(${PROJECT_NAME} STATIC ${DB_FILES})
+
+# # include_directories(${PROJECT_SOURCE_DIR}
+# #     ${CMAKE_SOURCE_DIR}/server2.0/
+# # )
+
+# # link_directories(${GOOGLE_PROTOBUF_DIR}/lib/)
+
+# # target_link_libraries(${PROJECT_NAME}
+# #     protobuf
+# # )
+
+
+# # server2.0/dataBase/CMakeLists.txt
+# project(dataBase)
+# # 获取所有.cpp文件
+# file(GLOB SOURCES "*.cpp")
+
+# # 创建静态库
+# add_library(${PROJECT_NAME} STATIC ${SOURCES})
+
+# # 包含头文件路径
+# target_include_directories(dataBase PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -5,6 +5,9 @@
 #include <stdarg.h>
 #include <queue>
 #include <condition_variable>
+#include <atomic>
+#include "../requirement/moodycamel/concurrentqueue.h"
+#include <chrono>
 
 // #define LOG_WRITE(level,format,...) \
 //     log::get_instance().write_Log(level,format,##__VA_ARGS__)
@@ -32,19 +35,20 @@ public:
     // static std::shared_ptr<log> getInstance();
     static log& get_instance();
     // bool write_log(logLevel level,const std::string& filename,const std::string& function,size_t line_num,const std::string& format,...);
-    bool write_log(logLevel level,const std::string& format,...);
+    bool write_log(logLevel level,const std::string format,...);
     void flush_log();
-    ~log(){ flushing = false;};
+    ~log(){ flushing.store(false);};
     // void output_log();
     log(const log&) = delete;
     log& operator=(const log&) = delete;
 private:
     log(){};
 private:
-    std::queue<std::string> m_log_queue;
-    std::mutex m_log_mutex;
-    std::condition_variable m_log_cond;
-    bool flushing = true;
+    moodycamel::ConcurrentQueue<std::string> m_log_queue;
+    // std::queue<std::string> m_log_queue;
+    // std::mutex m_log_mutex;
+    // std::condition_variable m_log_cond;
+    std::atomic<bool> flushing = true;
 // private:
     //文件路径
     // std::string m_file_path;

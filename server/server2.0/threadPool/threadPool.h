@@ -19,7 +19,8 @@ class ThreadPool {
     std::vector<std::shared_ptr<std::thread>> threadVec;  // 线程池
 public:
     explicit ThreadPool(int threadnum = 5);   // 创建线程池
-    ~ThreadPool();          // 销毁线程池
+    void deleter();
+    // ~ThreadPool();          // 销毁线程池
 
     template <typename F, typename ...Args>
     auto commit(F &f, Args &&...args) -> decltype(taskQueue->addTask(f, std::forward<Args>(args)...)); // 提交一个任务

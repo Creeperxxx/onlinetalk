@@ -36,13 +36,14 @@ private:
     // static std::mutex instance_mutex;
     // std::condition_variable cv;
     static std::once_flag init_once;
-    static std::shared_ptr<MySQLConnectionPool> m_instance;
+    static std::unique_ptr<MySQLConnectionPool> m_instance;
     MySQLConnectionPool(const MySQLConnectionPool&) = delete;
     MySQLConnectionPool& operator=(const MySQLConnectionPool&) = delete;
-    ~MySQLConnectionPool(){}
     MySQLConnectionPool(){}
 public:
-    static std::shared_ptr<MySQLConnectionPool> getInstance();
+    ~MySQLConnectionPool(){}
+    // static std::unique_ptr<MySQLConnectionPool> getInstance();
+    static MySQLConnectionPool& getInstance();
     std::shared_ptr<sql::Connection> getConnection();
     void releaseConnection(std::shared_ptr<sql::Connection> conn);
     void initialize_pool();

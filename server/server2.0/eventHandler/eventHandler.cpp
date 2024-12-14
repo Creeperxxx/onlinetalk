@@ -8,7 +8,7 @@ const int MAX_DEQUEUE_NUMS = 5;
 const int FIND_USERNAME_FAILED = -1;
 const int FIND_USER_SOCKET_FAILED = -2;
 
-std::atomic<bool> event_loop_running(true);
+// std::atomic<bool> event_loop_running(true);
 
 void ReactorEventHandler::init()
 {
@@ -22,8 +22,8 @@ void ReactorEventHandler::init()
     init_epoll();
 
     // 信号处理
-    signal(SIGINT, event_loop_running_signal_handler);
-    signal(SIGTERM, event_loop_running_signal_handler);
+    // signal(SIGINT, event_loop_running_signal_handler);
+    // signal(SIGTERM, event_loop_running_signal_handler);
 
     // 网络io模块初始化
     networkio = std::make_shared<NetworkIo>();
@@ -33,6 +33,9 @@ void ReactorEventHandler::init()
 
     // 线程池初始化
     thread_pool = std::make_shared<ThreadPool>(THREAD_NUMS);
+
+    //socketManager初始化
+    socket_manager = std::make_unique<socketManager>();
 
     auto lambda = [this]()
     { this->handle_sockets_recv(); };
@@ -87,7 +90,8 @@ void ReactorEventHandler::event_loop()
     int nfds = 0;
     // std::queue<int> ready_sockets_que;
     LOG_INFO("%s:%s:%d // 开始事件循环", __FILE__, __FUNCTION__, __LINE__);
-    while (event_loop_running)
+    // while (event_loop_running)
+    while(true)
     {
         nfds = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS, -1);
         if (nfds == -1)
@@ -134,7 +138,7 @@ void ReactorEventHandler::event_loop()
             // }
         }
     }
-    deleter();
+    // deleter();
 }
 
 void ReactorEventHandler::init_epoll()
@@ -151,6 +155,13 @@ void ReactorEventHandler::init_epoll()
 void ReactorEventHandler::deleter()
 {
     networkio->deleter();
+    close(epoll_fd);
+    handle_sockets_recv_running.store(false);
+    handle_sockets_send_running.store(false);
+    analyze_recv_data_running.store(false);
+    heartbeat_running.store(false);
+    thread_pool->deleter();
+
 }
 
 void ReactorEventHandler::add_socketfd_to_epoll(int socketfd, uint32_t events)
@@ -166,13 +177,13 @@ void ReactorEventHandler::add_socketfd_to_epoll(int socketfd, uint32_t events)
     }
 }
 
-void event_loop_running_signal_handler(int signal)
-{
-    if (signal == SIGINT || signal == SIGTERM)
-    {
-        event_loop_running = false;
-    }
-}
+// void event_loop_running_signal_handler(int signal)
+// {
+//     if (signal == SIGINT || signal == SIGTERM)
+//     {
+//         event_loop_running = false;
+//     }
+// }
 
 // void ReactorEventHandler::accept_new_connection()
 // {
@@ -518,10 +529,10 @@ void ReactorEventHandler::analyze_recv_data()
 //     return crc;
 // }
 
-// int ReactorEventHandler::get_socket_from_username(const std::string &name)
-// {
-    
-// }
+int ReactorEventHandler::get_socket_from_username(const std::string &name)
+{
+    return 0;
+}
 
 void ReactorEventHandler::enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data)
 {
@@ -592,14 +603,17 @@ void ReactorEventHandler::heartbeat()
         socket = socket_manager->get_tobesend_heartbeat_socketfd();
         if(socket == -1)
         {
-            //套接字set为空，为啥？
-            continue;
-        }
-        else if (socket == -2)
-        {
-            //set中还没有过期的socket
+            // //套接字set为空，为啥？
+            // continue;
+
+            //没有过期的套接字
             std::this_thread::sleep_for(std::chrono::seconds(TIME_OUT/2));
         }
+        // else if (socket == -2)
+        // {
+        //     //set中还没有过期的socket
+        //     std::this_thread::sleep_for(std::chrono::seconds(TIME_OUT/2));
+        // }
         else
         {
             //发送心跳包
@@ -612,6 +626,7 @@ void ReactorEventHandler::heartbeat()
             else
             {
                 socket_manager->enqueue_send_data(socket,data);
+                socket_manager->update_socket_interaction_time(socket);
             }
         }
     }
@@ -637,4 +652,26 @@ std::shared_ptr<std::vector<uint8_t>> ReactorEventHandler::get_heartbeat_data(in
     }
     temp_msg->setHeader(d);
     return msg_analysis_fsm->serializa_msg(temp_msg);
+}
+
+void ReactorEventHandler::run()
+{
+    // init();
+    // event_loop();
+    // deleter();
+
+    try
+    {
+        init();
+        event_loop();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr <<"异常："<< e.what() << '\n';
+    }
+}
+
+ReactorEventHandler::~ReactorEventHandler()
+{
+    deleter();
 }

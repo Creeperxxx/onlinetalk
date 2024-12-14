@@ -1,5 +1,5 @@
 #pragma once
-#include "Redispool.h"
+#include "RedisPool.h"
 
 class IredisMethods
 {
