@@ -9,6 +9,7 @@
 #include <cstddef>
 #include "../logSystem/log.h"
 #include <iostream>
+#include "RedisMethods.h"
 
 extern const std::string REDIS_ADDRESS;
 extern const int REDIS_PORT;
@@ -16,6 +17,7 @@ extern const size_t REDIS_POOL_SIZE;
 
 class redisPool
 {
+    friend class IredisMethods;
 public:
     // static std::shared_ptr<redisPool> getInstance();
     static redisPool& getInstance();

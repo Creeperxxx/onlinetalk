@@ -6,6 +6,7 @@
 #include <cppconn/exception.h>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
+#include <cppconn/prepared_statement.h>
 #include <vector>
 #include <queue>
 #include <mutex>
@@ -13,6 +14,8 @@
 #include <memory>
 #include "../logSystem/log.h"
 #include "../requirement/moodycamel/concurrentqueue.h"
+#include "mysqlMethods.h"
+// #include "../dataBase/dataBase.h"
 //raii
 extern const std::string MYSQL_ADDRESS;
 // extern const int port;
@@ -24,6 +27,8 @@ extern const std::string MYSQL_DATABASE;
 
 
 class MySQLConnectionPool {
+    friend class ImysqlMethods;
+    // friend class Idatabase;
 private:
     // std::string m_url;
     // std::string m_user;

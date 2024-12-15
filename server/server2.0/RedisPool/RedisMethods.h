@@ -1,10 +1,24 @@
 #pragma once
 #include "RedisPool.h"
+#include <memory>
+#include <vector>
+
+
+// using RedisReplyPtr = std::unique_ptr<redisReply, void(*)(redisReply*)>;
 
 class IredisMethods
 {
     
+public:
+    // using RedisReplyPtr = std::unique_ptr<redisReply, decltype(freeReplyObject)>;
+    // virtual std::unique_ptr<redisReply> execute_command(const std::string& rediscommand) = 0;
+    // virtual std::unique_ptr<redisReply,decltype(freeReplyObject)> execute_command(const std::string& rediscommand) = 0;
+    // virtual std::shared_ptr<redisReply> execute_command(const std::string& rediscommand) = 0;
 
+    virtual std::string redis_get(const std::string& key);
+    virtual bool redis_set(const std::string& key,const std::string& value);
+// private:
+//     std::unique_ptr<redisPool> m_redispool;
 };
 /*
 redis方法
@@ -16,5 +30,14 @@ redis方法
 */
 class redisMethodsV1 : public IredisMethods
 {
+public:
     // bool insert(const std::string &key, const std::string &value) override;
+    // std::unique_ptr<redisReply> execute_command(const std::string& rediscommand) override;
+    // std::unique_ptr<redisReply,decltype(freeReplyObject)> execute_command(const std::string& rediscommand) override;
+    // std::shared_ptr<redisReply> execute_command(const std::string& rediscommand) override;
+
+    std::string redis_get(const std::string& key);
+    bool redis_set(const std::string& key,const std::string& value);
+// private:
+//     static std::unique_ptr<redisMethods> m_instance;
 };

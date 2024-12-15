@@ -76,6 +76,7 @@ file(GLOB_RECURSE SOURCES
     server2.0/socketManager/*.cpp
     server2.0/threadPool/*.cpp
     server2.0/main.cpp
+    # server2.0/requirement/redisconnect/*.cpp
 )
 # set(SOURCES 
 #     server2.0/dataBase/dataBase.cpp
@@ -114,6 +115,7 @@ set(HEADERS
     ${CMAKE_SOURCE_DIR}/server2.0/threadPool
     ${CMAKE_SOURCE_DIR}/server2.0/message
     ${CMAKE_SOURCE_DIR}/server2.0/requirement/moodycamel
+    # ${CMAKE_SOURCE_DIR}/server2.0/requirement/redisconnect
     # ${MYSQLCPPCONN_INCLUDE_DIRS}
     # ${HIREDIS_INCLUDE_DIRS}
     ${MYSQLCONNECTORCPP_INCLUDE_DIRS}

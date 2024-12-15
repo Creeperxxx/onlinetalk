@@ -69,8 +69,8 @@ std::shared_ptr<redisContext> redisPool::get_connection()
     std::shared_ptr<redisContext> conn;
     while(!available_connections.try_dequeue(conn))
     {
-        std::this_thread::yield();
     }
+        std::this_thread::yield();
     return conn;
 }
 

@@ -42,7 +42,7 @@ public:
     log(const log&) = delete;
     log& operator=(const log&) = delete;
 private:
-    log(){};
+    log(){ m_log_queue.enqueue("------log begin-------\n");};
 private:
     moodycamel::ConcurrentQueue<std::string> m_log_queue;
     // std::queue<std::string> m_log_queue;

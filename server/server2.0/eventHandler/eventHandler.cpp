@@ -20,6 +20,7 @@ void ReactorEventHandler::init()
     };
     thread_pool->commit(lambda);
 
+    
     // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
     LOG_INFO("%s:%s:%d // 开始初始化", __FILE__, __FUNCTION__, __LINE__);
     // 其余初始化
@@ -87,7 +88,7 @@ void ReactorEventHandler::init()
 void ReactorEventHandler::event_loop()
 {
     struct epoll_event events[MAX_EPOLL_EVENTS];
-    int listen_fd = networkio->get_listenfd();
+    // int listen_fd = networkio->get_listenfd();
     int nfds = 0;
     // std::queue<int> ready_sockets_que;
     LOG_INFO("%s:%s:%d // 开始事件循环", __FILE__, __FUNCTION__, __LINE__);
@@ -281,7 +282,8 @@ void ReactorEventHandler::handle_sockets_recv()
         }
         // ready_sockets_temp = std::move(ready_sockets);
         // ready_sockets_temp.swap(ready_sockets);
-        ready_sockets_temp = std::move(ready_sockets);
+        // ready_sockets_temp = std::move(ready_sockets);
+        ready_sockets_temp.swap(ready_sockets);
         lock.unlock();
 
         for (auto socketfd : ready_sockets_temp)
