@@ -7,6 +7,8 @@
 #include <set>
 // #include "../requirement/moodycamel/concurrentqueue.h"
 
+//升级为单例模式吧，不然策略类访问不到socketmanager。也不能采用依赖注入。
+
 class socketManager
 {
 private:
@@ -36,9 +38,12 @@ private:
     std::multiset<std::shared_ptr<socketVector> , compareSocketVec> interaction_time_socketvec_set;
     std::mutex mutex_interact_time_set;
 
-    static std::string error_username;
+    // static std::string error_username;
+
+    static std::unique_ptr<socketManager> instance;
 public:
-    void add_socket_vec(const std::string& username,int socketfd);
+    static socketManager& getInstance();
+    bool add_socket_vec(const std::string& username,int socketfd);
     bool delete_socket_vec(int socketfd);
     void enqueue_recv_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);   
     void enqueue_send_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);
@@ -53,6 +58,14 @@ public:
     int get_tobesend_heartbeat_socketfd();
     const std::string& get_username(int socketfd);
     // void init();
+
+    ~socketManager(){}
+    socketManager(const socketManager&) = delete;
+    socketManager& operator=(const socketManager&) = delete;
+    static socketManager& getInstance();
 private:
+    socketManager(){}
+    
     std::shared_ptr<socketVector> get_socket_vec(int socketfd);
+    bool is_username_exist(const std::string& username);
 };

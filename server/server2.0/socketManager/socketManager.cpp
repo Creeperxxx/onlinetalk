@@ -1,6 +1,6 @@
 #include "socketManager.h"
 
-std::string socketManager::error_username = "errorusername";
+// std::string socketManager::error_username = "errorusername";
 
 // void socketManager::enqueue_recv_data(int socketfd, std::shared_ptr<std::vector<uint8_t>> data)
 // {
@@ -143,11 +143,20 @@ std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_send_vec()
     return std::make_shared<std::vector<int>>(std::move(updated_socket_send_vec));
 }
 
-void socketManager::add_socket_vec(const std::string &username, int socket)
+bool socketManager::add_socket_vec(const std::string &username, int socket)
 {
     {
-        std::lock_guard<std::mutex> lock(mutex_socket_vecs);
-        socket_vecs[socket] = std::make_shared<socketVector>(socket, username);
+        if( is_username_exist(username))
+        {
+            LOG_INFO("%s:%s:%d // 该用户已登录，不可再登录", __FILE__, __FUNCTION__, __LINE__);
+            return false;
+        }
+        else
+        {
+            std::lock_guard<std::mutex> lock(mutex_socket_vecs);
+            socket_vecs[socket] = std::make_shared<socketVector>(socket, username);
+        }
+        // socket_vecs[socket] = std::make_shared<socketVector>(socket, username);
     }
     {
         std::lock_guard<std::mutex> lock(mutex_interact_time_set);
@@ -317,10 +326,29 @@ const std::string &socketManager::get_username(int socketfd)
     if (it == nullptr)
     {
         LOG_ERROR("%s:%s:%d // 未找到套接字对应的socketVector", __FILE__, __FUNCTION__, __LINE__);
-        return error_username;
+        return "";
     }
     else
     {
         return it->get_username();
     }
+}
+
+socketManager& socketManager::getInstance()
+{
+    static socketManager instance;
+    return instance;
+}
+
+bool socketManager::is_username_exist(const std::string& username)
+{
+    std::lock_guard<std::mutex> lock(mutex_socket_vecs);
+    for (auto it : socket_vecs)
+    {
+        if (it.second->get_username() == username)
+        {
+            return true;
+        }
+    }
+    return false;
 }

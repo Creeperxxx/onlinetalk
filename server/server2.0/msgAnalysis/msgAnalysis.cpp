@@ -17,7 +17,7 @@ std::shared_ptr<IStrategy> strategy_registry::get_strategy(messageType type, mes
 
 void msgAnalysis::text_init()
 {
-    strategy_registry_->register_strategy<user_send_user>(messageType::Text, messageAction::USER_SEND_USER);
+    // strategy_registry_->register_strategy<user_send_user>(messageType::Text, messageAction::USER_SEND_USER);
 }
 
 void msgAnalysis::image_init()

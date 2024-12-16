@@ -4,8 +4,14 @@
 #include "../logSystem/log.h"
 #include <nlohmann/json.hpp>
 
-extern const std::string CACHE_PRIEFIX;
+inline const std::string CACHE_PRIEFIX = "user:";
+inline const std::string CACHE_FINDUSERID_PRIEFIX = "user:by_username:";
 
+enum class loginType
+{
+    USERNAME,
+    USERID
+};
 
 class Idatabase
 {
@@ -13,10 +19,12 @@ public:
     Idatabase():m_mysqlMethods(std::make_unique<mysqlMethodsV1>()),
                 m_redisMethods(std::make_unique<redisMethodsV1>())
                 {}
-    virtual std::string get_user_info(int userid);
+    // virtual std::string get_user_info(int userid);
+    virtual std::string get_user_info(const std::string& account , loginType type);
     // virtual std::string get_user_info(const std::string& username);
-    virtual void set_user_info(int userid,const std::string& username,const std::string& password , const std::string& email);
-    virtual void delete_user_info(int userid);
+    // virtual void set_user_info(int userid,const std::string& username,const std::string& password , const std::string& email);
+    virtual void set_user_info(const std::string& userid,const std::string& username,const std::string& password, const std::string& email);
+    virtual void delete_user_info(int userid);   
 protected:
     std::unique_ptr<ImysqlMethods> m_mysqlMethods;
     std::unique_ptr<IredisMethods> m_redisMethods;
@@ -27,9 +35,11 @@ class databaseV1 : public Idatabase
 public:
     static databaseV1& getInstance();
     ~databaseV1(){}
-    std::string get_user_info(int userid) override;
+    // std::string get_user_info(int userid) override;
+    std::string get_user_info(const std::string& userid , loginType) override;
     // std::string get_user_info(const std::string& username) override;
-    void set_user_info(int userid,const std::string& username,const std::string& password , const std::string& email) override;
+    // void set_user_info(int userid,const std::string& username,const std::string& password , const std::string& email) override;
+    void set_user_info(const std::string& userid,const std::string& username,const std::string& password, const std::string& email) override;
     void delete_user_info(int userid) override;
 private:
     databaseV1(): Idatabase(){}

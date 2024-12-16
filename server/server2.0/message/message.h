@@ -4,6 +4,17 @@
 #include <optional>
 #include <vector>
 
+inline const std::string DEFAULT_SENDER_NAME = "default_sender_name";
+inline const int DEFAULT_SENDER_ID = 0;
+inline const int DEFAULT_SESSION_ID = 0;
+inline const int DEFAULT_GROUP_ID = 0;
+inline const int DEFAULT_RECEIVER_ID = 0;
+inline const std::string DEFAULT_RECEIVER_NAME = "default_receiver_name";
+
+//response json
+inline const std::string JSON_FIELD_LOGIN_STATUS = "login_status";
+inline const std::string JSON_FIELD_LOGIN_STATUS_SUCCESS = "success";
+inline const std::string JSON_FIELD_LOGIN_STATUS_FAIL = "fail";
 
 enum class messageType
 {
@@ -74,42 +85,40 @@ enum class messageAction
     USER_SEND_IMAGE,
     USER_RECEIVE_IMAGE,
 
-    USER_SEND_FILE ,
+    USER_SEND_FILE,
     USER_RECEIVE_FILE,
 
-    USER_SEND_VOICE  ,
+    USER_SEND_VOICE,
     USER_RECEIVE_VOICE,
 
-    USER_SEND_VIDEO ,
+    USER_SEND_VIDEO,
     USER_RECEIVE_VIDEO,
 
-    USER_LOGIN  ,
+    USER_LOGIN,
     USER_LOGOUT,
     USER_REGISTER,
     USER_ADD_FRIEND,
     USER_DELETE_FRIEND,
 
-    USER_LOGIN_STATUS ,
+    USER_LOGIN_STATUS,
     USER_ONLINE_STATUS,
     FRIEND_ONLINE_STATUS,
     HEARTBEAT,
 };
 
-
-
 class dataHeader
 {
 public:
-    dataHeader(){}
+    dataHeader() {}
     dataHeader(messageType type,
                   messageAction action,
-                  const std::string &sender_name,
-                  int sender_id,
-                  int session_id,
-                  std::optional<int> group_id = std::nullopt,
-                  std::optional<int> receiver_id = std::nullopt,
+                  std::optional<std::string> sender_name = std::nullopt,
                   std::optional<std::string> receiver_name = std::nullopt,
-                  bool compressed = false)
+                  std::optional<int> receiver_id = std::nullopt,
+                  std::optional<int> sender_id = std::nullopt,
+                  std::optional<int> session_id = std::nullopt,
+                  std::optional<int> group_id = std::nullopt,
+                  std::optional<bool> compressed = std::nullopt)
                 : m_type(type),
                   m_action(action),
                   m_sender_name(sender_name),
@@ -122,40 +131,66 @@ public:
 
 public:
     // 提供公共接口以访问私有成员
-    const messageType &getType() const { return m_type; }
-    const messageAction &getAction() const { return m_action; }
-    const std::string &getSenderName() const { return m_sender_name; }
-    int getSenderId() const { return m_sender_id; }
+    const messageType getType() const {
+        return m_type; }
+    const messageAction getAction() const {
+        return m_action; }
+    const std::string& getSenderName() const {
+        return m_sender_name.value_or(DEFAULT_SENDER_NAME); }
+    int getSenderId() const {
+        return m_sender_id.value_or(DEFAULT_SENDER_ID); }
     // uint32_t getMessageSize() const { return m_message_size; }
-    int getSessionId() const { return m_session_id; }
-    const std::optional<int> &getGroupId() const { return m_group_id; }
-    const std::optional<int> &getReceiverId() const { return m_receiver_id; }
-    const std::optional<std::string> &getReceiverName() const { return m_receiver_name; }
-    bool getIsCompressed() const { return m_is_compressed; }
+    int getSessionId() const {
+        return m_session_id.value_or(DEFAULT_SESSION_ID);}
+    const int getGroupId() const {
+        return m_group_id.value_or(DEFAULT_GROUP_ID); }
+    const int getReceiverId() const {
+        return m_receiver_id.value_or(DEFAULT_RECEIVER_ID); }
+    const std::string& getReceiverName() const {
+        return m_receiver_name.value_or(DEFAULT_RECEIVER_NAME); }
+    bool getIsCompressed() const {
+        return m_is_compressed.value_or(false); }
+    int getSenderSocketFd() const {
+        return m_sender_socketfd.value_or(0); }
 
     // 设置方法
-    void setType(messageType type) { m_type = type; }
-    void setAction(messageAction a) { m_action = a; }
-    void setSenderName(const std::string &name) { m_sender_name = name; }
-    void setSenderId(int id) { m_sender_id = id; }
+    void setType(messageType type) {
+        m_type = type; }
+    void setAction(messageAction a) {
+        m_action = a; }
+    void setSenderName(const std::string& name) {
+        m_sender_name = name; }
+    void setSenderId(int id) {
+        m_sender_id = id; }
     // void setMessageSize(uint32_t size) { m_message_size = size; }
-    void setSessionId(int id) { m_session_id = id; }
-    void setGroupId(std::optional<int> id) { m_group_id = id; }
-    void setReceiverId(std::optional<int> id) { m_receiver_id = id; }
-    void setReceiverName(std::optional<std::string> name) { m_receiver_name = name; }
-    void setIsCompressed(bool compressed) { m_is_compressed = compressed; }
+    void setSessionId(int id) {
+        m_session_id = id; }
+    void setGroupId(int id) {
+        m_group_id = id; }
+    void setReceiverId(int id) {
+        m_receiver_id = id; }
+    void setReceiverName(const std::string& name) {
+        m_receiver_name = name; }
+    void setIsCompressed(bool compressed) {
+        m_is_compressed = compressed; }
+    void setSenderSocketFd(int fd) {
+        m_sender_socketfd = fd; }
 
 private:
     messageType m_type;
     messageAction m_action;
-    std::string m_sender_name;
-    int m_sender_id;
+    // std::string m_sender_name;
+    std::optional<std::string> m_sender_name;
+    // int m_sender_id;
+    std::optional<int> m_sender_id; 
     // uint32_t m_message_size;
-    int m_session_id;
+    // int m_session_id;
+    std::optional<int> m_session_id;
     std::optional<int> m_group_id;
     std::optional<int> m_receiver_id;
     std::optional<std::string> m_receiver_name;
-    bool m_is_compressed;
+    std::optional<bool> m_is_compressed;
+    std::optional<int> m_sender_socketfd;
 };
 
 class message
@@ -165,7 +200,7 @@ private:
     std::vector<uint8_t> data;
 
 public:
-    message(){}
+    message() {}
     message(dataHeader h, std::vector<uint8_t> d) : header(h), data(d) {}
     // 获取消息头
     const dataHeader &getHeader() const { return header; }

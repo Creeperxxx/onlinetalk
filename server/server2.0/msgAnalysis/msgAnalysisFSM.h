@@ -47,7 +47,8 @@ public:
     msgAnalysisFSM(){}
     // void init(std::shared_ptr<IserializationMethod> serialization_method,IEventHandler* eventHandler,std::shared_ptr<ThreadPool> threadPool);
     void init();
-    void process_data(std::shared_ptr<std::vector<uint8_t>> data);
+    // void process_data(std::shared_ptr<std::vector<uint8_t>> data);
+    void process_data(std::shared_ptr<std::vector<uint8_t>> data,int socketfd);
     std::shared_ptr<message> msg_analysis_handle(std::shared_ptr<message> msg);
     // std::shared_ptr<message> get_deserialized_msg();
     // void enqueue_send_msg(std::shared_ptr<message> msg);
@@ -56,6 +57,7 @@ public:
     std::shared_ptr<message> get_deserialized_msg();
     std::any get_event_callback(const std::string& event_name);
     std::shared_ptr<std::vector<uint8_t>> serializa_msg(std::shared_ptr<message> msg);
+    int get_socketfd(){return socketfd;}
     // void threadpool_commit();
 private:
     void process();
@@ -70,6 +72,7 @@ private:
     void error_handling();
     // uint32_t calculateCRC32(const uint8_t *data, size_t length);
 private:
+    int socketfd;
     uint32_t length;
     analysisState current_state;
     size_t offset;

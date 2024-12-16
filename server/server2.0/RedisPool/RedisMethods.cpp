@@ -98,3 +98,35 @@ bool redisMethodsV1::redis_set(const std::string& key,const std::string& value)
         }
     }
 }
+
+bool redisMethodsV1::redis_del(const std::string& key)
+{
+    auto conn = redisPool::getInstance().get_connection();
+    if (!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+    else
+    {
+        redisReply* raw_reply = static_cast<redisReply*>(redisCommand(conn.get(), "DEL %s", key.c_str()));
+        if(!raw_reply)
+        {
+            LOG_ERROR("%s:%s:%d // 执行redis命令失败", __FILE__, __FUNCTION__, __LINE__);
+            return false;
+        }
+        else
+        {
+            if(raw_reply->type == REDIS_REPLY_INTEGER && raw_reply->integer == 1)
+            {
+                LOG_INFO("%s:%s:%d // redis删除键值对:%s 成功", __FILE__, __FUNCTION__, __LINE__, key.c_str());
+                return true;
+            }
+            else
+            {
+                LOG_ERROR("%s:%s:%d // redis删除键值对:%s 失败", __FILE__, __FUNCTION__, __LINE__, key.c_str());
+                return false;
+            }
+        }
+    }
+}

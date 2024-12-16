@@ -17,6 +17,7 @@ public:
 
     virtual std::string redis_get(const std::string& key);
     virtual bool redis_set(const std::string& key,const std::string& value);
+    virtual bool redis_del(const std::string& key);
 // private:
 //     std::unique_ptr<redisPool> m_redispool;
 };
@@ -38,6 +39,7 @@ public:
 
     std::string redis_get(const std::string& key);
     bool redis_set(const std::string& key,const std::string& value);
+    bool redis_del(const std::string& key);
 // private:
 //     static std::unique_ptr<redisMethods> m_instance;
 };

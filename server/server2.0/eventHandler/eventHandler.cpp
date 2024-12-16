@@ -41,7 +41,7 @@ void ReactorEventHandler::init()
     add_socketfd_to_epoll(networkio->get_listenfd(), EPOLLIN | EPOLLET);
 
     //socketManager初始化
-    socket_manager = std::make_unique<socketManager>();
+    // socket_manager = std::make_unique<socketManager>();
 
         // 消息分析初始化
     msg_analysis_fsm = std::make_unique<msgAnalysisFSM>();
@@ -308,7 +308,8 @@ void ReactorEventHandler::handle_sockets_recv()
                 else
                 {
                     // sockets_recv_data[socketfd].enqueue_bulk(recvmsg->data(), recvmsg->size());
-                    socket_manager->enqueue_recv_data(socketfd, recvmsg);
+                    // socket_manager->enqueue_recv_data(socketfd, recvmsg);
+                    socketManager::getInstance().enqueue_recv_data(socketfd,recvmsg);
                 }
             }
         }
@@ -360,10 +361,12 @@ void ReactorEventHandler::handle_sockets_send()
     std::shared_ptr<std::vector<int>> willbesend_sockets;
     while (handle_sockets_send_running)
     {
-        willbesend_sockets = socket_manager->get_updated_socket_send_vec();
+        // willbesend_sockets = socket_manager->get_updated_socket_send_vec();
+        willbesend_sockets = socketManager::getInstance().get_updated_socket_send_vec();
         for(auto &socket : *willbesend_sockets)
         {
-            data = socket_manager->dequeue_send_data(socket);
+            // data = socket_manager->dequeue_send_data(socket);
+            data = socketManager::getInstance().dequeue_send_data(socket);
             if(data == nullptr || data->empty())
             {
                 continue;
@@ -424,12 +427,14 @@ void ReactorEventHandler::analyze_recv_data()
     // 还是回归条件变量+共享状态的方式
     while (analyze_recv_data_running)
     {
-        ready_sockets = socket_manager->get_updated_socket_recv_vec();
+        // ready_sockets = socket_manager->get_updated_socket_recv_vec();
+        ready_sockets = socketManager::getInstance().get_updated_socket_recv_vec();
         // 处理接收到的数据
         for (auto &socket : *ready_sockets)
         {
             // 处理接收到的数据
-            data = socket_manager->dequeue_recv_data(socket);
+            // data = socket_manager->dequeue_recv_data(socket);
+            data = socketManager::getInstance().dequeue_recv_data(socket);
             if( nullptr == data || data->empty())
             {
                 continue;
@@ -437,7 +442,7 @@ void ReactorEventHandler::analyze_recv_data()
             else
             {
                 // 处理接收到的数据
-                msg_analysis_fsm->process_data(data);
+                msg_analysis_fsm->process_data(data,socket);
             }
         }
 
@@ -553,11 +558,13 @@ void ReactorEventHandler::enqueue_send_message(std::string username , std::share
     else if(socket == FIND_USER_SOCKET_FAILED)
     {
         // 用户未上线
-        socket_manager->enqueue_willsend_data(username,data);
+        // socket_manager->enqueue_willsend_data(username,data);
+        socketManager::getInstance().enqueue_willsend_data(username,data);
     }
     else
     {
-        socket_manager->enqueue_send_data(socket,data);
+        // socket_manager->enqueue_send_data(socket,data);
+        socketManager::getInstance().enqueue_send_data(socket,data);
     }
 }
 
@@ -608,7 +615,8 @@ void ReactorEventHandler::heartbeat()
     int socket = 0;
     while(heartbeat_running.load())
     {
-        socket = socket_manager->get_tobesend_heartbeat_socketfd();
+        // socket = socket_manager->get_tobesend_heartbeat_socketfd();
+        socket = socketManager::getInstance().get_tobesend_heartbeat_socketfd();
         if(socket == -1)
         {
             // //套接字set为空，为啥？
@@ -633,8 +641,10 @@ void ReactorEventHandler::heartbeat()
             }
             else
             {
-                socket_manager->enqueue_send_data(socket,data);
-                socket_manager->update_socket_interaction_time(socket);
+                // socket_manager->enqueue_send_data(socket,data);
+                // socket_manager->update_socket_interaction_time(socket);
+                socketManager::getInstance().enqueue_send_data(socket,data);
+                socketManager::getInstance().update_socket_interaction_time(socket);
             }
         }
     }
@@ -648,7 +658,8 @@ std::shared_ptr<std::vector<uint8_t>> ReactorEventHandler::get_heartbeat_data(in
     dataHeader d;
     d.setType(messageType::Notice);
     d.setAction(messageAction::HEARTBEAT);
-    const std::string &username = socket_manager->get_username(socketfd);
+    // const std::string &username = socket_manager->get_username(socketfd);
+    const std::string& username = socketManager::getInstance().get_username(socketfd);
     if(username.empty())
     {
         LOG_ERROR("%s:%s:%d // 没找到对应用户", __FILE__, __FUNCTION__, __LINE__);

@@ -1,9 +1,9 @@
 #include "mysqlMethods.h"
-const std::string MYSQL_TABLE = "user";
-const std::string USER_ID_FIELD = "user_id";
-const std::string USER_NAME_FIELD = "user_name";
-const std::string USER_PASSWD_FIELD = "user_passwd";
-const std::string USER_EMAIL_FIELD = "user_email";
+const std::string MYSQL_TABLE = "users";
+const std::string USER_ID_FIELD = "id";
+const std::string USER_NAME_FIELD = "username";
+const std::string USER_PASSWD_FIELD = "password";
+const std::string USER_EMAIL_FIELD = "email";
 
 // void mysqlMethodsV1::init()
 // {

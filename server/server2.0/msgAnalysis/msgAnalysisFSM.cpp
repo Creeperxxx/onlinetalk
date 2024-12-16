@@ -80,9 +80,11 @@ void msgAnalysisFSM::check_identifier()
     }
 }
 
-void msgAnalysisFSM::process_data(std::shared_ptr<std::vector<uint8_t>> data)
+// void msgAnalysisFSM::process_data(std::shared_ptr<std::vector<uint8_t>> data)
+void msgAnalysisFSM::process_data(std::shared_ptr<std::vector<uint8_t>> data , int socketfd)
 {
     this->data = data;
+    this->socketfd = socketfd;
     process();
 }
 
@@ -159,7 +161,17 @@ void msgAnalysisFSM::process_msg()
     // std::function<std::shared_ptr<message>()> lambda = [this]() -> std::shared_ptr<message>*
     std::function<void()> lambda = [this]()
     {
-        auto returnmsg = this->msg_analysis_handle(this->get_deserialized_msg());
+        auto temp = this->get_deserialized_msg();
+        if (temp == nullptr)
+        {
+            LOG_ERROR("%s:%s:%d // 反序列化消息为空", __FILE__, __FUNCTION__, __LINE__);
+            return;
+        }
+        auto header = temp->getHeader();
+        header.setSenderSocketFd(this->get_socketfd());
+        temp->setHeader(header);
+
+        auto returnmsg = this->msg_analysis_handle(temp);
         std::string receiver_name;
         // 判断receivername是否为空
         if (returnmsg == nullptr)
@@ -167,15 +179,16 @@ void msgAnalysisFSM::process_msg()
             LOG_ERROR("%s:%s:%d // 返回消息为空", __FILE__, __FUNCTION__, __LINE__);
             return;
         }
-        else if (returnmsg->getHeader().getReceiverName().has_value())
-        {
-            receiver_name = returnmsg->getHeader().getReceiverName().value();
-        }
-        else
-        {
-            LOG_ERROR("%s:%s:%d // 接收者名字为空", __FILE__, __FUNCTION__, __LINE__);
-            return;
-        }
+        // else if (returnmsg->getHeader().getReceiverName().has_value())
+        // {
+        //     receiver_name = returnmsg->getHeader().getReceiverName().value();
+        // }
+        // else
+        // {
+        //     LOG_ERROR("%s:%s:%d // 接收者名字为空", __FILE__, __FUNCTION__, __LINE__);
+        //     return;
+        // }
+        receiver_name = returnmsg->getHeader().getReceiverName();
         auto serialized_msg = this->serializa_msg(returnmsg);
         std::any_cast<std::function<void(std::string username , std::shared_ptr<std::vector<uint8_t>>)>>(this->get_event_callback(ENQUEUE_SEND_DATA))(receiver_name,serialized_msg);
         // if (returnmsg != nullptr)
