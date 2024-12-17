@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include "../dataBase/dataBase.h"
 #include "../socketManager/socketManager.h"
+#include "../dataBase/dbConstants.h"
 
 class IStrategy
 {

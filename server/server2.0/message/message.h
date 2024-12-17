@@ -3,18 +3,9 @@
 #include <variant>
 #include <optional>
 #include <vector>
+#include "../dataBase/dbConstants.h"
 
-inline const std::string DEFAULT_SENDER_NAME = "default_sender_name";
-inline const int DEFAULT_SENDER_ID = 0;
-inline const int DEFAULT_SESSION_ID = 0;
-inline const int DEFAULT_GROUP_ID = 0;
-inline const int DEFAULT_RECEIVER_ID = 0;
-inline const std::string DEFAULT_RECEIVER_NAME = "default_receiver_name";
 
-//response json
-inline const std::string JSON_FIELD_LOGIN_STATUS = "login_status";
-inline const std::string JSON_FIELD_LOGIN_STATUS_SUCCESS = "success";
-inline const std::string JSON_FIELD_LOGIN_STATUS_FAIL = "fail";
 
 enum class messageType
 {

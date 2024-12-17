@@ -1,9 +1,5 @@
 #include "mysqlpool.h"
-const std::string MYSQL_ADDRESS = "127.0.0.1";
-const size_t  MYSQL_POOL_SIZE = 10;
-const std::string MYSQL_USER = "root";
-const std::string MYSQL_PASSWORD = "";
-const std::string MYSQL_DATABASE= "onlinechat";
+
 
 std::unique_ptr<MySQLConnectionPool> MySQLConnectionPool::m_instance = NULL;
 // std::mutex MySQLConnectionPool::instance_mutex;
@@ -73,6 +69,7 @@ void MySQLConnectionPool::initialize_pool()
 // }
 
 // std::unique_ptr<MySQLConnectionPool> MySQLConnectionPool::getInstance()
+// {
 MySQLConnectionPool& MySQLConnectionPool::getInstance()
 {
     // std::call_once(init_once, [](){

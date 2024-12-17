@@ -559,7 +559,7 @@ void ReactorEventHandler::enqueue_send_message(std::string username , std::share
     {
         // 用户未上线
         // socket_manager->enqueue_willsend_data(username,data);
-        socketManager::getInstance().enqueue_willsend_data(username,data);
+        socketManager::getInstance().enqueue_offline_data(username,data);
     }
     else
     {

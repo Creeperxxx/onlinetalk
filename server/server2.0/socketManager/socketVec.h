@@ -14,6 +14,8 @@ class socketVector
 private:
     int fd;
     std::string username;
+    std::string userid;
+
     std::atomic<time_t> last_interaction_time;
     // std::priority_queue<socketVector*, std::vector<socketVector*>, compareSocketVec> pq;
     
@@ -48,6 +50,7 @@ public:
     void update_last_interaction_time();
     bool is_timeout();
     int get_fd(){return fd;}
+    std::string get_userid(){return userid;}
     const std::string& get_username(){return username;}
     // void set_fd(int fd){this->fd = fd;}
 };

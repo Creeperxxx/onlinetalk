@@ -53,7 +53,7 @@ public:
     // std::shared_ptr<std::unordered_set<int>> get_updated_socket_send_vec();
     std::shared_ptr<std::vector<int>> get_updated_socket_recv_vec();
     std::shared_ptr<std::vector<int>> get_updated_socket_send_vec();
-    void enqueue_willsend_data(std::string username,std::shared_ptr<std::vector<uint8_t>> data);
+    void enqueue_offline_data(const std::string &userid,std::shared_ptr<std::vector<uint8_t>> data);
     void update_socket_interaction_time(int socketfd);
     int get_tobesend_heartbeat_socketfd();
     const std::string& get_username(int socketfd);

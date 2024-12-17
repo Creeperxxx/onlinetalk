@@ -1,9 +1,5 @@
 #include "RedisPool.h"
 
-const std::string REDIS_ADDRESS = "127.0.0.1";
-const int REDIS_PORT = 6379;
-const size_t REDIS_POOL_SIZE = 10;
-
 // std::shared_ptr<redisPool> redisPool::m_instance = nullptr;
 std::unique_ptr<redisPool> redisPool::m_instance = nullptr;
 std::once_flag redisPool::init_once;

@@ -130,3 +130,30 @@ bool redisMethodsV1::redis_del(const std::string& key)
         }
     }
 }
+
+std::string redisMethodsV1::build_cache_key(const std::string& userid)
+{
+    return CACHE_PRIEFIX + userid;
+}
+
+std::string redisMethodsV1::build_find_userid_key(const std::string& username)
+{
+    return CACHE_FINDUSERID_PRIEFIX + username;
+}
+
+bool redisMethodsV1::update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo)
+{
+    std::string redis_findid_key = build_find_userid_key(username);
+    std::string redis_cache_key = build_cache_key(userid);
+    if(!redis_set(redis_findid_key,userid))
+    {
+        LOG_ERROR("%s:%s:%d // redis更新name到id的映射失败", __FILE__, __FUNCTION__, __LINE__);
+        return false;    
+    }
+    if(!redis_set(redis_cache_key,userinfo))
+    {
+        LOG_ERROR("%s:%s:%d // redis更新id到userinfo的映射失败", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+    return true;
+}

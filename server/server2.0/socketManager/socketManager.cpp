@@ -204,11 +204,11 @@ bool socketManager::add_socket_vec(const std::string &username, int socket)
     // }
 }
 
-void socketManager::enqueue_willsend_data(std::string username, std::shared_ptr<std::vector<uint8_t>> data)
+void socketManager::enqueue_offline_data(const std::string &userid, std::shared_ptr<std::vector<uint8_t>> data)
 {
     // sendto_offline_user_data[username].enqueue_bulk(data->data(),data->size());
     std::lock_guard<std::mutex> lock(mutex_offline_user_data);
-    sendto_offline_user_data[username]->insert(sendto_offline_user_data[username]->end(), data->begin(), data->end());
+    sendto_offline_user_data[userid]->insert(sendto_offline_user_data[userid]->end(), data->begin(), data->end());
 }
 
 bool socketManager::delete_socket_vec(int socket)

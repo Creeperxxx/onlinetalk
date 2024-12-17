@@ -4,6 +4,9 @@ std::shared_ptr<message> controlUserLoginStrategy::handle(std::shared_ptr<messag
 {
     //response json:
     // { "login_status": "success"};
+
+    //login json
+    //{ "logintype": "username","id": "123456", "password": "123456"}
     dataHeader header(messageType::Notice, messageAction::USER_LOGIN_STATUS, std::nullopt, msg->getHeader().getSenderName(), msg->getHeader().getSenderId());
     nlohmann::json response;
     // header.setType(messageType::Notice);
@@ -17,15 +20,30 @@ std::shared_ptr<message> controlUserLoginStrategy::handle(std::shared_ptr<messag
     try
     {
         nlohmann::json data = nlohmann::json::parse(data_str);
-        std::string user_id = data[USER_ID_FIELD];
-        std::string user_passwd = data[USER_PASSWD_FIELD];
+        std::string login_mode_str = data[JSON_LOGIN_MODE];
+        std::string user_account;
+        loginType login_type_enum;
+        if(login_mode_str == JSON_LOGIN_MODE_USERNAME)
+        {
+            user_account = data[JSON_LOGIN_USERNAME]; 
+            login_type_enum = loginType::USERNAME;
+        }
+        else if(login_mode_str == JSON_LOGIN_MODE_ID)
+        {
+            user_account = data[JSON_LOGIN_MODE_ID];
+            login_type_enum = loginType::USERID;
+        }
+        std::string user_passwd = data[JSON_LOGIN_PASSWORD];
+        // std::string user_id = data[USER_ID_FIELD];
+        // std::string user_passwd = data[USER_PASSWD_FIELD];
 
-        std::string user_info = databaseV1::getInstance().get_user_info(user_id);
+        // std::string user_info = databaseV1::getInstance().get_user_info(user_id);
+        std::string user_info = databaseV2::get_instance().get_user_info(user_account, login_type_enum);
         if (user_info.empty())
         {
             LOG_ERROR("%s:%s:%d // 数据库没有找到用户信息", __FILE__, __FUNCTION__, __LINE__);
 
-            response[JSON_FIELD_LOGIN_STATUS]= JSON_FIELD_LOGIN_STATUS_FAIL;
+            response[JSON_LOGIN_STATUS] = JSON_LOGIN_STATUS_FAILED;
             // return nullptr;
         }
         else
@@ -59,8 +77,9 @@ std::shared_ptr<message> controlUserLoginStrategy::handle(std::shared_ptr<messag
             }
             else
             {
-                LOG_INFO("%s:%s:%d // %s用户登录失败", __FILE__, __FUNCTION__, __LINE__,user_id);
-                response[JSON_FIELD_LOGIN_STATUS]= JSON_FIELD_LOGIN_STATUS_FAIL;
+                LOG_INFO("%s:%s:%d // %s用户登录失败,登录方式%s", __FILE__, __FUNCTION__, __LINE__,user_account,login_mode_str);
+                // response[JSON_FIELD_LOGIN_STATUS]= JSON_FIELD_LOGIN_STATUS_FAIL;
+                response[JSON_LOGIN_STATUS] = JSON_LOGIN_STATUS_FAILED;
             }
         }
 

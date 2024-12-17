@@ -3,15 +3,7 @@
 #include "../MysqlPool/mysqlMethods.h"
 #include "../logSystem/log.h"
 #include <nlohmann/json.hpp>
-
-inline const std::string CACHE_PRIEFIX = "user:";
-inline const std::string CACHE_FINDUSERID_PRIEFIX = "user:by_username:";
-
-enum class loginType
-{
-    USERNAME,
-    USERID
-};
+#include "dbConstants.h"
 
 class Idatabase
 {
@@ -30,20 +22,30 @@ protected:
     std::unique_ptr<IredisMethods> m_redisMethods;
 };
 
-class databaseV1 : public Idatabase
+// class databaseV1 : public Idatabase
+// {
+// public:
+//     static databaseV1& getInstance();
+//     ~databaseV1(){}
+//     // std::string get_user_info(int userid) override;
+//     std::string get_user_info(const std::string& userid , loginType) override;
+//     // std::string get_user_info(const std::string& username) override;
+//     // void set_user_info(int userid,const std::string& username,const std::string& password , const std::string& email) override;
+//     void set_user_info(const std::string& userid,const std::string& username,const std::string& password, const std::string& email) override;
+//     void delete_user_info(int userid) override;
+// private:
+//     databaseV1(): Idatabase(){}
+// private:
+//     static std::unique_ptr<databaseV1> m_instance;
+//     static std::once_flag init_once;
+// };
+
+class databaseV2 : public Idatabase
 {
 public:
-    static databaseV1& getInstance();
-    ~databaseV1(){}
-    // std::string get_user_info(int userid) override;
-    std::string get_user_info(const std::string& userid , loginType) override;
-    // std::string get_user_info(const std::string& username) override;
-    // void set_user_info(int userid,const std::string& username,const std::string& password , const std::string& email) override;
+    static databaseV2& get_instance();
+    ~databaseV2(){}
+    std::string get_user_info(const std::string& account, loginType) override;
     void set_user_info(const std::string& userid,const std::string& username,const std::string& password, const std::string& email) override;
     void delete_user_info(int userid) override;
-private:
-    databaseV1(): Idatabase(){}
-private:
-    static std::unique_ptr<databaseV1> m_instance;
-    static std::once_flag init_once;
 };

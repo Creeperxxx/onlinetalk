@@ -15,14 +15,15 @@
 #include "../logSystem/log.h"
 #include "../requirement/moodycamel/concurrentqueue.h"
 #include "mysqlMethods.h"
+#include "../dataBase/dbConstants.h"
 // #include "../dataBase/dataBase.h"
 //raii
-extern const std::string MYSQL_ADDRESS;
-// extern const int port;
-extern const size_t  MYSQL_POOL_SIZE;
-extern const std::string MYSQL_USER;
-extern const std::string MYSQL_PASSWORD;
-extern const std::string MYSQL_DATABASE;
+// extern const std::string MYSQL_ADDRESS;
+// // extern const int port;
+// extern const size_t  MYSQL_POOL_SIZE;
+// extern const std::string MYSQL_USER;
+// extern const std::string MYSQL_PASSWORD;
+// extern const std::string MYSQL_DATABASE;
 
 
 

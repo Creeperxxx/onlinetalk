@@ -40,6 +40,9 @@ public:
     std::string redis_get(const std::string& key);
     bool redis_set(const std::string& key,const std::string& value);
     bool redis_del(const std::string& key);
+    std::string build_cache_key(const std::string& userid);
+    std::string build_find_userid_key(const std::string& username);
+    bool update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo);
 // private:
 //     static std::unique_ptr<redisMethods> m_instance;
 };

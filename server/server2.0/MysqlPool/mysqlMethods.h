@@ -1,21 +1,30 @@
 #pragma once
 #include "mysqlpool.h"
 #include <memory>
+#include <variant>
+// enum class statementType
+// {
+//     QUERY,
+//     NOTQUERY
+// };
 
-extern const std::string MYSQL_TABLE;
-extern const std::string USER_ID_FIELD;
-extern const std::string USER_NAME_FIELD;
-extern const std::string USER_PASSWD_FIELD;
-extern const std::string USER_EMAIL_FIELD;
 
 class ImysqlMethods
 {
 public:
     // virtual void init() = 0;
-    virtual std::unique_ptr<sql::ResultSet> execute_query(const std::string& sql) = 0;
-    virtual bool execute_notquery(const std::string& sql) = 0;
-private:
-    std::unique_ptr<MySQLConnectionPool> m_mysqlpool;
+    // virtual std::unique_ptr<sql::ResultSet> execute_query(const std::string& sql ) = 0;
+
+    // virtual std::unique_ptr<sql::ResultSet> execute_query(const std::string& sql , std::vector<std::variant<int,std::string>>& params) = 0;
+
+    virtual std::variant<bool , std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type ,const std::string& sql, std::vector<std::variant<int,std::string>>& params) = 0;
+
+    // virtual bool execute_notquery(const std::string& sql) = 0;
+    // virtual bool execute_notquery(const std::string& sql , std::vector<std::variant<int,std::string>>& params) = 0;
+
+    virtual std::shared_ptr<sql::Connection> getConnection() = 0;
+// private:
+    // std::unique_ptr<MySQLConnectionPool> m_mysqlpool;
 };
 
 class mysqlMethodsV1: public ImysqlMethods
@@ -23,8 +32,17 @@ class mysqlMethodsV1: public ImysqlMethods
 public:
     // void init() override;
     std::shared_ptr<sql::Connection> getConnection();
-    std::unique_ptr<sql::ResultSet> execute_query(const std::string& sql) override;
-    bool execute_notquery(const std::string& sql) override;
+    // std::unique_ptr<sql::ResultSet> execute_query(const std::string& sql) override;
+    // bool execute_notquery(const std::string& sql) override;
 // private:
 //     std::shared_ptr<MySQLConnectionPool> m_mysqlpool;
 };
+
+class mysqlMethodsV2 : public ImysqlMethods
+{
+public:
+    std::shared_ptr<sql::Connection> getConnection();
+
+    std::variant<bool, std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params);
+};
+
