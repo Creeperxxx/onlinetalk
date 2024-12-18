@@ -154,13 +154,18 @@
 //     }
 // }
 
-databaseV2& databaseV2::get_instance()
+// databaseV2& databaseV2::get_instance()
+// {
+//     static databaseV2 instance;
+//     return instance;
+// }
+database& database::get_instance()
 {
-    static databaseV2 instance;
+    static database instance;
     return instance;
 }
 
-std::string databaseV2::get_user_info(const std::string &account ,loginType type)
+std::string database::get_user_info_from_cacheordb(const std::string &account ,loginType type)
 {
     //1. 先查redis
     //2. 查不到就查mysql
@@ -169,10 +174,13 @@ std::string databaseV2::get_user_info(const std::string &account ,loginType type
     std::string res_string;
     std::string mysql_query_sql;
     std::vector<std::variant<int,std::string>> params;
+    std::string redis_findid_key;
+    std::string user_id;
     if(type == loginType::USERNAME)
     {
-        std::string redis_findid_key = dynamic_cast<redisMethodsV1*>(m_redisMethods.get())->build_find_userid_key(account);
-        std::string user_id = m_redisMethods->redis_get(redis_findid_key);
+        // std::string redis_findid_key = dynamic_cast<redisMethods*>(m_redisMethods.get())->build_find_userid_key(account);
+        redis_findid_key = m_redisMethods->build_key_find_userid(account);
+        user_id = m_redisMethods->redis_get(redis_findid_key);
         if(user_id.empty())
         {
             LOG_WARING("%s:%s:%d // 在redis中找不到%s对应的id",__FILE__,__FUNCTION__,__LINE__,account);
@@ -181,7 +189,8 @@ std::string databaseV2::get_user_info(const std::string &account ,loginType type
         }
         else   
         {
-            redis_query_key = dynamic_cast<redisMethodsV1*>(m_redisMethods.get())->build_cache_key(user_id);
+            // redis_query_key = dynamic_cast<redisMethods*>(m_redisMethods.get())->build_cache_key(user_id);
+            redis_query_key = m_redisMethods->build_key_find_userinfo(user_id);
             res_string = m_redisMethods->redis_get(redis_query_key);
             if(!res_string.empty())
             {
@@ -196,7 +205,8 @@ std::string databaseV2::get_user_info(const std::string &account ,loginType type
     }
     else
     {
-        redis_query_key = dynamic_cast<redisMethodsV1*>(m_redisMethods.get())->build_cache_key(account);
+        // redis_query_key = dynamic_cast<redisMethods*>(m_redisMethods.get())->build_cache_key(account);
+        redis_query_key = m_redisMethods->build_key_find_userinfo(account);
         res_string = m_redisMethods->redis_get(redis_query_key);
         if(!res_string.empty())
         {
@@ -232,12 +242,18 @@ std::string databaseV2::get_user_info(const std::string &account ,loginType type
                 return "";
             }
             //更新到redis
-            bool flag = dynamic_cast<redisMethodsV1*>(m_redisMethods.get())->update_redis_cache(res->getString(USER_NAME_FIELD),std::to_string(res->getInt(USER_ID_FIELD)),res_string);
-            if(!flag)
-            {
-                LOG_ERROR("%s:%s:%d // 更新redis缓存失败",__FILE__,__FUNCTION__,__LINE__);
-            }
-            return res_string;
+            redis_findid_key = m_redisMethods->build_key_find_userid(res->getString(USER_NAME_FIELD));
+            m_redisMethods->redis_set(redis_findid_key,std::to_string(res->getInt(USER_ID_FIELD)),std::nullopt,REDIS_EXPIRE_USERINFO);
+            redis_query_key = m_redisMethods->build_key_find_userinfo(std::to_string(res->getInt(USER_ID_FIELD)));
+            m_redisMethods->redis_set(redis_query_key,res_string,std::nullopt,REDIS_EXPIRE_USERINFO);
+            // bool flag = dynamic_cast<redisMethods*>(m_redisMethods.get())->update_redis_cache(res->getString(USER_NAME_FIELD),std::to_string(res->getInt(USER_ID_FIELD)),res_string);
+
+            // bool flag = m_redisMethods->update_redis_cache(res->getString(USER_NAME_FIELD),std::to_string(res->getInt(USER_ID_FIELD)),res_string);
+            // if(!flag)
+            // {
+            //     LOG_ERROR("%s:%s:%d // 更新redis缓存失败",__FILE__,__FUNCTION__,__LINE__);
+            // }
+            // return res_string;
         }
         else
         {
@@ -247,7 +263,7 @@ std::string databaseV2::get_user_info(const std::string &account ,loginType type
     }
 }
 
-void databaseV2::set_user_info(const std::string &userid, const std::string &username, const std::string &password, const std::string &email)
+void database::set_user_info_from_cacheanddb(const std::string &userid, const std::string &username, const std::string &password, const std::string &email)
 {
     // 1. 先更新mysql
     //"INSERT INTO " + MYSQL_TABLE + " (" + USER_ID_FIELD + ", " + USER_NAME_FIELD + ", " + USER_PASSWD_FIELD + ", " + USER_EMAIL_FIELD + ") VALUES (?, ?, ?, ?)" +
@@ -277,15 +293,26 @@ void databaseV2::set_user_info(const std::string &userid, const std::string &use
     }
     
     // 2. 将redis中的数据删除
-    std::string cache_key = dynamic_cast<redisMethodsV1*>(m_redisMethods.get())->build_cache_key(userid);
-    if(m_redisMethods->redis_del(cache_key))
-    {
-        LOG_INFO("%s:%s:%d // 删除redis成功",__FILE__,__FUNCTION__,__LINE__);
-        return;
-    }
-    else
-    {
-        LOG_WARING("%s:%s:%d // 删除redis失败",__FILE__,__FUNCTION__,__LINE__);
-        return;
-    }
+    // std::string cache_key = dynamic_cast<redisMethods*>(m_redisMethods.get())->build_cache_key(userid);
+    std::string cache_key = m_redisMethods->build_key_find_userinfo(userid);
+    m_redisMethods->redis_del(cache_key);
+    std::string redis_findid_key = m_redisMethods->build_key_find_userid(username);
+    m_redisMethods->redis_del(redis_findid_key);
+    // if(m_redisMethods->redis_del(cache_key))
+    // {
+    //     LOG_INFO("%s:%s:%d // 删除redis成功",__FILE__,__FUNCTION__,__LINE__);
+    //     return;
+    // }
+    // else
+    // {
+    //     LOG_WARING("%s:%s:%d // 删除redis失败",__FILE__,__FUNCTION__,__LINE__);
+    //     return;
+    // }
 }
+
+void database::set_offline_data_from_cacheanddb(const std::string &userid,const std::vector<uint8_t> &data)
+{
+    //先将数据序列化
+    
+}
+

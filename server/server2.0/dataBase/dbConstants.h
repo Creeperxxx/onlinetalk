@@ -33,12 +33,20 @@ inline const std::string JSON_LOGIN_STATUS_FAILED = "failed";
 */
 
 //redis
-inline const std::string REDIS_ADDRESS = "127.0.0.1";
-inline const int REDIS_PORT = 6379;
+inline const std::string REDIS_POOL_ADDRESS = "127.0.0.1";
+inline const int REDIS_POOL_PORT = 6379;
 inline const size_t REDIS_POOL_SIZE = 10;
 
-inline const std::string CACHE_PRIEFIX = "user:";
-inline const std::string CACHE_FINDUSERID_PRIEFIX = "user:by_username:";
+inline const std::string REDIS_PRIEFIX_FIND_USERINFO = "user:user_info:";
+inline const std::string REDIS_PRIEFIX_FIND_USERID = "user:find_userid_by_username:";
+
+inline const int REDIS_EXPIRE_USERINFO = 60*60;
+
+enum class redisSetMode
+{
+    NX,//键不存在则设置，存在则不设置
+    XX//键存在则设置，不存在则不设置
+};
 
 //mysql
 enum class statementType

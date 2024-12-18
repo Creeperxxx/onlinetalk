@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/home/creeper/code/c++2.0/onlinetalk/server"
+    "cmake.sourceDirectory": "/home/creeper/code/c++2.0/onlinetalk/server",
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

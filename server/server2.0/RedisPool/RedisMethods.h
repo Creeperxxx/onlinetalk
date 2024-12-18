@@ -2,25 +2,27 @@
 #include "RedisPool.h"
 #include <memory>
 #include <vector>
-
+#include <optional>
 
 // using RedisReplyPtr = std::unique_ptr<redisReply, void(*)(redisReply*)>;
 
-class IredisMethods
-{
+//我去，这里属于是强行面向接口编程了啊，感觉这个虚基类完全没有必要反而让项目更麻烦了我服了
+// class IredisMethods
+// {
     
-public:
-    // using RedisReplyPtr = std::unique_ptr<redisReply, decltype(freeReplyObject)>;
-    // virtual std::unique_ptr<redisReply> execute_command(const std::string& rediscommand) = 0;
-    // virtual std::unique_ptr<redisReply,decltype(freeReplyObject)> execute_command(const std::string& rediscommand) = 0;
-    // virtual std::shared_ptr<redisReply> execute_command(const std::string& rediscommand) = 0;
+// public:
+//     // using RedisReplyPtr = std::unique_ptr<redisReply, decltype(freeReplyObject)>;
+//     // virtual std::unique_ptr<redisReply> execute_command(const std::string& rediscommand) = 0;
+//     // virtual std::unique_ptr<redisReply,decltype(freeReplyObject)> execute_command(const std::string& rediscommand) = 0;
+//     // virtual std::shared_ptr<redisReply> execute_command(const std::string& rediscommand) = 0;
 
-    virtual std::string redis_get(const std::string& key);
-    virtual bool redis_set(const std::string& key,const std::string& value);
-    virtual bool redis_del(const std::string& key);
-// private:
-//     std::unique_ptr<redisPool> m_redispool;
-};
+//     virtual std::string redis_get(const std::string& key);
+//     virtual bool redis_set(const std::string& key,const std::string& value);
+//     virtual bool redis_del(const std::string& key);
+// // private:
+// //     std::unique_ptr<redisPool> m_redispool;
+// };
+
 /*
 redis方法
 1. 插入键值对。要求值可以为5种数据类型
@@ -29,20 +31,25 @@ redis方法
 4. 更新键值对。
 5. 
 */
-class redisMethodsV1 : public IredisMethods
+class redisMethods //: public IredisMethods
 {
-public:
+// public:
     // bool insert(const std::string &key, const std::string &value) override;
     // std::unique_ptr<redisReply> execute_command(const std::string& rediscommand) override;
     // std::unique_ptr<redisReply,decltype(freeReplyObject)> execute_command(const std::string& rediscommand) override;
     // std::shared_ptr<redisReply> execute_command(const std::string& rediscommand) override;
-
-    std::string redis_get(const std::string& key);
-    bool redis_set(const std::string& key,const std::string& value);
+public:
     bool redis_del(const std::string& key);
-    std::string build_cache_key(const std::string& userid);
-    std::string build_find_userid_key(const std::string& username);
-    bool update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo);
+
+    std::string redis_set_get(const std::string& key);
+    bool redis_set_set(const std::string& key,const std::string& value, std::optional<redisSetMode> mode = std::nullopt, std::optional<int> expire = std::nullopt);
+    
+    std::string 
+    // std::string build_cache_key(const std::string& userid);
+    std::string build_key_find_userinfo(const std::string& userid);
+    // std::string build_find_userid_key(const std::string& username);
+    std::string build_key_find_userid(const std::string& username);
+    // bool update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo);
 // private:
 //     static std::unique_ptr<redisMethods> m_instance;
 };

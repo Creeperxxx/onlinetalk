@@ -28,8 +28,9 @@
 
 
 class MySQLConnectionPool {
-    friend class ImysqlMethods;
+    // friend class mysqlMethods;
     // friend class Idatabase;
+    friend class mysqlConnRAII;
 private:
     // std::string m_url;
     // std::string m_user;
@@ -41,18 +42,25 @@ private:
     // std::mutex pool_mutex;
     // static std::mutex instance_mutex;
     // std::condition_variable cv;
-    static std::once_flag init_once;
-    static std::unique_ptr<MySQLConnectionPool> m_instance;
+    // static std::once_flag init_once;
+    // static std::unique_ptr<MySQLConnectionPool> m_instance;
     MySQLConnectionPool(const MySQLConnectionPool&) = delete;
     MySQLConnectionPool& operator=(const MySQLConnectionPool&) = delete;
-    MySQLConnectionPool(){}
-public:
-    ~MySQLConnectionPool(){}
-    // static std::unique_ptr<MySQLConnectionPool> getInstance();
+    MySQLConnectionPool(){ initialize_pool();}
+    void initialize_pool();
     static MySQLConnectionPool& getInstance();
     std::shared_ptr<sql::Connection> getConnection();
     void releaseConnection(std::shared_ptr<sql::Connection> conn);
-    void initialize_pool();
+
+    // static MySQLConnectionPool& getInstance();
+public:
+    // static MySQLConnectionPool& getInstance();
+
+    ~MySQLConnectionPool(){}
+    // static std::unique_ptr<MySQLConnectionPool> getInstance();
+    // std::shared_ptr<sql::Connection> getConnection();
+    // void releaseConnection(std::shared_ptr<sql::Connection> conn);
+    // void initialize_pool();
     // void initializePool(const std::string& url,
     //                     const std::string& user, 
     //                     const std::string& password,   
@@ -62,3 +70,13 @@ public:
     // std::shared_ptr<sql::ResultSet> executestatement(const std::string& sql);
 };
 
+class mysqlConnRAII
+{
+private:
+    std::shared_ptr<sql::Connection> conn;
+    MySQLConnectionPool& mysql_pool;   
+public:
+    mysqlConnRAII():mysql_pool(MySQLConnectionPool::getInstance()){conn = mysql_pool.getConnection();}
+    ~mysqlConnRAII(){mysql_pool.releaseConnection(conn);}
+    std::shared_ptr<sql::Connection> get_connection(){return conn;}
+};

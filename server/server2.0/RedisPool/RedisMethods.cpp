@@ -27,10 +27,12 @@
 //     }
 // }
 
-std::string redisMethodsV1::redis_get(const std::string& key)
+std::string redisMethods::redis_get(const std::string& key)
 // std::string redisMethods::redis_get(const std::string& key)
 {
-    auto conn = redisPool::getInstance().get_connection();
+    // auto conn = redisPool::getInstance().get_connection();
+    auto connraii = redisConnRAII();
+    auto conn = connraii.get_connection();
     if (!conn)
     {
         LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
@@ -38,7 +40,8 @@ std::string redisMethodsV1::redis_get(const std::string& key)
     }
     else
     {
-        redisReply* raw_reply = static_cast<redisReply*>(redisCommand(conn.get(), "GET %s", key.c_str()));
+        // redisReply* raw_reply = static_cast<redisReply*>(redisCommand(conn.get(), "GET %s", key.c_str()));
+        std::unique_ptr<redisReply,void(*)(redisReply*)> raw_reply(static_cast<redisReply*>(redisCommand(conn.get(), "GET %s", key.c_str())),[](redisReply* reply){freeReplyObject(reply);});
         if(!raw_reply)
         {
             LOG_ERROR("%s:%s:%d // 执行redis命令失败", __FILE__, __FUNCTION__, __LINE__);
@@ -66,10 +69,14 @@ std::string redisMethodsV1::redis_get(const std::string& key)
     }
 }
 
-bool redisMethodsV1::redis_set(const std::string& key,const std::string& value)
+
+
+bool redisMethods::redis_set(const std::string& key,const std::string& value ,std::optional<redisSetMode> mode,std::optional<int> expiretime)
 // bool redisMethods::redis_set(const std::string& key,const std::string& value)
 {
-    auto conn = redisPool::getInstance().get_connection();
+    // auto conn = redisPool::getInstance().get_connection();
+    auto connraii = redisConnRAII();
+    auto conn = connraii.get_connection();
     if (!conn)
     {
         LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
@@ -77,7 +84,48 @@ bool redisMethodsV1::redis_set(const std::string& key,const std::string& value)
     }
     else
     {
-        redisReply* raw_reply = static_cast<redisReply*>(redisCommand(conn.get(), "SET %s %s", key.c_str(), value.c_str()));
+        // redisReply* raw_reply = static_cast<redisReply*>(redisCommand(conn.get(), "SET %s %s", key.c_str(), value.c_str()));
+
+        // std::string mode_str = "";
+        // if(mode.has_value())
+        // {
+        //     if(mode.value() == redisSetMode::NX)
+        //     {
+        //         mode_str = "NX";
+        //     }
+        //     else
+        //     {
+        //         mode_str = "XX";
+        //     }
+        // }
+        // std::string expiretime_mode = "";
+        // if(expiretime.has_value())
+        // {
+        //     expiretime_mode = "EX";
+        // }
+        // else
+        // {
+
+        // }
+        // std::unique_ptr<redisReply,void(*)(redisReply*)> raw_reply(static_cast<redisReply*>(redisCommand(conn.get(), "SET %s %s %s %d %s", key.c_str(), value.c_str(), expiretime ,)),[](redisReply* reply){freeReplyObject(reply);});
+
+        std::string command_str = "SET " + key + " " + value;
+        if(mode.has_value())
+        {
+            if(mode.value() == redisSetMode::NX)
+            {
+                command_str += " NX";
+            }
+            else
+            {
+                command_str += " XX";
+            }
+        }
+        if(expiretime.has_value())
+        {
+            command_str += " EX " + std::to_string(expiretime.value());
+        }
+        std::unique_ptr<redisReply,void(*)(redisReply*)> raw_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
         if(!raw_reply)
         {
             LOG_ERROR("%s:%s:%d // 执行redis命令失败", __FILE__, __FUNCTION__, __LINE__);
@@ -99,9 +147,11 @@ bool redisMethodsV1::redis_set(const std::string& key,const std::string& value)
     }
 }
 
-bool redisMethodsV1::redis_del(const std::string& key)
+bool redisMethods::redis_del(const std::string& key)
 {
-    auto conn = redisPool::getInstance().get_connection();
+    // auto conn = redisPool::getInstance().get_connection();
+    auto connraii = redisConnRAII();
+    auto conn = connraii.get_connection();
     if (!conn)
     {
         LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
@@ -109,7 +159,8 @@ bool redisMethodsV1::redis_del(const std::string& key)
     }
     else
     {
-        redisReply* raw_reply = static_cast<redisReply*>(redisCommand(conn.get(), "DEL %s", key.c_str()));
+        // redisReply* raw_reply = static_cast<redisReply*>(redisCommand(conn.get(), "DEL %s", key.c_str()));
+        std::unique_ptr<redisReply,void(*)(redisReply*)> raw_reply(static_cast<redisReply*>(redisCommand(conn.get(), "DEL %s", key.c_str())),[](redisReply* reply){freeReplyObject(reply);});
         if(!raw_reply)
         {
             LOG_ERROR("%s:%s:%d // 执行redis命令失败", __FILE__, __FUNCTION__, __LINE__);
@@ -131,29 +182,29 @@ bool redisMethodsV1::redis_del(const std::string& key)
     }
 }
 
-std::string redisMethodsV1::build_cache_key(const std::string& userid)
+std::string redisMethods::build_key_find_userinfo(const std::string& userid)
 {
-    return CACHE_PRIEFIX + userid;
+    return REDIS_PRIEFIX_FIND_USERINFO + userid;
 }
 
-std::string redisMethodsV1::build_find_userid_key(const std::string& username)
+std::string redisMethods::build_key_find_userid(const std::string& username)
 {
-    return CACHE_FINDUSERID_PRIEFIX + username;
+    return REDIS_PRIEFIX_FIND_USERID + username;
 }
 
-bool redisMethodsV1::update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo)
-{
-    std::string redis_findid_key = build_find_userid_key(username);
-    std::string redis_cache_key = build_cache_key(userid);
-    if(!redis_set(redis_findid_key,userid))
-    {
-        LOG_ERROR("%s:%s:%d // redis更新name到id的映射失败", __FILE__, __FUNCTION__, __LINE__);
-        return false;    
-    }
-    if(!redis_set(redis_cache_key,userinfo))
-    {
-        LOG_ERROR("%s:%s:%d // redis更新id到userinfo的映射失败", __FILE__, __FUNCTION__, __LINE__);
-        return false;
-    }
-    return true;
-}
+// bool redisMethods::update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo)
+// {
+//     std::string redis_findid_key = build_find_userid_key(username);
+//     std::string redis_cache_key = build_cache_key(userid);
+//     if(!redis_set(redis_findid_key,userid))
+//     {
+//         LOG_ERROR("%s:%s:%d // redis更新name到id的映射失败", __FILE__, __FUNCTION__, __LINE__);
+//         return false;    
+//     }
+//     if(!redis_set(redis_cache_key,userinfo))
+//     {
+//         LOG_ERROR("%s:%s:%d // redis更新id到userinfo的映射失败", __FILE__, __FUNCTION__, __LINE__);
+//         return false;
+//     }
+//     return true;
+// }

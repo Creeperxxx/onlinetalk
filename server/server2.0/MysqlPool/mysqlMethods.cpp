@@ -48,15 +48,17 @@
 
 
 
-std::shared_ptr<sql::Connection> mysqlMethodsV2::getConnection()
-{
-    return MySQLConnectionPool::getInstance().getConnection();
-}
+// std::shared_ptr<sql::Connection> mysqlMethods::getConnection()
+// {
+//     return MySQLConnectionPool::getInstance().getConnection();
+// }
 
-std::variant<bool , std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> mysqlMethodsV2::execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params)
+std::variant<bool , std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> mysqlMethods::execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params)
 {
     try{
-    auto conn = MySQLConnectionPool::getInstance().getConnection();
+    // auto conn = MySQLConnectionPool::getInstance().getConnection();
+    auto connraii = mysqlConnRAII();
+    auto conn = connraii.get_connection();
     if(conn == nullptr)
     {
         LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
