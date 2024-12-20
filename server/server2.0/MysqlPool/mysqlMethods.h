@@ -2,6 +2,7 @@
 #include "mysqlpool.h"
 #include <memory>
 #include <variant>
+#include <optional>
 // enum class statementType
 // {
 //     QUERY,
@@ -43,6 +44,7 @@ class mysqlMethods //: public ImysqlMethods
 public:
     // std::shared_ptr<sql::Connection> getConnection();
 
-    std::variant<bool, std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params);
+    // std::variant<bool, std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params);
+    std::variant<bool, std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type,const std::string& sql, std::optional<std::vector<std::variant<int,std::string>>> params = std::nullopt);
 };
 

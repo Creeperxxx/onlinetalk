@@ -59,13 +59,25 @@ inline const std::string MYSQL_ADDRESS = "127.0.0.1";
 inline const size_t  MYSQL_POOL_SIZE = 10;
 inline const std::string MYSQL_USER = "root";
 inline const std::string MYSQL_PASSWORD = "";
-inline const std::string MYSQL_DATABASE= "onlinechat";
+inline const std::string MYSQL_DATABASE= "chat";
 
-inline const std::string MYSQL_TABLE = "users";
-inline const std::string USER_ID_FIELD = "id";
-inline const std::string USER_NAME_FIELD = "username";
-inline const std::string USER_PASSWD_FIELD = "password";
-inline const std::string USER_EMAIL_FIELD = "email";
+    //mysql user表
+inline const std::string MYSQL_TABLE_USERS = "users";
+inline const std::string MYSQL_TABLE_USER_FIELD_ID = "user_id";
+inline const std::string MYSQL_TABLE_USER_FIELD_NAME = "user_name";
+inline const std::string MYSQL_TABLE_USER_FIELD_PASSWD = "user_passwd";
+inline const std::string MYSQL_TABLE_USER_FIELD_EMAIL = "user_email";
+    //mysql messages表
+inline const std::string MYSQL_TABLE_MESSAGES = "messages";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_ID = "message_id";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_SENDER_ID = "sender_id";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_RECEIVER_ID = "receiver_id";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_SENDER_NAME = "sender_name";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_RECEIVER_NAME = "receiver_name";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_CONTENT = "content";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_MESSAGETYPE = "message_type";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_ISDELIVERED = "is_delivered";
+inline const std::string MYSQL_TABLE_MESSAGES_FIELD_CREATEDAT = "created_at";
 
 //message
 inline const std::string DEFAULT_SENDER_NAME = "default_sender_name";

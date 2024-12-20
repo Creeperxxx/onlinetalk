@@ -27,7 +27,7 @@
 //     }
 // }
 
-std::string redisMethods::redis_get(const std::string& key)
+std::string redisMethods::redis_set_get(const std::string& key)
 // std::string redisMethods::redis_get(const std::string& key)
 {
     // auto conn = redisPool::getInstance().get_connection();
@@ -71,7 +71,7 @@ std::string redisMethods::redis_get(const std::string& key)
 
 
 
-bool redisMethods::redis_set(const std::string& key,const std::string& value ,std::optional<redisSetMode> mode,std::optional<int> expiretime)
+bool redisMethods::redis_set_set(const std::string& key,const std::string& value ,std::optional<redisSetMode> mode,std::optional<int> expiretime)
 // bool redisMethods::redis_set(const std::string& key,const std::string& value)
 {
     // auto conn = redisPool::getInstance().get_connection();

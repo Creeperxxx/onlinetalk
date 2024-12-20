@@ -1,11 +1,7 @@
 #include "msgAnalysisFSM.h"
 
 // const int MSG_IDENTIFIER_SIZE = 4;
-const char MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE] = {'M', 'S', 'G', '_'};
-const uint32_t MSG_MAX_LENGHT = 2048;
 
-const char *ENQUEUE_SEND_DATA = "enqueue_send_data";
-const char *TASK_COMMIT = "task_commit";
 
 void msgAnalysisFSM::process()
 {
@@ -167,6 +163,8 @@ void msgAnalysisFSM::process_msg()
             LOG_ERROR("%s:%s:%d // 反序列化消息为空", __FILE__, __FUNCTION__, __LINE__);
             return;
         }
+        //将发来的消息加入数据库
+
         auto header = temp->getHeader();
         header.setSenderSocketFd(this->get_socketfd());
         temp->setHeader(header);
@@ -188,8 +186,12 @@ void msgAnalysisFSM::process_msg()
         //     LOG_ERROR("%s:%s:%d // 接收者名字为空", __FILE__, __FUNCTION__, __LINE__);
         //     return;
         // }
-        receiver_name = returnmsg->getHeader().getReceiverName();
-        auto serialized_msg = this->serializa_msg(returnmsg);
+        //
+
+        //将得到的返回消息加入数据库。
+        // receiver_name = returnmsg->getHeader().getReceiverName();
+        // auto serialized_msg = this->serializa_msg(returnmsg);
+
         std::any_cast<std::function<void(std::string username , std::shared_ptr<std::vector<uint8_t>>)>>(this->get_event_callback(ENQUEUE_SEND_DATA))(receiver_name,serialized_msg);
         // if (returnmsg != nullptr)
         // {

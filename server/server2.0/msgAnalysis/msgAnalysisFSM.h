@@ -9,13 +9,8 @@
 #include "../threadPool/threadPool.h"
 #include "../eventManager/eventManager.h"
 #include <any>
+#include "msgAnalysisConstants.h"
 
-inline constexpr int MSG_IDENTIFIER_SIZE = 4;
-extern const char MSG_IDENTIFIER[MSG_IDENTIFIER_SIZE];
-extern const uint32_t MSG_MAX_LENGHT;
-
-extern const char* ENQUEUE_SEND_DATA;
-extern const char* TASK_COMMIT;
 
 enum class analysisState
 {

@@ -13,15 +13,13 @@
 #include "../logSystem/log.h"
 #include <string>
 #include "../socketManager/socketManager.h"
+#include "ehConstants.h"
 
+// extern const int MAX_EPOLL_EVENTS;
+// extern const int THREAD_NUMS;
+// extern const int LISTEN_PORT;
+// extern const int MAX_DEQUEUE_NUMS;
 
-extern const int MAX_EPOLL_EVENTS;
-extern const int THREAD_NUMS;
-extern const int LISTEN_PORT;
-extern const int MAX_DEQUEUE_NUMS;
-
-extern const int FIND_USERNAME_FAILED;
-extern const int FIND_USER_SOCKET_FAILED;
 
 // extern std::atomic<bool> event_loop_running;
 // void event_loop_running_signal_handler(int signal);
@@ -48,8 +46,12 @@ public:
     void analyze_recv_data();
     void heartbeat();
     // void enqueue_send_message(std::shared_ptr<message> data);
-    void enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data);
+    // void enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data);
+    void enqueue_send_message(const std::string& userid,std::shared_ptr<std::vector<uint8_t>> data);
     void task_commit(std::function<void()> task);
+    void add_new_userid_to_all_userid(const std::string& userid);
+    void delete_userid_from_all_userid(const std::string& userid);
+    
 
 private:
     void deleter();
@@ -61,9 +63,13 @@ private:
     // template <typename T>
     // std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
     // uint32_t calculateCRC32(const uint8_t *data, size_t length);
-    int get_socket_from_username(const std::string& username);
+    // int get_socket_from_username(const std::string& username);
+    int get_socket_from_userid(const std::string& userid);
     // int get_socket_from_userid(int userid);
     std::shared_ptr<std::vector<uint8_t>> get_heartbeat_data(int socketfd);
+    void load_all_userid();
+    bool is_userid_exist(const std::string& userid);
+    // bool is_user_online(const std::string& userid);
 
 private:
     int epoll_fd;
@@ -84,6 +90,9 @@ private:
     std::vector<int> ready_sockets;
     std::mutex ready_sockets_mutex;
     std::condition_variable ready_sockets_cv;
+
+    std::unordered_set<std::string> all_userid;
+    std::mutex all_userid_mutex;
 
     // std::shared_ptr<socketManager> socket_manager;
     // std::unique_ptr<socketManager> socket_manager;

@@ -143,7 +143,8 @@ std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_send_vec()
     return std::make_shared<std::vector<int>>(std::move(updated_socket_send_vec));
 }
 
-bool socketManager::add_socket_vec(const std::string &username, int socket)
+// bool socketManager::add_socket_vec(const std::string &username, int socket)
+bool socketManager::add_socket_vec(const std::string& userid,const std::string& username,int socketfd)
 {
     {
         if( is_username_exist(username))
@@ -351,4 +352,17 @@ bool socketManager::is_username_exist(const std::string& username)
         }
     }
     return false;
+}
+
+int socketManager::get_socket_by_userid(const std::string& userid)
+{
+    std::lock_guard<std::mutex> lock(mutex_socket_vecs);
+    for(auto it : socket_vecs)
+    {
+        if(it.second->get_userid() == userid)
+        {
+            return it.first;
+        }
+    }
+    return USER_OFFLINE;
 }

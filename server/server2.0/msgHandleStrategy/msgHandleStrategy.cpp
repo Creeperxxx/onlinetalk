@@ -50,7 +50,7 @@ std::shared_ptr<message> controlUserLoginStrategy::handle(std::shared_ptr<messag
         {
             nlohmann::json user_info_json = nlohmann::json::parse(user_info);
 
-            if (user_passwd == user_info_json[USER_PASSWD_FIELD])
+            if (user_passwd == user_info_json[MYSQL_TABLE_USER_FIELD_PASSWD])
             {
                 //这里需要用到socketmanager，有两种方案：
                 //  1. 将socketmanager设计为单例模式

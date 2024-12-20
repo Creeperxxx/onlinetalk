@@ -180,25 +180,25 @@ std::string database::get_user_info_from_cacheordb(const std::string &account ,l
     {
         // std::string redis_findid_key = dynamic_cast<redisMethods*>(m_redisMethods.get())->build_find_userid_key(account);
         redis_findid_key = m_redisMethods->build_key_find_userid(account);
-        user_id = m_redisMethods->redis_get(redis_findid_key);
+        user_id = m_redisMethods->redis_set_get(redis_findid_key);
         if(user_id.empty())
         {
             LOG_WARING("%s:%s:%d // 在redis中找不到%s对应的id",__FILE__,__FUNCTION__,__LINE__,account);
-            mysql_query_sql = "SELECT * FROM " + MYSQL_TABLE + " WHERE " + USER_NAME_FIELD + " =?";
+            mysql_query_sql = "SELECT * FROM " + MYSQL_TABLE_USERS + " WHERE " + MYSQL_TABLE_USER_FIELD_NAME + " =?";
             params.push_back(account);
         }
         else   
         {
             // redis_query_key = dynamic_cast<redisMethods*>(m_redisMethods.get())->build_cache_key(user_id);
             redis_query_key = m_redisMethods->build_key_find_userinfo(user_id);
-            res_string = m_redisMethods->redis_get(redis_query_key);
+            res_string = m_redisMethods->redis_set_get(redis_query_key);
             if(!res_string.empty())
             {
                 return res_string;
             }
             else
             {
-                mysql_query_sql = "SELECT * FROM " + MYSQL_TABLE + " WHERE " + USER_ID_FIELD + " =?";
+                mysql_query_sql = "SELECT * FROM " + MYSQL_TABLE_USERS + " WHERE " + MYSQL_TABLE_USER_FIELD_ID + " =?";
                 params.push_back(user_id);
             }
         }
@@ -207,14 +207,14 @@ std::string database::get_user_info_from_cacheordb(const std::string &account ,l
     {
         // redis_query_key = dynamic_cast<redisMethods*>(m_redisMethods.get())->build_cache_key(account);
         redis_query_key = m_redisMethods->build_key_find_userinfo(account);
-        res_string = m_redisMethods->redis_get(redis_query_key);
+        res_string = m_redisMethods->redis_set_get(redis_query_key);
         if(!res_string.empty())
         {
             return res_string;
         }
         else
         {
-            mysql_query_sql = "SELECT * FROM " + MYSQL_TABLE + " WHERE " + USER_ID_FIELD + " =?";
+            mysql_query_sql = "SELECT * FROM " + MYSQL_TABLE_USERS + " WHERE " + MYSQL_TABLE_USER_FIELD_ID + " =?";
             params.push_back(account);
         }
     }
@@ -230,10 +230,10 @@ std::string database::get_user_info_from_cacheordb(const std::string &account ,l
         if(res->next())
         {
             nlohmann::json user_info;
-            user_info[USER_ID_FIELD] = std::to_string(res->getInt(USER_ID_FIELD));
-            user_info[USER_NAME_FIELD] = res->getString(USER_NAME_FIELD);
-            user_info[USER_PASSWD_FIELD] = res->getString(USER_PASSWD_FIELD);
-            user_info[USER_EMAIL_FIELD] = res->getString(USER_EMAIL_FIELD);
+            user_info[MYSQL_TABLE_USER_FIELD_ID] = std::to_string(res->getInt(MYSQL_TABLE_USER_FIELD_ID));
+            user_info[MYSQL_TABLE_USER_FIELD_NAME] = res->getString(MYSQL_TABLE_USER_FIELD_NAME);
+            user_info[MYSQL_TABLE_USER_FIELD_PASSWD] = res->getString(MYSQL_TABLE_USER_FIELD_PASSWD);
+            user_info[MYSQL_TABLE_USER_FIELD_EMAIL] = res->getString(MYSQL_TABLE_USER_FIELD_EMAIL);
 
             res_string = user_info.dump();
             if(res_string.empty())
@@ -242,10 +242,10 @@ std::string database::get_user_info_from_cacheordb(const std::string &account ,l
                 return "";
             }
             //更新到redis
-            redis_findid_key = m_redisMethods->build_key_find_userid(res->getString(USER_NAME_FIELD));
-            m_redisMethods->redis_set(redis_findid_key,std::to_string(res->getInt(USER_ID_FIELD)),std::nullopt,REDIS_EXPIRE_USERINFO);
-            redis_query_key = m_redisMethods->build_key_find_userinfo(std::to_string(res->getInt(USER_ID_FIELD)));
-            m_redisMethods->redis_set(redis_query_key,res_string,std::nullopt,REDIS_EXPIRE_USERINFO);
+            redis_findid_key = m_redisMethods->build_key_find_userid(res->getString(MYSQL_TABLE_USER_FIELD_NAME));
+            m_redisMethods->redis_set_set(redis_findid_key,std::to_string(res->getInt(MYSQL_TABLE_USER_FIELD_ID)),std::nullopt,REDIS_EXPIRE_USERINFO);
+            redis_query_key = m_redisMethods->build_key_find_userinfo(std::to_string(res->getInt(MYSQL_TABLE_USER_FIELD_ID)));
+            m_redisMethods->redis_set_set(redis_query_key,res_string,std::nullopt,REDIS_EXPIRE_USERINFO);
             // bool flag = dynamic_cast<redisMethods*>(m_redisMethods.get())->update_redis_cache(res->getString(USER_NAME_FIELD),std::to_string(res->getInt(USER_ID_FIELD)),res_string);
 
             // bool flag = m_redisMethods->update_redis_cache(res->getString(USER_NAME_FIELD),std::to_string(res->getInt(USER_ID_FIELD)),res_string);
@@ -268,8 +268,8 @@ void database::set_user_info_from_cacheanddb(const std::string &userid, const st
     // 1. 先更新mysql
     //"INSERT INTO " + MYSQL_TABLE + " (" + USER_ID_FIELD + ", " + USER_NAME_FIELD + ", " + USER_PASSWD_FIELD + ", " + USER_EMAIL_FIELD + ") VALUES (?, ?, ?, ?)" +
 //                                      " ON DUPLICATE KEY UPDATE " + USER_NAME_FIELD + " = VALUES(" + USER_NAME_FIELD + "), " + USER_PASSWD_FIELD + " = VALUES(" + USER_PASSWD_FIELD + "), " + USER_EMAIL_FIELD + " = VALUES(" + USER_EMAIL_FIELD + ")";
-    std::string update_sql = "INSERT INTO " + MYSQL_TABLE + " (" + USER_ID_FIELD + ", " + USER_NAME_FIELD + ", " + USER_PASSWD_FIELD + ", " + USER_EMAIL_FIELD + ") VALUES (?,?,?,?)" +
-                             " ON DUPLICATE KEY UPDATE " + USER_NAME_FIELD + " = VALUES(" + USER_NAME_FIELD + "), " + USER_PASSWD_FIELD + " = VALUES(" + USER_PASSWD_FIELD + "), " + USER_EMAIL_FIELD + " = VALUES(" + USER_EMAIL_FIELD + ")";
+    std::string update_sql = "INSERT INTO " + MYSQL_TABLE_USERS + " (" + MYSQL_TABLE_USER_FIELD_ID + ", " + MYSQL_TABLE_USER_FIELD_NAME + ", " + MYSQL_TABLE_USER_FIELD_PASSWD + ", " + MYSQL_TABLE_USER_FIELD_EMAIL + ") VALUES (?,?,?,?)" +
+                             " ON DUPLICATE KEY UPDATE " + MYSQL_TABLE_USER_FIELD_NAME + " = VALUES(" + MYSQL_TABLE_USER_FIELD_NAME + "), " + MYSQL_TABLE_USER_FIELD_PASSWD + " = VALUES(" + MYSQL_TABLE_USER_FIELD_PASSWD + "), " + MYSQL_TABLE_USER_FIELD_EMAIL + " = VALUES(" + MYSQL_TABLE_USER_FIELD_EMAIL + ")";
     std::vector<std::variant<int,std::string>> params;
     params.push_back(std::stoi(userid));
     params.push_back(username);
@@ -310,9 +310,68 @@ void database::set_user_info_from_cacheanddb(const std::string &userid, const st
     // }
 }
 
-void database::set_offline_data_from_cacheanddb(const std::string &userid,const std::vector<uint8_t> &data)
-{
-    //先将数据序列化
+// void database::set_offline_data_from_cacheanddb(const std::string &userid,const std::vector<uint8_t> &data, const time_t score,const int &time_stamp)
+// void set_offline_data_from_cacheanddb(const std::string &key_userid, const time_t& score_timestamp , const std::vector<uint8_t> value_offlinemsg,std::optional<int> expire)
+// {
+//     //将值存储在sorted set中，以时间戳作为分数
     
+// }
+
+void database::set_msg_from_db(const std::string& sender_id,const std::string &sender_name,const std::string &receiver_id, const std::string &receiver_name, const std::string &msg,const std::string& type)
+{
+    // mysqlConnRAII connraii;
+    // auto conn = connraii.get_connection();
+    // if(conn == nullptr)
+    // {
+    //     LOG_ERROR("%s:%s:%d // 获取mysql连接失败",__FILE__,__FUNCTION__,__LINE__);
+    //     return;
+    // }
+    
+    std::string insert_sql = "INSERT INTO " + MYSQL_TABLE_MESSAGES + " (" + MYSQL_TABLE_MESSAGES_FIELD_SENDER_ID + ", " + MYSQL_TABLE_MESSAGES_FIELD_SENDER_NAME + ", " + MYSQL_TABLE_MESSAGES_FIELD_RECEIVER_ID + ", " + MYSQL_TABLE_MESSAGES_FIELD_RECEIVER_NAME + ", " +  MYSQL_TABLE_MESSAGES_FIELD_CONTENT+ ", " + MYSQL_TABLE_MESSAGES_FIELD_MESSAGETYPE + ") VALUES (?,?,?,?,?,?)";
+    std::vector<std::variant<int,std::string>> params;
+    params.push_back(std::stoi(sender_id));
+    params.push_back(sender_name);
+    params.push_back(std::stoi(receiver_id));
+    params.push_back(receiver_name);
+    params.push_back(msg);
+    params.push_back(type);
+    auto res = m_mysqlMethods->execute_sql(statementType::NOTQUERY,insert_sql,params);
+    if(std::holds_alternative<bool>(res))
+    {
+        if(std::get<bool>(res))
+        {
+            LOG_INFO("%s:%s:%d // 插入mysql成功",__FILE__,__FUNCTION__,__LINE__);
+        }
+        else
+        {
+            LOG_ERROR("%s:%s:%d // 插入mysql失败",__FILE__,__FUNCTION__,__LINE__);
+        }
+    }
+    else
+    {
+        LOG_ERROR("%s:%s:%d // 执行插入语句返回非bool类型",__FILE__,__FUNCTION__,__LINE__);
+    }
 }
 
+std::shared_ptr<std::vector<std::string>> database::get_alluserid_from_db()
+{
+    std::string select_sql = "SELECT " + MYSQL_TABLE_USER_FIELD_ID + " FROM " + MYSQL_TABLE_USERS;
+    auto res = m_mysqlMethods->execute_sql(statementType::QUERY,select_sql);
+    std::string userid;
+    std::shared_ptr<std::vector<std::string>> userid_vec;
+    if(std::holds_alternative<bool>(res))
+    {
+        LOG_ERROR("%s:%s:%d // 执行查询语句返回bool类型",__FILE__,__FUNCTION__,__LINE__);
+        return nullptr;
+    }
+    else
+    {
+        auto resultset = std::move(std::get<std::unique_ptr<sql::ResultSet,decltype(&sql::ResultSet::close)>>(res));
+        while(resultset->next())
+        {
+            userid = std::to_string(resultset->getUInt64(MYSQL_TABLE_USER_FIELD_ID));   //id字段为bigint unsigned，要用无符号64位接收,使用stou11转回来
+            userid_vec->push_back(userid);
+        }
+        return userid_vec;
+    }
+}

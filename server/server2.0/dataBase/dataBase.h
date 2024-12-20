@@ -53,7 +53,9 @@ public:
     std::string get_user_info_from_cacheordb(const std::string& account, loginType);
     void set_user_info_from_cacheanddb(const std::string& userid,const std::string& username,const std::string& password, const std::string& email);
     // void set_offline_data_from_cacheanddb(const std::string &userid, const std::vector<uint8_t> &data);
-    void set_offline_data_from_cacheanddb(const std::string &userid, const std::string &data,const time_t &time_stamp);
+    // void set_offline_data_from_cacheanddb(const std::string &key_userid, const time_t& score_timestamp , const std::vector<uint8_t> value_offlinemsg,std::optional<int> expire = std::nullopt); //是否考虑将data的类型改为string？
+    void set_msg_from_db(const std::string& sender_id,const std::string &sender_name,const std::string &receiver_id, const std::string &receiver_name, const std::string &msg,const std::string& type);
+    std::shared_ptr<std::vector<std::string>> get_alluserid_from_db();
     // void delete_user_info(int userid);
 private:
     database():m_mysqlMethods(std::make_unique<mysqlMethods>()),m_redisMethods(std::make_unique<redisMethods>()){}

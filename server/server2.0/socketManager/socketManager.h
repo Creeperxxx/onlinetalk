@@ -5,6 +5,7 @@
 #include <mutex>
 #include <atomic>
 #include <set>
+#include "../eventHandler/ehConstants.h"
 // #include "../requirement/moodycamel/concurrentqueue.h"
 
 //升级为单例模式吧，不然策略类访问不到socketmanager。也不能采用依赖注入。
@@ -43,7 +44,7 @@ private:
     static std::unique_ptr<socketManager> instance;
 public:
     static socketManager& getInstance();
-    bool add_socket_vec(const std::string& username,int socketfd);
+    bool add_socket_vec(const std::string& userid,const std::string& username,int socketfd);
     bool delete_socket_vec(int socketfd);
     void enqueue_recv_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);   
     void enqueue_send_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);
@@ -57,6 +58,7 @@ public:
     void update_socket_interaction_time(int socketfd);
     int get_tobesend_heartbeat_socketfd();
     const std::string& get_username(int socketfd);
+    int get_socket_by_userid(const std::string& userid);
     // void init();
 
     ~socketManager(){}
@@ -68,4 +70,5 @@ private:
     
     std::shared_ptr<socketVector> get_socket_vec(int socketfd);
     bool is_username_exist(const std::string& username);
+    bool is_userid_exist(const std::string& userid);
 };

@@ -44,7 +44,6 @@ public:
     std::string redis_set_get(const std::string& key);
     bool redis_set_set(const std::string& key,const std::string& value, std::optional<redisSetMode> mode = std::nullopt, std::optional<int> expire = std::nullopt);
     
-    std::string 
     // std::string build_cache_key(const std::string& userid);
     std::string build_key_find_userinfo(const std::string& userid);
     // std::string build_find_userid_key(const std::string& username);

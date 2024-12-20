@@ -1,12 +1,6 @@
 #include "eventHandler.h"
 
-const int MAX_EPOLL_EVENTS = 1024;
-const int THREAD_NUMS = 10;
-const int LISTEN_PORT = 8060;
-const int MAX_DEQUEUE_NUMS = 5;
 
-const int FIND_USERNAME_FAILED = -1;
-const int FIND_USER_SOCKET_FAILED = -2;
 
 // std::atomic<bool> event_loop_running(true);
 
@@ -80,6 +74,8 @@ void ReactorEventHandler::init()
         this->heartbeat();
     };
     thread_pool->commit(lambda6);
+
+    load_all_userid();// 加载所有用户id
 
     // LOG_WRITE(logLevel::LOG_LEVEL_INFO, "%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
     LOG_INFO("%s:%s:%d // 初始化完成", __FILE__, __FUNCTION__, __LINE__);
@@ -541,31 +537,44 @@ void ReactorEventHandler::analyze_recv_data()
 //     return crc;
 // }
 
-int ReactorEventHandler::get_socket_from_username(const std::string &name)
+// int ReactorEventHandler::get_socket_from_username(const std::string &name)
+// {
+//     return 0;
+// }
+
+int ReactorEventHandler::get_socket_from_userid(const std::string &id)
 {
-    return 0;
+    if(!is_userid_exist(id))
+    {
+        return USER_NOT_EXIST;
+    }
+    return socketManager::getInstance().get_socket_by_userid(id);
 }
 
-void ReactorEventHandler::enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data)
+// void ReactorEventHandler::enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data)
+void ReactorEventHandler::enqueue_send_message(const std::string &userid, std::shared_ptr<std::vector<uint8_t>> data)
 {
-    int socket = get_socket_from_username(username);
-    if (socket == FIND_USERNAME_FAILED)
+    // int socket = get_socket_from_username(username);
+    int socket = get_socket_from_userid(userid);
+    if (socket == USER_NOT_EXIST)
     {
         // // todo 没找到对应用户
         LOG_WARING("%s:%s:%d // 没找到对应用户", __FILE__, __FUNCTION__, __LINE__);
         return;
     }
-    else if(socket == FIND_USER_SOCKET_FAILED)
+    if(socket == USER_OFFLINE)
     {
         // 用户未上线
         // socket_manager->enqueue_willsend_data(username,data);
-        socketManager::getInstance().enqueue_offline_data(username,data);
+
+        //用户未上线的处理就是，将消息加入到redis和mysql数据库中，等到用户上线时，根据userid和is_delivered来获取离线消息并发送
+        // socketManager::getInstance().enqueue_offline_data(username,data);
+        
     }
-    else
-    {
-        // socket_manager->enqueue_send_data(socket,data);
-        socketManager::getInstance().enqueue_send_data(socket,data);
-    }
+    
+    // socket_manager->enqueue_send_data(socket,data);
+    socketManager::getInstance().enqueue_send_data(socket,data);
+    
 }
 
 // // void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
@@ -694,3 +703,41 @@ ReactorEventHandler::~ReactorEventHandler()
 {
     deleter();
 }
+
+void ReactorEventHandler::load_all_userid()
+{
+    auto alluserid_vec = database::get_instance().get_alluserid_from_db();
+    if(alluserid_vec == nullptr || alluserid_vec->empty())
+    {
+        LOG_ERROR("%s:%s:%d // 数据库中没有用户", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
+    std::lock_guard<std::mutex> lock(all_userid_mutex);
+    for(const auto & userid : *alluserid_vec)
+    {
+        all_userid.insert(userid);
+    }
+}
+
+void ReactorEventHandler::add_new_userid_to_all_userid(const std::string &userid)
+{
+    std::lock_guard<std::mutex> lock(all_userid_mutex);
+    all_userid.insert(userid);
+}
+
+void ReactorEventHandler::delete_userid_from_all_userid(const std::string &userid)
+{
+    std::lock_guard<std::mutex> lock(all_userid_mutex);
+    all_userid.erase(userid);
+}
+
+bool ReactorEventHandler::is_userid_exist(const std::string &userid)
+{
+    std::lock_guard<std::mutex> lock(all_userid_mutex);
+    return all_userid.find(userid) != all_userid.end();
+}
+
+// bool ReactorEventHandler::is_user_online(const std::string& userid)
+// {
+//     return socketManager::getInstance()
+// }

@@ -53,7 +53,8 @@
 //     return MySQLConnectionPool::getInstance().getConnection();
 // }
 
-std::variant<bool , std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> mysqlMethods::execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params)
+// std::variant<bool , std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> mysqlMethods::execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params)
+std::variant<bool, std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type,const std::string& sql, std::optional<std::vector<std::variant<int,std::string>>> params)
 {
     try{
     // auto conn = MySQLConnectionPool::getInstance().getConnection();
@@ -64,11 +65,23 @@ std::variant<bool , std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::cl
         LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
-
+    if(!params.has_value())
+    {
+        std::unique_ptr<sql::Statement,decltype(&sql::Statement::close)> stmt(conn->createStatement(),&sql::Statement::close);
+        if(type == statementType::QUERY)
+        {
+            std::unique_ptr<sql::ResultSet,decltype(&sql::ResultSet::close)> res(stmt->executeQuery(sql),&sql::ResultSet::close);
+            return res;
+        }
+        else if(type == statementType::NOTQUERY)
+        {
+            return stmt->executeUpdate(sql) > 0;
+        }
+    }
     std::unique_ptr<sql::PreparedStatement ,decltype(&sql::PreparedStatement::close)> stmt(conn->prepareStatement(sql),&sql::PreparedStatement::close);
 
     int paramindex = 1;
-    for(const auto & param : params)
+    for(const auto & param : params.value())
     {
         if(std::holds_alternative<int>(param))
         {
