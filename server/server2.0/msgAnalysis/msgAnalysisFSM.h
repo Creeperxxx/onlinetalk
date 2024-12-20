@@ -5,7 +5,8 @@
 #include <zlib.h>
 #include <cstring>
 // #include "../eventHandler/eventHandler.h"
-#include "../msgAnalysis/msgAnalysis.h"
+// #include "../msgAnalysis/msgAnalysis.h"
+#include "../msgHandle/msgHandle.h"
 #include "../threadPool/threadPool.h"
 #include "../eventManager/eventManager.h"
 #include <any>
@@ -77,10 +78,13 @@ private:
     std::shared_ptr<std::vector<uint8_t>> data;
     std::shared_ptr<std::vector<uint8_t>> message_data;
     std::shared_ptr<message> msg;
-    std::unique_ptr<msgAnalysis> msg_analysis;
+    std::unique_ptr<msgHandler> msg_analysis;
     // std::shared_ptr<ThreadPool> pool;
     // IEventHandler* event_handler;
     FSMErrorType error_type;
 
-    std::unique_ptr<eventManager> event_manager;
+    // std::unique_ptr<eventManager> event_manager;
 };
+
+
+

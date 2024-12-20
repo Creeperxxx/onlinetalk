@@ -5,8 +5,6 @@
 #include <vector>
 #include "../dataBase/dbConstants.h"
 
-
-
 enum class messageType
 {
     Text,
@@ -126,7 +124,7 @@ public:
         return m_type; }
     const messageAction getAction() const {
         return m_action; }
-    const std::string& getSenderName() const {
+    const std::string getSenderName() const {
         return m_sender_name.value_or(DEFAULT_SENDER_NAME); }
     int getSenderId() const {
         return m_sender_id.value_or(DEFAULT_SENDER_ID); }
@@ -137,7 +135,7 @@ public:
         return m_group_id.value_or(DEFAULT_GROUP_ID); }
     const int getReceiverId() const {
         return m_receiver_id.value_or(DEFAULT_RECEIVER_ID); }
-    const std::string& getReceiverName() const {
+    const std::string getReceiverName() const {
         return m_receiver_name.value_or(DEFAULT_RECEIVER_NAME); }
     bool getIsCompressed() const {
         return m_is_compressed.value_or(false); }

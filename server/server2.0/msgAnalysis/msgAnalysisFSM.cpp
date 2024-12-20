@@ -218,7 +218,7 @@ void msgAnalysisFSM::init()
     // this->event_handler = eventHandler;
     // this->pool = threadPool;
     current_state = analysisState::initial_state;
-    msg_analysis = std::make_unique<msgAnalysis>();
+    msg_analysis = std::make_unique<msgHandler>();
     msg_analysis->init();
     event_manager = std::make_unique<eventManager>();
 }
