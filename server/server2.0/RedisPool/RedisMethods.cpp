@@ -208,3 +208,56 @@ std::string redisMethods::build_key_find_userid(const std::string& username)
 //     }
 //     return true;
 // }
+
+void redisMethods::consume_msg(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
+    //这里阻塞的等待消息，是否需要优化？
+    //默认阻塞1s，获取1条消息
+    std::unique_ptr<redisReply, void(*)(redisReply*)> consume_reply(static_cast<redisReply*>(redisCommand(conn.get(), "XREADGROUP GROUP %s %s COUNT %d BLOCK %d STREAMS %s >", group_name.c_str(), consumer_name.c_str(),block_time.value() ,count.value(),stream_name.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(consume_reply == nullptr || consume_reply->type == REDIS_REPLY_ERROR)
+    {
+        LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+    }
+    else    
+    {
+        for(int i = 0; i < consume_reply->element[0]->element[i]; i++)
+    }
+}
+
+bool redisMethods::init_create_consumer_group(const std::string &stream_name ,const std::string& group_name)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+    std::unique_ptr<redisReply, void(*)(redisReply*)> create_group_reply(static_cast<redisReply*>(redisCommand(conn.get(), "XGROUP CREATE %s %s $ MKSTREAM", stream_name.c_str(), group_name.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(create_group_reply && create_group_reply->type == REDIS_REPLY_ERROR)
+    {
+        if(strstr(create_group_reply->str, "BUSYGROUP") != nullptr)
+        {
+            LOG_INFO("%s:%s:%d // 消费者组%s已经存在", __FILE__, __FUNCTION__, __LINE__,group_name.c_str());
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("%s:%s:%d // 创建消费者组%s失败", __FILE__, __FUNCTION__, __LINE__,group_name.c_str());
+            return false;
+        }
+    }
+    else
+    {
+        LOG_INFO("%s:%s:%d // 创建消费者组%s成功", __FILE__, __FUNCTION__, __LINE__,group_name.c_str());
+        return true;
+    }
+    
+}
