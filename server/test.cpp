@@ -296,42 +296,79 @@
 #include <string.h>
 using namespace std;
 
-int main() {
-    redisContext *c = redisConnect("127.0.0.1", 6379);
-    if (c == nullptr || c->err) {
-        if (c) {
-            std::cerr << "Connection error: " << c->errstr << "\n";
-            redisFree(c);
-        } else {
-            std::cerr << "Connection error: can't allocate redis context\n";
-        }
-        return 1;
-    }
+// int main() {
+//     redisContext* context = redisConnect("127.0.0.1", 6379);
+//     if (context == NULL || context->err) {
+//         if (context) {
+//             std::cerr << "Error: " << context->errstr << std::endl;
+//             redisFree(context);
+//         } else {
+//             std::cerr << "Can't allocate redis context" << std::endl;
+//         }
+//         return 1;
+//     }
+//     redisReply* reply = (redisReply*)(redisCommand(context, "auth 123456"));
+//     freeReplyObject(reply);
+//     reply = (redisReply*)(redisCommand(context, "xadd test1 * username creeper age 20"));
+//     if(reply == NULL)
+//     {
+//         cout<<"reply = null"<<endl;
+//     }
+//     else if (reply->type = REDIS_REPLY_STRING)
+//     {
+//         cout<<"reply->str : "<<reply->str<<endl;
+//         cout<<"reply->len : "<<reply->len<<endl;
+//     }
+//     freeReplyObject(reply);
+//     reply = (redisReply*)(redisCommand(context , "xrange test1 - +"));
+//     int count = 0;
+//     if(reply == NULL)
+//     {
+//         cout<<"reply = null"<<endl;
+//     }
+//     else if (reply->type = REDIS_REPLY_ARRAY)
+//     {
+//         for(int i = 0; i<reply->elements; i++)
+//         {
+//             redisReply* entry = reply->element[i];
+//             redisReply* msg_id = entry->element[0];
+//             redisReply* msg_data = entry->element[1];
+//             for(int j = 0; j<msg_data->elements - 1; j+=2)
+//             {
+//                 redisReply* field = msg_data->element[j];
+//                 redisReply* value = msg_data->element[j+1];
+//                 cout<<"序号为："<<count<<"  field :"<<field->str<<"\tvalue : "<<value->str<<endl;
+//                 count++;
+//             }
+//         }
 
-    // Ping the server
-    redisReply *reply = (redisReply*)redisCommand(c, "auth 123456");
-    if(reply == nullptr)
-    {
-        cout<<"reply == nullptr"<<endl;
-    }
-    else if (reply->type == REDIS_REPLY_STATUS)
-    {
-        cout<<"TYPE = status"<<endl;
-        int len = (int)reply->len;
-        cout<<"len = "<<reply->len<<endl;
-        cout<<"len = "<<len<<endl;
-        cout<<"str = "<<reply->str<<endl;
-    }
-    else
-    {
-        cout<<"wrong"<<endl;
-    }
-    
-    freeReplyObject(reply);
 
-    redisFree(c);
-    return 0;
-}
+
+//         // cout<<"reply->elements : "<<reply->elements<<endl;
+//         // for(int i = 0; i<reply->elements; i++)
+//         // {
+//         //     redisReply* entry = reply->element[i];
+//         //     cout<<"entry->elements : "<<entry->elements<<endl;
+//         //     for(int j = 0; j<entry->elements; j++)
+//         //     {
+//         //         redisReply* msg_id = entry->element[0];
+//         //         cout<<"msg_id : "<<msg_id->str<<endl;
+//         //         redisReply* msg_data = entry->element[1];
+//         //         for(int k = 0; k<msg_data->elements - 2; k+=2)
+//         //         {
+//         //             redisReply* field = msg_data->element[k];
+//         //             redisReply* value = msg_data->element[k+1];
+//         //             cout<<"序号为："<<count<<"  field : "<<field->str<<" value : "<<value->str<<endl;
+//         //             count++;
+//         //         }
+//         //     }
+//         // }
+//     }
+//     freeReplyObject(reply);
+
+//     redisFree(context);
+//     return 0;
+// }
 
 // #include <hiredis/hiredis.h>
 
@@ -363,3 +400,63 @@ int main() {
 
 //     redisFree(c);
 // }
+
+
+
+int main() {
+    redisContext* context = redisConnect("127.0.0.1", 6379);
+    if (context == NULL || context->err) {
+        if (context) {
+            std::cerr << "Error: " << context->errstr << std::endl;
+            redisFree(context);
+        } else {
+            std::cerr << "Can't allocate redis context" << std::endl;
+        }
+        return 1;
+    }
+    redisReply* reply1 = (redisReply*)redisCommand(context,"auth 123456");
+    // 执行xreadgroup命令
+    redisReply* reply = (redisReply*)redisCommand(context, "xreadgroup group consumer consumer1 count 1 block 0 streams test >");
+    if (reply == NULL) {
+        std::cerr << "Failed to execute xreadgroup command." << std::endl;
+        redisFree(context);
+        return 1;
+    }
+    if (reply->type == REDIS_REPLY_ARRAY) {
+        for (size_t i = 0; i < reply->elements; ++i) {
+            redisReply* stream_entry = reply->element[i];
+            if (stream_entry->type == REDIS_REPLY_ARRAY && stream_entry->elements == 2) {
+                redisReply* stream_name_reply = stream_entry->element[0];
+                cout<<"stream_name : "<<stream_name_reply->str<<endl;
+                redisReply* messages_reply = stream_entry->element[1];
+                if (messages_reply->type == REDIS_REPLY_ARRAY) {
+                    for (size_t j = 0; j < messages_reply->elements; ++j) {
+                        redisReply* message_entry = messages_reply->element[j];
+                        if (message_entry->type == REDIS_REPLY_ARRAY && message_entry->elements == 2) {
+                            redisReply* msg_id_reply = message_entry->element[0];
+                            redisReply* msg_fields_reply = message_entry->element[1];
+                            std::cout << "Message ID: " << msg_id_reply->str << std::endl;
+                            if (msg_fields_reply->type == REDIS_REPLY_ARRAY) {
+                                for (size_t k = 0; k < msg_fields_reply->elements - 1; k += 2) {
+                                    redisReply* field_reply = msg_fields_reply->element[k];
+                                    redisReply* value_reply = msg_fields_reply->element[k + 1];
+                                    std::cout << "Field: " << field_reply->str << ", Value: " << value_reply->str << std::endl;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        cout<<reply->len<<endl;
+        // cout<<reply->str<<endl;
+        // std::string temp(reply->str,reply->len);
+        // cout<<temp<<endl;
+    }
+    freeReplyObject(reply);
+    redisFree(context);
+    return 0;
+}

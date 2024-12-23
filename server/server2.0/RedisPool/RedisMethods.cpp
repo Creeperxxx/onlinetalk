@@ -220,14 +220,25 @@ void redisMethods::consume_msg(const std::string &stream_name,const std::string&
     }
     //这里阻塞的等待消息，是否需要优化？
     //默认阻塞1s，获取1条消息
-    std::unique_ptr<redisReply, void(*)(redisReply*)> consume_reply(static_cast<redisReply*>(redisCommand(conn.get(), "XREADGROUP GROUP %s %s COUNT %d BLOCK %d STREAMS %s >", group_name.c_str(), consumer_name.c_str(),block_time.value() ,count.value(),stream_name.c_str())),[](redisReply* reply){freeReplyObject(reply);});
-    if(consume_reply == nullptr || consume_reply->type == REDIS_REPLY_ERROR)
+    std::string command_str = "XREADGROUP GROUP " + group_name + " " + consumer_name + " COUNT " + std::to_string(count.value()) + " BLOCK " + std::to_string(block_time.value()) + " STREAMS " + stream_name + " >";
+    // std::unique_ptr<redisReply, void(*)(redisReply*)> consume_reply(static_cast<redisReply*>(redisCommand(conn.get(), "XREADGROUP GROUP %s %s COUNT %d BLOCK %d STREAMS %s >", group_name.c_str(), consumer_name.c_str(),block_time.value() ,count.value(),stream_name.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    std::unique_ptr<redisReply, void(*)(redisReply*)> consume_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(consume_reply == nullptr || consume_reply->type == REDIS_REPLY_ERROR )
     {
         LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
     }
-    else    
+    else if(consume_reply->type == REDIS_REPLY_NIL)
     {
-        for(int i = 0; i < consume_reply->element[0]->element[i]; i++)
+        LOG_INFO("%s:%s:%d // 消费者：%s没有消息", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+    }
+    else if(consume_reply->type != REDIS_REPLY_ARRAY)
+    {
+        LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+    }
+    else if(consume_reply->type == REDIS_REPLY_ARRAY)
+    {
+        LOG_INFO("%s:%s:%d // 消费者：%s消费消息成功", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+        
     }
 }
 
