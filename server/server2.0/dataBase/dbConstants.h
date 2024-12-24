@@ -39,8 +39,12 @@ inline const size_t REDIS_POOL_SIZE = 10;
 
 inline const std::string REDIS_PRIEFIX_FIND_USERINFO = "user:user_info:";
 inline const std::string REDIS_PRIEFIX_FIND_USERID = "user:find_userid_by_username:";
+inline const std::string REDIS_JSON_FIELD_STREAMNAME = "stream_name";
+inline const std::string REDIS_JSON_FIELD_MESSAGEID = "msg_id";
+
 
 inline const int REDIS_EXPIRE_USERINFO = 60*60;
+
 
 enum class redisSetMode
 {

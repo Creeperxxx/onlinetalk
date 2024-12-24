@@ -209,7 +209,7 @@ std::string redisMethods::build_key_find_userid(const std::string& username)
 //     return true;
 // }
 
-void redisMethods::consume_msg(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
+std::string redisMethods::consume_msg(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
 {
     redisConnRAII connraii;
     auto conn = connraii.get_connection();
@@ -218,6 +218,10 @@ void redisMethods::consume_msg(const std::string &stream_name,const std::string&
         LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
         return;
     }
+    // std::string res_str;
+    //json字符串,使用json库
+    // nlohmann::json res_json;
+
     //这里阻塞的等待消息，是否需要优化？
     //默认阻塞1s，获取1条消息
     std::string command_str = "XREADGROUP GROUP " + group_name + " " + consumer_name + " COUNT " + std::to_string(count.value()) + " BLOCK " + std::to_string(block_time.value()) + " STREAMS " + stream_name + " >";
@@ -229,7 +233,7 @@ void redisMethods::consume_msg(const std::string &stream_name,const std::string&
     }
     else if(consume_reply->type == REDIS_REPLY_NIL)
     {
-        LOG_INFO("%s:%s:%d // 消费者：%s没有消息", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+        LOG_WARING("%s:%s:%d // 消费者：%s没有消息", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
     }
     else if(consume_reply->type != REDIS_REPLY_ARRAY)
     {
@@ -238,6 +242,45 @@ void redisMethods::consume_msg(const std::string &stream_name,const std::string&
     else if(consume_reply->type == REDIS_REPLY_ARRAY)
     {
         LOG_INFO("%s:%s:%d // 消费者：%s消费消息成功", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+        return get_string_from_redisreply(consume_reply.get());
+        // std::string stream_name;
+        // std::string message_id;
+        // std::string field;
+        // std::string value;
+        //这里从结果集中取出消息，层次为：流名称->消息id->消息内容
+        // for(int i = 0; i < consume_reply->elements; i++)
+        // {
+        //     stream_name = consume_reply->element[i]->element[0]->str;
+        //     res_json[REDIS_JSON_FIELD_STREAMNAME] = stream_name;
+
+        //     std::unique_ptr<redisReply, void(*)(redisReply*)> stream_reply(static_cast<redisReply*>(consume_reply->element[i]->element[1]),[](redisReply* reply){freeReplyObject(reply);});
+        //     if(stream_reply->type != REDIS_REPLY_ARRAY || stream_reply->elements != 2)
+        //     {
+        //         LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+        //     }
+        //     else
+        //     {
+        //         for(int j = 0; j < stream_reply->elements; j++)
+        //         {
+        //             message_id = stream_reply->element[j]->element[0]->str;
+        //             res_json[REDIS_JSON_FIELD_MESSAGEID] = message_id;
+        //             std::unique_ptr<redisReply, void(*)(redisReply*)> message_reply(static_cast<redisReply*>(stream_reply->element[j]->element[1]),[](redisReply* reply){freeReplyObject(reply);});
+        //             if(message_reply->type!= REDIS_REPLY_ARRAY || message_reply->elements!= 2)
+        //             {
+        //                 LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+        //             }
+        //             else
+        //             {
+        //                 for(int k = 0; k < message_reply->elements - 1; k += 2)
+        //                 {
+        //                     field = message_reply->element[k]->str;
+        //                     value = message_reply->element[k+1]->str;
+
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         
     }
 }
@@ -272,3 +315,96 @@ bool redisMethods::init_create_consumer_group(const std::string &stream_name ,co
     }
     
 }
+
+std::string redisMethods::get_string_from_redisreply(redisReply* reply)
+{
+    if(reply == nullptr)
+    {
+        return "";
+    }
+    nlohmann::json res_json;
+    std::unique_ptr<redisReply,void(*)(redisReply*)> reply_ptr(reply,[](redisReply* reply){freeReplyObject(reply);});
+    if(reply_ptr->type == REDIS_REPLY_STRING)
+    {
+        LOG_WARING("%s:%s:%d // redis返回的是字符串,内容为:%s", __FILE__, __FUNCTION__, __LINE__, reply->str);
+    }
+    else if (reply_ptr->type == REDIS_REPLY_ERROR)
+    {
+        LOG_WARING("%s:%s:%d // redis返回的是错误,内容为:%s", __FILE__, __FUNCTION__, __LINE__, reply->str);
+    }
+    else if (reply_ptr->type == REDIS_REPLY_INTEGER)
+    {
+        LOG_WARING("%s:%s:%d // redis返回的是整数,内容为:%d", __FILE__, __FUNCTION__, __LINE__, reply->integer);
+    }
+    else if(reply_ptr->type == REDIS_REPLY_NIL)
+    {
+        LOG_WARING("%s:%s:%d // redis返回的是nil", __FILE__, __FUNCTION__, __LINE__);
+    } 
+    else if(reply_ptr->type == REDIS_REPLY_STATUS)
+    {
+        LOG_WARING("%s:%s:%d // redis返回的是状态,内容为:%s", __FILE__, __FUNCTION__, __LINE__, reply->str);
+    }
+    else if(reply_ptr->type == REDIS_REPLY_ARRAY)
+    {
+        for(int i = 0; i < reply_ptr->elements; i++)
+        {
+            res_json[REDIS_JSON_FIELD_STREAMNAME] = reply->element[i]->element[0]->str;
+            for(int j = 0; j < reply->element[i]->element[1]->elements; j++)
+            {
+                res_json[REDIS_JSON_FIELD_MESSAGEID] = reply->element[i]->element[1]->element[j]->element[0]->str;
+                for(int k = 0; k < reply->element[i]->element[1]->element[j]->element[1]->elements - 1; k += 2)
+                {
+                    res_json[reply->element[i]->element[1]->element[j]->element[1]->element[k]->str] = reply->element[i]->element[1]->element[j]->element[1]->element[k+1]->str;
+                }
+            }
+        }
+
+        // for(int i = 0; i < reply_ptr->elements; i++)
+        // {
+        //     std::unique_ptr<redisReply,void(*)(redisReply*)> stream_ptr(reply_ptr->element[i],[](redisReply* reply){freeReplyObject(reply);});
+        //     if(reply_ptr->type != REDIS_REPLY_ARRAY)
+        //     {
+        //         LOG_WARING("%s:%s:%d // redis返回的不是数组,内容为:%s", __FILE__, __FUNCTION__, __LINE__, reply_ptr->str);
+        //     }
+        //     else
+        //     {
+        //         res_json[REDIS_JSON_FIELD_STREAMNAME] = stream_ptr->element[0]->str;
+        //         std::unique_ptr<redisReply,void(*)(redisReply*)> message_ptr(stream_ptr->element[1],[](redisReply* reply){freeReplyObject(reply);});
+        //         if(message_ptr->type!= REDIS_REPLY_ARRAY)
+        //         {
+        //             LOG_WARING("%s:%s:%d // redis返回的不是数组,内容为:%s", __FILE__, __FUNCTION__, __LINE__, reply_ptr->str);
+        //         }
+        //         else
+        //         {
+        //             for(int j = 0; j < message_ptr->elements; j++)
+        //             {
+        //                 std::unique_ptr<redisReply,void(*)(redisReply*)> message_element_ptr(message_ptr->element[j],[](redisReply* reply){freeReplyObject(reply);});
+        //                 if(message_element_ptr->type!= REDIS_REPLY_ARRAY)
+        //                 {
+        //                     LOG_WARING("%s:%s:%d // redis返回的不是数组,内容为:%s", __FILE__, __FUNCTION__, __LINE__, reply_ptr->str);
+        //                 }
+        //                 else
+        //                 {
+        //                     res_json[REDIS_JSON_FIELD_MESSAGEID] = message_element_ptr->element[0]->str;
+        //                     std::unique_ptr<redisReply,void(*)(redisReply*)> message_content_ptr(message_element_ptr->element[1],[](redisReply* reply){freeReplyObject(reply);});
+        //                     if(message_content_ptr->type!= REDIS_REPLY_ARRAY)
+        //                     {
+        //                         LOG_WARING("%s:%s:%d // redis返回的不是数组,内容为:%s", __FILE__, __FUNCTION__, __LINE__, reply_ptr->str);
+        //                     }
+        //                     else
+        //                     {
+        //                         for(int k = 0; k < message_content_ptr->elements - 1; k+=2)
+        //                         {
+        //                             res_json[message_content_ptr->element[k]->str] = message_content_ptr->element[k+1]->str;
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+    }
+    return res_json.dump();
+}
+
+
