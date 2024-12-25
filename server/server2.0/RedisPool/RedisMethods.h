@@ -50,10 +50,13 @@ public:
     std::string build_key_find_userinfo(const std::string& userid);
     // std::string build_find_userid_key(const std::string& username);
     std::string build_key_find_userid(const std::string& username);
-    std::string consume_msg(const std::string& stream_name,const std::string& group_name,const std::string& consumer_name, const std::optional<int> block_time = 1000,const std::optional<int> count = 1);
-    bool init_create_consumer_group(const std::string& stream_name,const std::string& groupname);
+    std::shared_ptr<std::vector<std::string>> redis_stream_xreadgroup(const std::string& stream_name,const std::string& group_name,const std::string& consumer_name, const std::optional<int> block_time = std::nullopt,const std::optional<int> count = std::nullopt);
+    bool init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);
+    // std::string redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields);
+    std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
+    bool redis_stream_xack(const std::string& stream,const std::string& groupname,const std::string& id);
 private:
-    std::string get_string_from_redisreply(redisReply* reply);
+    std::shared_ptr<std::vector<std::string>> get_string_from_redisreply(redisReply* reply);
     // void judge_redisreply_status(redisReply* reply);
     // bool update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo);
 // private:

@@ -209,14 +209,16 @@ std::string redisMethods::build_key_find_userid(const std::string& username)
 //     return true;
 // }
 
-std::string redisMethods::consume_msg(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
+// std::string redisMethods::redis_stream_xreadgroup(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
+std::shared_ptr<std::vector<std::string>> redisMethods::redis_stream_xreadgroup(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
 {
+    std::shared_ptr<std::vector<std::string>> res = std::make_shared<std::vector<std::string>>();
     redisConnRAII connraii;
     auto conn = connraii.get_connection();
     if(!conn)
     {
         LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
-        return;
+        return res;
     }
     // std::string res_str;
     //json字符串,使用json库
@@ -224,25 +226,60 @@ std::string redisMethods::consume_msg(const std::string &stream_name,const std::
 
     //这里阻塞的等待消息，是否需要优化？
     //默认阻塞1s，获取1条消息
-    std::string command_str = "XREADGROUP GROUP " + group_name + " " + consumer_name + " COUNT " + std::to_string(count.value()) + " BLOCK " + std::to_string(block_time.value()) + " STREAMS " + stream_name + " >";
+    // std::string command_str = "XREADGROUP GROUP " + group_name + " " + consumer_name + " COUNT " + std::to_string(count.value()) + " BLOCK " + std::to_string(block_time.value()) + " STREAMS " + stream_name + " >";
+    std::string command_str = "XREADGROUP GROUP" + group_name + " " + consumer_name + " ";
+    if(block_time.has_value())
+    {
+        command_str += "BLOCK " + std::to_string(block_time.value()) + " ";
+    }
+    if(count.has_value())
+    {
+        command_str += "COUNT " + std::to_string(count.value()) + " ";
+    }
     // std::unique_ptr<redisReply, void(*)(redisReply*)> consume_reply(static_cast<redisReply*>(redisCommand(conn.get(), "XREADGROUP GROUP %s %s COUNT %d BLOCK %d STREAMS %s >", group_name.c_str(), consumer_name.c_str(),block_time.value() ,count.value(),stream_name.c_str())),[](redisReply* reply){freeReplyObject(reply);});
-    std::unique_ptr<redisReply, void(*)(redisReply*)> consume_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
-    if(consume_reply == nullptr || consume_reply->type == REDIS_REPLY_ERROR )
+    while(true)
     {
-        LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+        std::unique_ptr<redisReply, void(*)(redisReply*)> consume_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+        if(consume_reply == nullptr || consume_reply->type == REDIS_REPLY_ERROR)
+        {
+            LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+            break;
+        }
+        else if(consume_reply->type == REDIS_REPLY_NIL)
+        {
+            //暂时没有消息
+            std::this_thread::sleep_for(std::chrono::milliseconds(REDIS_STREAM_XREADGROUP_SLEEPTIME));
+        }
+        else if(consume_reply->type != REDIS_REPLY_ARRAY)
+        {
+            LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+            break;
+        }
+        else if(consume_reply->type == REDIS_REPLY_ARRAY)
+        {
+            LOG_INFO("%s:%s:%d // 消费者：%s消费消息成功", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+            res = get_string_from_redisreply(consume_reply.get());
+            break;
+        }
     }
-    else if(consume_reply->type == REDIS_REPLY_NIL)
-    {
-        LOG_WARING("%s:%s:%d // 消费者：%s没有消息", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
-    }
-    else if(consume_reply->type != REDIS_REPLY_ARRAY)
-    {
-        LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
-    }
-    else if(consume_reply->type == REDIS_REPLY_ARRAY)
-    {
-        LOG_INFO("%s:%s:%d // 消费者：%s消费消息成功", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
-        return get_string_from_redisreply(consume_reply.get());
+    return res;
+    // if(consume_reply == nullptr || consume_reply->type == REDIS_REPLY_ERROR )
+    // {
+    //     LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+    // }
+    // else if(consume_reply->type == REDIS_REPLY_NIL)
+    // {
+    //     LOG_WARING("%s:%s:%d // 消费者：%s没有消息", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+    // }
+    // else if(consume_reply->type != REDIS_REPLY_ARRAY)
+    // {
+    //     LOG_ERROR("%s:%s:%d // 消费者：%s消费消息失败", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+    // }
+    // else if(consume_reply->type == REDIS_REPLY_ARRAY)
+    // {
+    //     LOG_INFO("%s:%s:%d // 消费者：%s消费消息成功", __FILE__, __FUNCTION__, __LINE__,consumer_name.c_str());
+    //     // return get_string_from_redisreply(consume_reply.get());
+    //     res = get_string_from_redisreply(consume_reply.get());
         // std::string stream_name;
         // std::string message_id;
         // std::string field;
@@ -282,10 +319,11 @@ std::string redisMethods::consume_msg(const std::string &stream_name,const std::
         //     }
         // }
         
-    }
+    // }
+    // return res;
 }
 
-bool redisMethods::init_create_consumer_group(const std::string &stream_name ,const std::string& group_name)
+bool redisMethods::init_stream_consumer_group(const std::string &stream_name ,const std::string& group_name)
 {
     redisConnRAII connraii;
     auto conn = connraii.get_connection();
@@ -316,13 +354,17 @@ bool redisMethods::init_create_consumer_group(const std::string &stream_name ,co
     
 }
 
-std::string redisMethods::get_string_from_redisreply(redisReply* reply)
+// std::string redisMethods::get_string_from_redisreply(redisReply* reply)
+std::shared_ptr<std::vector<std::string>> redisMethods::get_string_from_redisreply(redisReply* reply)
 {
+    nlohmann::json res_json;
+    std::string stream_name;
+    std::string message_id;
+    std::shared_ptr<std::vector<std::string>> res_vec = std::make_shared<std::vector<std::string>>();
     if(reply == nullptr)
     {
-        return "";
+        return res_vec;
     }
-    nlohmann::json res_json;
     std::unique_ptr<redisReply,void(*)(redisReply*)> reply_ptr(reply,[](redisReply* reply){freeReplyObject(reply);});
     if(reply_ptr->type == REDIS_REPLY_STRING)
     {
@@ -348,17 +390,23 @@ std::string redisMethods::get_string_from_redisreply(redisReply* reply)
     {
         for(int i = 0; i < reply_ptr->elements; i++)
         {
-            res_json[REDIS_JSON_FIELD_STREAMNAME] = reply->element[i]->element[0]->str;
+            // res_json[REDIS_JSON_FIELD_STREAMNAME] = reply->element[i]->element[0]->str;
+            stream_name = reply->element[i]->element[0]->str;
             for(int j = 0; j < reply->element[i]->element[1]->elements; j++)
             {
-                res_json[REDIS_JSON_FIELD_MESSAGEID] = reply->element[i]->element[1]->element[j]->element[0]->str;
+                // res_json[REDIS_JSON_FIELD_MESSAGEID] = reply->element[i]->element[1]->element[j]->element[0]->str;
+                message_id = reply->element[i]->element[1]->element[j]->element[0]->str;
                 for(int k = 0; k < reply->element[i]->element[1]->element[j]->element[1]->elements - 1; k += 2)
                 {
                     res_json[reply->element[i]->element[1]->element[j]->element[1]->element[k]->str] = reply->element[i]->element[1]->element[j]->element[1]->element[k+1]->str;
                 }
+                // res_vec->push_back(res_json.dump());
+                res_json[REDIS_JSON_FIELD_STREAMNAME] = stream_name;
+                res_json[REDIS_JSON_FIELD_MESSAGEID] = message_id;
+                res_vec->push_back(res_json.dump());
+                res_json.clear();
             }
         }
-
         // for(int i = 0; i < reply_ptr->elements; i++)
         // {
         //     std::unique_ptr<redisReply,void(*)(redisReply*)> stream_ptr(reply_ptr->element[i],[](redisReply* reply){freeReplyObject(reply);});
@@ -404,7 +452,58 @@ std::string redisMethods::get_string_from_redisreply(redisReply* reply)
         //     }
         // }
     }
-    return res_json.dump();
+    return res_vec;
+    // return res_json.dump();
 }
 
+// std::string redisMethods::redis_stream_xadd(const std::string &stream,const std::vector<std::pair<std::string,std::string>>& fields)
+std::string redisMethods::redis_stream_xadd(const std::string &stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return "";
+    }
+    std::string command_str = "XADD " + stream + " * ";
+    for(auto& field : *fields)
+    {
+        command_str += field.first + " " + field.second + " ";
+    }
+    std::unique_ptr<redisReply, void(*)(redisReply*)> add_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(add_reply == nullptr || add_reply->type != REDIS_REPLY_STRING)
+    {
+        LOG_ERROR("%s:%s:%d // 向流%s添加消息失败", __FILE__, __FUNCTION__, __LINE__,stream.c_str());
+        return "";
+    }
+    else
+    {
+        LOG_INFO("%s:%s:%d // 向流%s添加消息成功", __FILE__, __FUNCTION__, __LINE__,stream.c_str());
+        return add_reply->str;
+    }
+}
+
+bool redisMethods::redis_stream_xack(const std::string &stream,const std::string& group_name,const std::string& id)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+    std::string command_str = "XAck " + stream + " " + group_name + " " + id;
+    std::unique_ptr<redisReply, void(*)(redisReply*)> ack_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(ack_reply == nullptr || ack_reply->type!= REDIS_REPLY_INTEGER)
+    {
+        LOG_ERROR("%s:%s:%d // 向流%s确认消息失败", __FILE__, __FUNCTION__, __LINE__,stream.c_str());
+        return false;
+    }
+    else
+    {
+        LOG_INFO("%s:%s:%d // 向流%s确认消息成功", __FILE__, __FUNCTION__, __LINE__,stream.c_str());
+        return true;
+    }
+}
 

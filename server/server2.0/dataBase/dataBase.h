@@ -56,9 +56,19 @@ public:
     // void set_offline_data_from_cacheanddb(const std::string &key_userid, const time_t& score_timestamp , const std::vector<uint8_t> value_offlinemsg,std::optional<int> expire = std::nullopt); //是否考虑将data的类型改为string？
     void set_msg_from_db(const std::string& sender_id,const std::string &sender_name,const std::string &receiver_id, const std::string &receiver_name, const std::string &msg,const std::string& type);
     std::shared_ptr<std::vector<std::string>> get_alluserid_from_db();
+    
+    std::shared_ptr<std::vector<std::string>> redis_stream_xreadgroup(const std::string& stream_name,const std::string& group_name,const std::string& consumer_name, const std::optional<int> block_time = std::nullopt,const std::optional<int> count = std::nullopt);
+    // std::string redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields);
+    std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
+    int redis_stream_xack_single(const std::string& stream,const std::string& groupname,const std::string& id);
+    int redis_stream_xack_batch(const std::string& stream,const std::string& groupname,std::shared_ptr<std::vector<std::string>> ids);
+private:
+    void init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);
     // void delete_user_info(int userid);
 private:
-    database():m_mysqlMethods(std::make_unique<mysqlMethods>()),m_redisMethods(std::make_unique<redisMethods>()){}
+    database():m_mysqlMethods(std::make_unique<mysqlMethods>()),m_redisMethods(std::make_unique<redisMethods>()){
+        init_stream_consumer_group(REDIS_STREAM_STREAMNAME_SERVER,REDIS_STREAM_GROUPNAME_SERVER);
+    }
     // std::unique_ptr<ImysqlMethods> m_mysqlMethods;
     std::unique_ptr<mysqlMethods> m_mysqlMethods;
     std::unique_ptr<redisMethods> m_redisMethods;

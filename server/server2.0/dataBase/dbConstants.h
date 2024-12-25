@@ -42,8 +42,16 @@ inline const std::string REDIS_PRIEFIX_FIND_USERID = "user:find_userid_by_userna
 inline const std::string REDIS_JSON_FIELD_STREAMNAME = "stream_name";
 inline const std::string REDIS_JSON_FIELD_MESSAGEID = "msg_id";
 
-
 inline const int REDIS_EXPIRE_USERINFO = 60*60;
+
+inline const int REDIS_STREAM_XREADGROUP_SLEEPTIME = 1000; //redis stream xreadgroup命令如果没有读到数据则默认sleep的时间
+inline const int REDIS_STREAM_XREADGROUP_BLOCK = 1000;  //redis stream xreadgroup命令默认阻塞时间
+inline const int REDIS_STREAM_XREADGROUP_COUNT = 1; //redis stream xreadgroup命令默认返回的消息数量
+inline const std::string REDIS_STREAM_STREAMNAME_SERVER = "server";
+inline const std::string REDIS_STREAM_GROUPNAME_SERVER= "mygroup";
+inline const int REDIS_STREAM_XACK_FAILED_SLEEPTIME = 1000; //redis stream xack命令失败后sleep的时间
+inline const int REDIS_STREAM_XACK_FAILED_MAXRETRY = 10; //redis stream xack命令失败后最大重试次数
+
 
 
 enum class redisSetMode
