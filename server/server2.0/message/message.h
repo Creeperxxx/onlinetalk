@@ -102,11 +102,11 @@ public:
     dataHeader(messageType type,
                   messageAction action,
                   std::optional<std::string> sender_name = std::nullopt,
+                  std::optional<std::string> sender_id = std::nullopt, 
                   std::optional<std::string> receiver_name = std::nullopt,
-                  std::optional<int> receiver_id = std::nullopt,
-                  std::optional<int> sender_id = std::nullopt,
-                  std::optional<int> session_id = std::nullopt,
-                  std::optional<int> group_id = std::nullopt,
+                  std::optional<std::string> receiver_id = std::nullopt,
+                  std::optional<std::string> session_id = std::nullopt,
+                  std::optional<std::string> group_id = std::nullopt,
                   std::optional<bool> compressed = std::nullopt)
                 : m_type(type),
                   m_action(action),
@@ -126,14 +126,14 @@ public:
         return m_action; }
     const std::string getSenderName() const {
         return m_sender_name.value_or(DEFAULT_SENDER_NAME); }
-    int getSenderId() const {
+    std::string getSenderId() const {
         return m_sender_id.value_or(DEFAULT_SENDER_ID); }
     // uint32_t getMessageSize() const { return m_message_size; }
-    int getSessionId() const {
+    std::string getSessionId() const {
         return m_session_id.value_or(DEFAULT_SESSION_ID);}
-    const int getGroupId() const {
+    const std::string getGroupId() const {
         return m_group_id.value_or(DEFAULT_GROUP_ID); }
-    const int getReceiverId() const {
+    const std::string getReceiverId() const {
         return m_receiver_id.value_or(DEFAULT_RECEIVER_ID); }
     const std::string getReceiverName() const {
         return m_receiver_name.value_or(DEFAULT_RECEIVER_NAME); }
@@ -149,14 +149,14 @@ public:
         m_action = a; }
     void setSenderName(const std::string& name) {
         m_sender_name = name; }
-    void setSenderId(int id) {
+    void setSenderId(std::string id) {
         m_sender_id = id; }
     // void setMessageSize(uint32_t size) { m_message_size = size; }
-    void setSessionId(int id) {
+    void setSessionId(std::string id) {
         m_session_id = id; }
-    void setGroupId(int id) {
+    void setGroupId(std::string id) {
         m_group_id = id; }
-    void setReceiverId(int id) {
+    void setReceiverId(std::string id) {
         m_receiver_id = id; }
     void setReceiverName(const std::string& name) {
         m_receiver_name = name; }
@@ -171,13 +171,18 @@ private:
     // std::string m_sender_name;
     std::optional<std::string> m_sender_name;
     // int m_sender_id;
-    std::optional<int> m_sender_id; 
+    // std::optional<int> m_sender_id; 
+    std::optional<std::string> m_sender_id;
     // uint32_t m_message_size;
     // int m_session_id;
-    std::optional<int> m_session_id;
-    std::optional<int> m_group_id;
-    std::optional<int> m_receiver_id;
+    // std::optional<int> m_session_id;
+    std::optional<std::string> m_session_id;
+    // std::optional<int> m_group_id;
+    std::optional<std::string> m_group_id;
+    // std::optional<int> m_receiver_id;
+    std::optional<std::string> m_group_id;
     std::optional<std::string> m_receiver_name;
+    std::optional<std::string> m_receiver_id;
     std::optional<bool> m_is_compressed;
     std::optional<int> m_sender_socketfd;
 };

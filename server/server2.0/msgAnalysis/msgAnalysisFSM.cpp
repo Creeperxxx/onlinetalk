@@ -123,7 +123,7 @@ void msgAnalysisFSM::check_crc()
 {
     memcpy(&crc, data->data() + offset, sizeof(crc));
     crc = ntohl(crc);
-    if (crc == dynamic_cast<serializationMethodV1 *>(serialization_method.get())->calculateCRC32(data->data() + offset - length, length))
+    if (crc == dynamic_cast<cerealSerializationMethod *>(serialization_method.get())->calculateCRC32(data->data() + offset - length, length))
     {
         // 校验通过
         offset += sizeof(crc);
@@ -214,7 +214,7 @@ void msgAnalysisFSM::process_msg()
 // void msgAnalysisFSM::init(std::shared_ptr<IserializationMethod> serialization_method)
 void msgAnalysisFSM::init()
 {
-    this->serialization_method = std::make_unique<serializationMethodV1>();
+    this->serialization_method = std::make_unique<cerealSerializationMethod>();
     // this->event_handler = eventHandler;
     // this->pool = threadPool;
     current_state = analysisState::initial_state;

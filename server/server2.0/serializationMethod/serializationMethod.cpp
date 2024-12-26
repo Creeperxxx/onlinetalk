@@ -1,6 +1,6 @@
 #include "serializationMethod.h"
 
-std::shared_ptr<std::vector<uint8_t>> serializationMethodV1::serialize_message(std::shared_ptr<message> msg)
+std::shared_ptr<std::vector<uint8_t>> cerealSerializationMethod::serialize_message(std::shared_ptr<message> msg)
 {
     try
     {
@@ -38,7 +38,7 @@ std::shared_ptr<std::vector<uint8_t>> serializationMethodV1::serialize_message(s
     }
 }
 
-std::shared_ptr<message> serializationMethodV1::deserialize_message(std::shared_ptr<std::vector<uint8_t>> data)
+std::shared_ptr<message> cerealSerializationMethod::deserialize_message(std::shared_ptr<std::vector<uint8_t>> data)
 {
     try
     {
@@ -50,23 +50,32 @@ std::shared_ptr<message> serializationMethodV1::deserialize_message(std::shared_
             // 反序列化 messageHeader
             messageType type;
             messageAction action;
-            std::string sender_name;
+            /* std::string sender_name;
             int sender_id;
             // uint32_t message_size;
             int session_id;
             std::optional<int> group_id;
             std::optional<int> receiver_id;
             std::optional<std::string> receiver_name;
+            bool compressed; */
+            std::string sender_name;
+            std::string sender_id;
+            std::string receiver_name;
+            std::string receiver_id;
+            std::string session_id;
+            std::string group_id;
             bool compressed;
             iarchive(CEREAL_NVP(type),
                      CEREAL_NVP(action),
                      CEREAL_NVP(sender_name),
                      CEREAL_NVP(sender_id),
+                     CEREAL_NVP(receiver_name),
+                     CEREAL_NVP(receiver_id),
                      //  CEREAL_NVP(message_size),
                      CEREAL_NVP(session_id),
                      CEREAL_NVP(group_id),
-                     CEREAL_NVP(receiver_id),
-                     CEREAL_NVP(receiver_name),
+                    //  CEREAL_NVP(receiver_id),
+                    //  CEREAL_NVP(receiver_name),
                      CEREAL_NVP(compressed));
 
             // 反序列化 message 数据
@@ -74,7 +83,7 @@ std::shared_ptr<message> serializationMethodV1::deserialize_message(std::shared_
             iarchive(CEREAL_NVP(msg_data));
             // 创建 message 对象
 
-            msg->setHeader(dataHeader(type, action, sender_name, sender_id, session_id, group_id, receiver_id, receiver_name, compressed));
+            msg->setHeader(dataHeader(type,action,sender_name,sender_id,receiver_name,receiver_id,session_id,group_id,compressed));
             msg->setData(msg_data);
         }
         return msg;
@@ -93,9 +102,20 @@ std::shared_ptr<message> serializationMethodV1::deserialize_message(std::shared_
     }
 }
 
-uint32_t serializationMethodV1::calculateCRC32(const uint8_t *data, size_t length)
+uint32_t cerealSerializationMethod::calculateCRC32(const uint8_t *data, size_t length)
 {
     uint32_t crc = crc32(0L, Z_NULL, 0); // 初始化CRC32
     crc = crc32(crc, data, length);      // 计算CRC32
     return crc;
+}
+
+std::shared_ptr<ISerializationMethod> SerializationMethodFactory::createSerializationMethod(const SerializationMethodType &type)
+{
+    switch (type)
+    {
+    case SerializationMethodType::CEREAL:
+        return std::make_shared<cerealSerializationMethod>();
+    default:
+        return nullptr;
+    }
 }

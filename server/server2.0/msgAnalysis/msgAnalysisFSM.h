@@ -74,7 +74,7 @@ private:
     size_t offset;
     uint32_t seq;
     uint32_t crc;
-    std::unique_ptr<IserializationMethod> serialization_method;
+    std::unique_ptr<ISerializationMethod> serialization_method;
     std::shared_ptr<std::vector<uint8_t>> data;
     std::shared_ptr<std::vector<uint8_t>> message_data;
     std::shared_ptr<message> msg;
