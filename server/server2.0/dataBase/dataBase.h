@@ -62,13 +62,12 @@ public:
     std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
     int redis_stream_xack_single(const std::string& stream,const std::string& groupname,const std::string& id);
     int redis_stream_xack_batch(const std::string& stream,const std::string& groupname,std::shared_ptr<std::vector<std::string>> ids);
-private:
     void init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);
     // void delete_user_info(int userid);
 private:
-    database():m_mysqlMethods(std::make_unique<mysqlMethods>()),m_redisMethods(std::make_unique<redisMethods>()){
-        init_stream_consumer_group(REDIS_STREAM_STREAMNAME_SERVER,REDIS_STREAM_GROUPNAME_SERVER);
-    }
+    database():m_mysqlMethods(std::make_unique<mysqlMethods>()),m_redisMethods(std::make_unique<redisMethods>()){} // {
+        // init_stream_consumer_group(REDIS_STREAM_STREAMNAME_SERVER,REDIS_STREAM_GROUPNAME_SERVER);
+    // }
     // std::unique_ptr<ImysqlMethods> m_mysqlMethods;
     std::unique_ptr<mysqlMethods> m_mysqlMethods;
     std::unique_ptr<redisMethods> m_redisMethods;

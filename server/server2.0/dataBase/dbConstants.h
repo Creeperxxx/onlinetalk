@@ -49,6 +49,7 @@ inline const int REDIS_STREAM_XREADGROUP_BLOCK = 1000;  //redis stream xreadgrou
 inline const int REDIS_STREAM_XREADGROUP_COUNT = 1; //redis stream xreadgroup命令默认返回的消息数量
 inline const std::string REDIS_STREAM_STREAMNAME_SERVER = "server";
 inline const std::string REDIS_STREAM_GROUPNAME_SERVER= "mygroup";
+inline const std::string REDIS_STREAM_CONSUMERNAME_SERVER = "consumer";
 inline const int REDIS_STREAM_XACK_FAILED_SLEEPTIME = 1000; //redis stream xack命令失败后sleep的时间
 inline const int REDIS_STREAM_XACK_FAILED_MAXRETRY = 10; //redis stream xack命令失败后最大重试次数
 
