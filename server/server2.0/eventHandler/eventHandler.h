@@ -78,7 +78,7 @@ private:
     std::atomic<int> analyze_recv_data_running;
     std::atomic<int> heartbeat_running;
     std::unique_ptr<NetworkIo> networkio;
-    std::unique_ptr<ThreadPool> thread_pool;
+    std::unique_ptr<threadPool> thread_pool;
     // std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
     std::unique_ptr<msgAnalysisFSM> msg_analysis_fsm;
     // std::shared_ptr<msgAnalysis> msgAnalysis;

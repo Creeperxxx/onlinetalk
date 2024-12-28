@@ -52,6 +52,8 @@ inline const std::string REDIS_STREAM_GROUPNAME_SERVER= "mygroup";
 inline const std::string REDIS_STREAM_CONSUMERNAME_SERVER = "consumer";
 inline const int REDIS_STREAM_XACK_FAILED_SLEEPTIME = 1000; //redis stream xack命令失败后sleep的时间
 inline const int REDIS_STREAM_XACK_FAILED_MAXRETRY = 10; //redis stream xack命令失败后最大重试次数
+inline const int REDIS_STREAM_READER_NUM = 3;
+inline const int REDOS_STREAM_WRITER_NUM = 3;
 
 
 

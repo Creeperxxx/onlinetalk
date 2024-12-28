@@ -7,7 +7,7 @@
 void ReactorEventHandler::init()
 {
     // 线程池初始化
-    thread_pool = std::make_unique<ThreadPool>(THREAD_NUMS);
+    thread_pool = std::make_unique<threadPool>(THREAD_NUMS);
     // 日志初始化
     auto lambda = [this](){
         log::get_instance().flush_log();

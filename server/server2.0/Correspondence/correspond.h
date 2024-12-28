@@ -1,7 +1,6 @@
 #include "../dataBase/dataBase.h"
+#include "../threadPool/threadPool.h"
 
-inline const int REDIS_READER_NUM = 3;
-inline const int REDIS_WRITER_NUM = 3;
 
 class Icorrespondence
 {
@@ -20,14 +19,16 @@ class corRedisStream : Icorrespondence
 {
 public: 
     void init()override;
+    void thread_write();
+    void thread_read();
     void run()override;
 private:
-    void thread_read();
-    void thread_write();
     std::string read_msg();
     bool write_msg(const std::string& msg);
 private:
     std::atomic<int> m_consumer_num;
+    std::atomic<bool> m_reader_run;
+    std::atomic<bool> m_writer_run;
     // int m_reader_num = 1;
     // int m_writer_num = 1;
 };
