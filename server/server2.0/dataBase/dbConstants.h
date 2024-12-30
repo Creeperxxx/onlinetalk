@@ -43,6 +43,7 @@ inline const std::string REDIS_JSON_FIELD_STREAMNAME = "stream_name";
 inline const std::string REDIS_JSON_FIELD_MESSAGEID = "msg_id";
 
 inline const int REDIS_EXPIRE_USERINFO = 60*60;
+    //redis stream
 
 inline const int REDIS_STREAM_XREADGROUP_SLEEPTIME = 1000; //redis stream xreadgroup命令如果没有读到数据则默认sleep的时间
 inline const int REDIS_STREAM_XREADGROUP_BLOCK = 1000;  //redis stream xreadgroup命令默认阻塞时间
@@ -52,8 +53,33 @@ inline const std::string REDIS_STREAM_GROUPNAME_SERVER= "mygroup";
 inline const std::string REDIS_STREAM_CONSUMERNAME_SERVER = "consumer";
 inline const int REDIS_STREAM_XACK_FAILED_SLEEPTIME = 1000; //redis stream xack命令失败后sleep的时间
 inline const int REDIS_STREAM_XACK_FAILED_MAXRETRY = 10; //redis stream xack命令失败后最大重试次数
-inline const int REDIS_STREAM_READER_NUM = 3;
-inline const int REDOS_STREAM_WRITER_NUM = 3;
+inline const int REDIS_STREAM_READER_NUM = 1;
+inline const int REDOS_STREAM_WRITER_NUM = 1;
+inline const std::string REDIS_STREAM_MESSAGE_FIELD_NAME = "message";
+inline const std::string REDIS_STREAM_REGISTERNAME_PREFIX = "register";
+
+
+        //redis stream中客户端向服务器端发送消息的消息格式
+/*
+{
+    "header" : {
+        "sender_id" : "sender_id",
+        "sender_name" : "sender_name",
+        "receiver_id" : "receiver_id",
+        "receiver_name" : "receiver_name",
+        "receiver_stream" : "receiver_stream",
+        "message_type" : "message_type",
+        "message_action" : "message_action",
+        "session_id" : "session_id",
+        "group_id" : "group_id"
+    },
+    "data" : {
+        "content" : {
+
+        }
+    }
+}
+*/
 
 
 
@@ -101,3 +127,12 @@ inline const int DEFAULT_SESSION_ID = 0;
 inline const int DEFAULT_GROUP_ID = 0;
 inline const int DEFAULT_RECEIVER_ID = 0;
 inline const std::string DEFAULT_RECEIVER_NAME = "default_receiver_name";
+
+inline const std::string MESSAGE_HEADER_SENDER_ID = "sender_id";
+inline const std::string MESSAGE_HEADER_SENDER_NAME = "sender_name";
+inline const std::string MESSAGE_HEADER_RECEIVER_ID = "receiver_id";
+inline const std::string MESSAGE_HEADER_RECEIVER_NAME = "receiver_name";
+inline const std::string MESSAGE_HEADER = "header";
+inline const std::string MESSAGE_DATA = "data";
+inline const std::string MESSAGE_HEADER_REGISTER_TOKEN = "register_token";
+inline const std::string MESSAGE_HEADER_RECEIVER_STREAM = "receiver_stream";

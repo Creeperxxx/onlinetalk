@@ -59,7 +59,8 @@ public:
     
     std::shared_ptr<std::vector<std::string>> redis_stream_xreadgroup(const std::string& stream_name,const std::string& group_name,const std::string& consumer_name, const std::optional<int> block_time = std::nullopt,const std::optional<int> count = std::nullopt);
     // std::string redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields);
-    std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
+    std::string redis_stream_xadd_fields(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
+    std::string redis_stream_xadd_msg(const std::string& stream,const std::string& msg);
     int redis_stream_xack_single(const std::string& stream,const std::string& groupname,const std::string& id);
     int redis_stream_xack_batch(const std::string& stream,const std::string& groupname,std::shared_ptr<std::vector<std::string>> ids);
     void init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);

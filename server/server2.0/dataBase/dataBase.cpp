@@ -395,7 +395,7 @@ void database::init_stream_consumer_group(const std::string &stream_name, const 
 }
 
 // std::string database::redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields)
-std::string database::redis_stream_xadd(const std::string &stream, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> fields)
+std::string database::redis_stream_xadd_fields(const std::string &stream, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> fields)
 {
     return m_redisMethods->redis_stream_xadd(stream, fields);
 }
@@ -441,4 +441,9 @@ int database::redis_stream_xack_batch(const std::string &stream, const std::stri
         }
     }
     return count;
+}
+
+std::string database::redis_stream_xadd_msg(const std::string &stream, const std::string &msg)
+{
+    return m_redisMethods->redis_stream_xadd(stream, msg);
 }

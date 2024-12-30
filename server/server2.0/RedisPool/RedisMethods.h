@@ -54,6 +54,7 @@ public:
     bool init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);
     // std::string redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields);
     std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
+    std::string redis_stream_xadd(const std::string& stream,const std::string& msg);
     bool redis_stream_xack(const std::string& stream,const std::string& groupname,const std::string& id);
 private:
     std::shared_ptr<std::vector<std::string>> get_string_from_redisreply(redisReply* reply);

@@ -507,3 +507,25 @@ bool redisMethods::redis_stream_xack(const std::string &stream,const std::string
     }
 }
 
+std::string redisMethods::redis_stream_xadd(const std::string& stream,const std::string& msg)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return "";
+    }
+    std::string command_str = "XADD " + stream + " * " + REDIS_STREAM_MESSAGE_FIELD_NAME + msg;
+    std::unique_ptr<redisReply, void(*)(redisReply*)> add_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(add_reply == nullptr || add_reply->type != REDIS_REPLY_STRING)
+    {
+        LOG_ERROR("%s:%s:%d // 向流%s添加消息失败", __FILE__, __FUNCTION__, __LINE__,stream.c_str());
+        return "";
+    }
+    else
+    {
+        LOG_INFO("%s:%s:%d // 向流%s添加消息成功", __FILE__, __FUNCTION__, __LINE__,stream.c_str());
+        return add_reply->str;
+    }
+}

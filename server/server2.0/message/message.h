@@ -165,6 +165,7 @@ public:
     void setSenderSocketFd(int fd) {
         m_sender_socketfd = fd; }
 
+
 private:
     messageType m_type;
     messageAction m_action;

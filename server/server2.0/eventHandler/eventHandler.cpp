@@ -369,7 +369,7 @@ void ReactorEventHandler::handle_sockets_send()
             }
             else
             {
-                if(false == networkio->send_data(socket,data))
+                if(false == networkio->send_data_binary(socket,data))
                 {
                     //发送失败
                     LOG_ERROR("%s:%s:%d // 发送失败",__FILE__,__FUNCTION__,__LINE__);

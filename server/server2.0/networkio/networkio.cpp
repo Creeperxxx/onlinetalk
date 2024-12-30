@@ -67,7 +67,7 @@ void NetworkIo::deleter()
 
 // void NetworkIo::send_data(int socket_fd, std::shared_ptr<message> msg) {
 // void NetworkIo::send_data(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
-bool NetworkIo::send_data(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
+bool NetworkIo::send_data_binary(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
     // 序列化
 
     // auto data = serialization_method->serialize_message(msg);
@@ -162,23 +162,6 @@ std::shared_ptr<std::vector<uint8_t>> NetworkIo::recv_data(int socket_fd) {
     //反序列化
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // // 读取数据类型
     // uint8_t type_byte;
     // ssize_t bytes_received = recv(socket_fd, &type_byte, 1, 0);
@@ -230,4 +213,9 @@ std::shared_ptr<std::vector<uint8_t>> NetworkIo::recv_data(int socket_fd) {
 //     }
 //     auto str = ss.str();
 //     return std::vector<uint8_t>(str.begin(), str.end());
+// }
+
+// bool NetworkIo::send_data_string(int socket_fd,const std::string& data)
+// {
+//     auto res = send()
 // }

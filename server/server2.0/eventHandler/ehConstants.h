@@ -1,3 +1,4 @@
+#pragma once
 
 //eventhandler
 inline const int USER_NOT_EXIST = -1;
