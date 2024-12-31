@@ -1,7 +1,7 @@
-#include "networkio.h"
+#include "socketNetworkIo.h"
 const int FULL_CONNECT_LENGTH = 10;
 
-void NetworkIo::init(int listen_port)
+void socketNetworkIo::init(int listen_port)
 {
     this->listen_port = listen_port;
     init_listenfd();
@@ -10,7 +10,7 @@ void NetworkIo::init(int listen_port)
     // serialization_method = std::make_unique<serializationMethodV1>();
 }
 
-void NetworkIo::init_listenfd()
+void socketNetworkIo::init_listenfd()
 {
     listen_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(listen_fd == -1)
@@ -40,7 +40,7 @@ void NetworkIo::init_listenfd()
     }
 }
 
-void NetworkIo::set_blocking_mode(int socket_fd,bool blocking)
+void socketNetworkIo::set_blocking_mode(int socket_fd,bool blocking)
 {
     int flags = fcntl(socket_fd, F_GETFL, 0);
     if (flags == -1) {
@@ -60,14 +60,14 @@ void NetworkIo::set_blocking_mode(int socket_fd,bool blocking)
     }
 }
 
-void NetworkIo::deleter()
+void socketNetworkIo::deleter()
 {
     close(listen_fd);
 }
 
 // void NetworkIo::send_data(int socket_fd, std::shared_ptr<message> msg) {
 // void NetworkIo::send_data(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
-bool NetworkIo::send_data_binary(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
+bool socketNetworkIo::send_data_binary(int socket_fd, std::shared_ptr<std::vector<uint8_t>> data) {
     // 序列化
 
     // auto data = serialization_method->serialize_message(msg);
@@ -124,7 +124,7 @@ bool NetworkIo::send_data_binary(int socket_fd, std::shared_ptr<std::vector<uint
 }
 
 // std::vector<uint8_t> NetworkIo::recv_data(int socket_fd) {
-std::shared_ptr<std::vector<uint8_t>> NetworkIo::recv_data(int socket_fd) {
+std::shared_ptr<std::vector<uint8_t>> socketNetworkIo::recv_data(int socket_fd) {
     // 接收数据
     std::shared_ptr<std::vector<std::uint8_t>> data = std::make_shared<std::vector<uint8_t>>();
     ssize_t byte = 0;
@@ -219,3 +219,65 @@ std::shared_ptr<std::vector<uint8_t>> NetworkIo::recv_data(int socket_fd) {
 // {
 //     auto res = send()
 // }
+
+bool socketNetworkIo::send_data(int socketfd,const char* data,size_t length)
+{
+    int byte = 0;
+    int byte_sum = 0;
+    while(byte_sum < length)
+    {
+        byte = send(socketfd,data + byte_sum,length - byte_sum,0);
+        if(byte == -1)
+        {
+            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                LOG_WARING("%s:%s:%d // send data eagain or ewouldblock",__FILE__,__FUNCTION__,__LINE__);
+                continue;
+            }
+            else
+            {
+                LOG_ERROR("%s:%s:%d // send data error",__FILE__,__FUNCTION__,__LINE__);
+                return false;
+            }
+        }
+        byte_sum += byte;
+    }
+    return true;
+}
+
+std::shared_ptr<std::vector<uint8_t>> socketNetworkIo::recv_data(int socketfd)
+{
+    std::shared_ptr<std::vector<uint8_t>> ret_data = std::make_shared<std::vector<uint8_t>>();
+    char buffer[1024] = {0};
+    int byte = 0;
+    while(true)
+    {
+        byte = recv(socketfd,buffer,sizeof(buffer),0);
+        if(byte == -1)
+        {
+            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                LOG_WARING("%s:%s:%d // recv data eagain or ewouldblock",__FILE__,__FUNCTION__,__LINE__);
+                continue;
+            }
+            else
+            {
+                LOG_ERROR("%s:%s:%d // recv data error",__FILE__,__FUNCTION__,__LINE__);
+                //todo 这里要清理套接字
+                return ret_data;
+            }
+        }
+        else if(byte == 0)
+        {
+            //recv函数返回0表示连接已关闭
+            LOG_INFO("%s:%s:%d // 对应的socket关闭",__FILE__,__FUNCTION__,__LINE__);
+            //todo 这里要清理套接字
+            return ret_data;
+        }
+        else
+        {
+            ret_data->insert(ret_data->end(),buffer,buffer + byte);
+        }
+    }
+    return ret_data;
+}

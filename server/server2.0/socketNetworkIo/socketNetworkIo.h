@@ -29,13 +29,15 @@ extern const int FULL_CONNECT_LENGTH;
 //     DataPacket(DataType type, const std::vector<uint8_t>& data) : type(type), data(data) {}
 // };
 
-class NetworkIo
+class socketNetworkIo
 {
 public:
     void init(int listen_port);
     void deleter();
     // void send_data(int socketfd,std::shared_ptr<message> msg);//通过套接字发送消息
     // void send_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);
+    
+    //这4个函数好像没什么用了
     bool send_data_binary(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);
     // std::vector<uint8_t> recv_data(int socketfd);//通过套接字接收并返回消息
     std::shared_ptr<std::vector<uint8_t>> recv_data(int socketfd);
@@ -44,7 +46,7 @@ public:
     
     //用std::shared_ptr<std::vector<uint8_t>>存储数据,记住recv时要用一个buf缓冲区缓冲.
     bool send_data(int socketfd,const char* data,size_t len);
-    std::shared_ptr<std::vector<uint8_t>> 
+    std::shared_ptr<std::vector<uint8_t>> recv_data(int socketfd);
 
     void set_blocking_mode(int socket_fd,bool blocking);// 对套接字进行设置，设置为非阻塞
 

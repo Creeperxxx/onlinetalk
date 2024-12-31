@@ -1,7 +1,8 @@
 #include "../dataBase/dataBase.h"
 #include "../threadPool/threadPool.h"
 #include "../dataManager/dataManager.h"
-#include "../networkio/networkio.h"
+// #include "../networkio/networkio.h"
+#include "../socketNetworkIo/socketNetworkIo.h"
 #include <memory>
 
 
@@ -52,7 +53,7 @@ public:
     void thread_read() override;
     void thread_event_loop();
 private:
-    std::unique_ptr<NetworkIo> m_networkio;
+    std::unique_ptr<socketNetworkIo> m_networkio;
 };
 
 

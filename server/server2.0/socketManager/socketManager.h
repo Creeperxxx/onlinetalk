@@ -6,6 +6,8 @@
 #include <atomic>
 #include <set>
 #include "../eventHandler/ehConstants.h"
+#include <fcntl.h>
+#include <string.h>
 // #include "../requirement/moodycamel/concurrentqueue.h"
 
 //升级为单例模式吧，不然策略类访问不到socketmanager。也不能采用依赖注入。
@@ -13,8 +15,8 @@
 class socketManager
 {
 private:
-    std::unordered_map<int,std::shared_ptr<socketVector>> socket_vecs;
-    std::mutex mutex_socket_vecs;
+    std::unordered_map<int,std::shared_ptr<socketVector>> socket_map;
+    std::mutex mutex_socket_map;
     // std::condition_variable socket_vecs_cv;
     // std::unordered_set<int> updated_socket_recv_set; // 这里为啥要用集合来着
     std::vector<int> updated_socket_recv_vec;
@@ -44,6 +46,7 @@ private:
     static std::unique_ptr<socketManager> instance;
 public:
     static socketManager& getInstance();
+    void add_socket(int socketfd);
     bool add_socket_vec(const std::string& userid,const std::string& username,int socketfd);
     bool delete_socket_vec(int socketfd);
     void enqueue_recv_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);   
@@ -71,4 +74,5 @@ private:
     std::shared_ptr<socketVector> get_socket_vec(int socketfd);
     bool is_username_exist(const std::string& username);
     bool is_userid_exist(const std::string& userid);
+    // void set_socket_isblocking(int socketfd,bool is_block);
 };

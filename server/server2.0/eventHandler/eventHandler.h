@@ -1,5 +1,6 @@
 #pragma once
-#include "../networkio/networkio.h"
+// #include "../networkio/networkio.h"
+#include "../socketNetworkIo/socketNetworkIo.h"
 #include <sys/epoll.h>
 #include <signal.h>
 #include <atomic>
@@ -14,6 +15,13 @@
 #include <string>
 #include "../socketManager/socketManager.h"
 #include "ehConstants.h"
+#include "../dataManager/dataManager.h"
+#include <fcntl.h>
+
+inline const bool REACTOR_IS_PUSH_READY_SOCKET_SINGLE = true;
+inline const bool REACTOR_IS_EPOLL_WAIT_TIMEOUT = false;
+inline const int REACTOR_EPOLL_WAIT_TIMEOUT_SECOND = 10;
+inline const int REACTOR_EPOLL_MAX_EVENTS = 10;
 
 // extern const int MAX_EPOLL_EVENTS;
 // extern const int THREAD_NUMS;
@@ -27,20 +35,22 @@
 class IEventHandler
 {
 public:
-    virtual void init() = 0;
-    virtual void handle_new_connections() = 0;
-    virtual void run() = 0;
-    virtual ~IEventHandler() = default;
+    // virtual void init() = 0;
+    // virtual void handle_new_connections() = 0;
+    // virtual void run() = 0;
+    // virtual ~IEventHandler() = default;
     // virtual void handle_ready_connections(int socketfd) = 0;
 };
 
-class ReactorEventHandler : public IEventHandler
+class ReactorEventHandlerV1 : public IEventHandler
 {
 public:
-    ~ReactorEventHandler() override;
-    void init() override;
-    void run() override;
-    void event_loop();
+    ~ReactorEventHandlerV1();
+    void init();
+    void new_init();
+    void run();
+    void old_1_event_loop();
+    void new_event_loop();
     void handle_sockets_recv();
     void handle_sockets_send();//todo 同时检查是否有要发给为上线用户的消息。
     void analyze_recv_data();
@@ -52,13 +62,14 @@ public:
     void add_new_userid_to_all_userid(const std::string& userid);
     void delete_userid_from_all_userid(const std::string& userid);
     
+    
 
 private:
     void deleter();
     void init_epoll();
     void add_socketfd_to_epoll(int socketfd, uint32_t events);
     // void accept_new_connection();
-    void handle_new_connections() override;
+    void handle_new_connections();
     // void handle_ready_connections(int socketfd) override;
     // template <typename T>
     // std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
@@ -77,7 +88,7 @@ private:
     std::atomic<int> handle_sockets_send_running;
     std::atomic<int> analyze_recv_data_running;
     std::atomic<int> heartbeat_running;
-    std::unique_ptr<NetworkIo> networkio;
+    std::unique_ptr<socketNetworkIo> networkio;
     std::unique_ptr<threadPool> thread_pool;
     // std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
     std::unique_ptr<msgAnalysisFSM> msg_analysis_fsm;
@@ -93,6 +104,8 @@ private:
 
     std::unordered_set<std::string> all_userid;
     std::mutex all_userid_mutex;
+
+    std::atomic<bool> m_event_loop_running;
 
     // std::shared_ptr<socketManager> socket_manager;
     // std::unique_ptr<socketManager> socket_manager;
@@ -126,4 +139,21 @@ private:
 class ProactorEventHandler : public IEventHandler
 {
 
+};
+
+class ReactorEventHandler : public IEventHandler
+{
+public:
+    void init(int listen_fd);
+    void run();
+private:
+    void init_epoll();
+    void event_loop();
+    void accept_new_connections();
+    void add_socket_to_epoll(int socketfd, uint32_t events);
+    void set_socket_isblocking(int socketfd,bool isblocking);
+private:
+    std::atomic<bool> m_event_loop_running;
+    int epoll_fd;
+    int listen_fd;
 };

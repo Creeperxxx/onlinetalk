@@ -104,9 +104,9 @@ std::shared_ptr<std::vector<uint8_t>> socketManager::dequeue_send_data(int socke
 
 std::shared_ptr<socketVector> socketManager::get_socket_vec(int socketfd)
 {
-    std::lock_guard<std::mutex> lock(mutex_socket_vecs);
-    auto it = socket_vecs.find(socketfd);
-    if (it == socket_vecs.end())
+    std::lock_guard<std::mutex> lock(mutex_socket_map);
+    auto it = socket_map.find(socketfd);
+    if (it == socket_map.end())
     {
         LOG_ERROR("%s:%s:%d // 未找到套接字对应的socketVector", __FILE__, __func__, __LINE__);
         return nullptr;
@@ -154,14 +154,14 @@ bool socketManager::add_socket_vec(const std::string& userid,const std::string& 
         }
         else
         {
-            std::lock_guard<std::mutex> lock(mutex_socket_vecs);
-            socket_vecs[socket] = std::make_shared<socketVector>(socket, username);
+            std::lock_guard<std::mutex> lock(mutex_socket_map);
+            socket_map[socketfd] = std::make_shared<socketVector>(socketfd, username);
         }
         // socket_vecs[socket] = std::make_shared<socketVector>(socket, username);
     }
     {
         std::lock_guard<std::mutex> lock(mutex_interact_time_set);
-        interaction_time_socketvec_set.insert(socket_vecs[socket]);
+        interaction_time_socketvec_set.insert(socket_map[socketfd]);
     }
 
     // interaction_time_socketvec_set.insert(socket_vecs[socket]);
@@ -173,7 +173,7 @@ bool socketManager::add_socket_vec(const std::string& userid,const std::string& 
         temp = std::make_shared<std::vector<uint8_t>>(std::move(*sendto_offline_user_data[username]));
         sendto_offline_user_data.erase(username);
     }
-    enqueue_send_data(socket, temp);
+    enqueue_send_data(socketfd, temp);
 
     // auto temp = sendto_offline_user_data[username]
     // enqueue_send_data(socket,sendto_offline_user_data[username]);
@@ -224,8 +224,8 @@ bool socketManager::delete_socket_vec(int socket)
     {
         if (it->is_recv_data_empty() && it->is_send_data_empty())
         {
-            std::lock_guard<std::mutex> lock(mutex_socket_vecs);
-            socket_vecs.erase(socket);
+            std::lock_guard<std::mutex> lock(mutex_socket_map);
+            socket_map.erase(socket);
             return true;
         }
         else
@@ -343,8 +343,8 @@ socketManager& socketManager::getInstance()
 
 bool socketManager::is_username_exist(const std::string& username)
 {
-    std::lock_guard<std::mutex> lock(mutex_socket_vecs);
-    for (auto it : socket_vecs)
+    std::lock_guard<std::mutex> lock(mutex_socket_map);
+    for (auto it : socket_map)
     {
         if (it.second->get_username() == username)
         {
@@ -356,8 +356,8 @@ bool socketManager::is_username_exist(const std::string& username)
 
 int socketManager::get_socket_by_userid(const std::string& userid)
 {
-    std::lock_guard<std::mutex> lock(mutex_socket_vecs);
-    for(auto it : socket_vecs)
+    std::lock_guard<std::mutex> lock(mutex_socket_map);
+    for(auto it : socket_map)
     {
         if(it.second->get_userid() == userid)
         {
@@ -365,4 +365,35 @@ int socketManager::get_socket_by_userid(const std::string& userid)
         }
     }
     return USER_OFFLINE;
+}
+
+// void socketManager::set_socket_isblocking(int socket_fd, bool blocking)
+// {
+//     int flags = fcntl(socket_fd, F_GETFL, 0);
+//     if (flags == -1) {
+//         // std::cerr << "Error getting file status flags: " << strerror(errno) << std::endl;
+//         LOG_ERROR("%s:%s:%d // 错误获取文件状态标志: %s", __FILE__, __FUNCTION__, __LINE__, strerror(errno));
+//     }
+
+//     if (blocking) {
+//         // 设置为阻塞模式
+//         if (fcntl(socket_fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
+//             // std::cerr << "Error setting socket to blocking mode: " << strerror(errno) << std::endl;
+//             LOG_ERROR("%s:%s:%d // 错误设置套接字为阻塞模式: %s", __FILE__, __FUNCTION__, __LINE__, strerror(errno));
+//         }
+//     } else {
+//         // 设置为非阻塞模式
+//         if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+//             // std::cerr << "Error setting socket to non-blocking mode: " << strerror(errno) << std::endl;
+//             LOG_ERROR("%s:%s:%d // 错误设置套接字为非阻塞模式: %s", __FILE__, __FUNCTION__, __LINE__, strerror(errno));
+//         }
+//     }
+// }
+
+void socketManager::add_socket(int socketfd)
+{
+    std::lock_guard<std::mutex> lock(mutex_socket_map);
+    socket_map[socketfd] = std::make_shared<socketVector>(socketfd);
+    // set_socket_isblocking(socketfd,false);
+    // return true;
 }

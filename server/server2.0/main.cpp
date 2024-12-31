@@ -10,7 +10,7 @@ int main()
 
     try
     {
-        std::unique_ptr<IEventHandler> eventHandler = std::make_unique<ReactorEventHandler>();
+        std::unique_ptr<IEventHandler> eventHandler = std::make_unique<ReactorEventHandlerV1>();
         eventHandler->run();
         return 0;
     }
