@@ -17,7 +17,7 @@
 //     //     return;
 //     // }
 // }
-void socketManager::enqueue_recv_data(int socketfd, std::shared_ptr<std::vector<uint8_t>> data)
+void oldSocketManager::enqueue_recv_data(int socketfd, std::shared_ptr<std::vector<uint8_t>> data)
 {
     auto it = get_socket_vec(socketfd);
     if (it == nullptr)
@@ -33,7 +33,7 @@ void socketManager::enqueue_recv_data(int socketfd, std::shared_ptr<std::vector<
     recv_vec_cv.notify_one();
 }
 
-void socketManager::enqueue_send_data(int socketfd, std::shared_ptr<std::vector<uint8_t>> data)
+void oldSocketManager::enqueue_send_data(int socketfd, std::shared_ptr<std::vector<uint8_t>> data)
 {
     auto it = get_socket_vec(socketfd);
     if (it == nullptr)
@@ -65,7 +65,7 @@ void socketManager::enqueue_send_data(int socketfd, std::shared_ptr<std::vector<
 //     }
 // }
 
-std::shared_ptr<std::vector<uint8_t>> socketManager::dequeue_recv_data(int socketfd)
+std::shared_ptr<std::vector<uint8_t>> oldSocketManager::dequeue_recv_data(int socketfd)
 {
     auto it = get_socket_vec(socketfd);
     if (it == nullptr)
@@ -89,7 +89,7 @@ std::shared_ptr<std::vector<uint8_t>> socketManager::dequeue_recv_data(int socke
     //     return it->dequeue_recv_data();
     // }
 }
-std::shared_ptr<std::vector<uint8_t>> socketManager::dequeue_send_data(int socketfd)
+std::shared_ptr<std::vector<uint8_t>> oldSocketManager::dequeue_send_data(int socketfd)
 {
     auto it = get_socket_vec(socketfd);
     if (it == nullptr)
@@ -102,7 +102,7 @@ std::shared_ptr<std::vector<uint8_t>> socketManager::dequeue_send_data(int socke
     }
 }
 
-std::shared_ptr<socketVector> socketManager::get_socket_vec(int socketfd)
+std::shared_ptr<socketVector> oldSocketManager::get_socket_vec(int socketfd)
 {
     std::lock_guard<std::mutex> lock(mutex_socket_map);
     auto it = socket_map.find(socketfd);
@@ -118,7 +118,7 @@ std::shared_ptr<socketVector> socketManager::get_socket_vec(int socketfd)
 }
 
 // std::shared_ptr<std::unordered_set<int>> socketManager::get_updated_socket_recv_vec()
-std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_recv_vec()
+std::shared_ptr<std::vector<int>> oldSocketManager::get_updated_socket_recv_vec()
 {
     std::unique_lock<std::mutex> lock(mutex_recv_vec);
     // while(updated_socket_recv_set.empty())
@@ -131,7 +131,7 @@ std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_recv_vec()
 }
 
 // std::shared_ptr<std::unordered_set<int>> socketManager::get_updated_socket_send_vec()
-std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_send_vec()
+std::shared_ptr<std::vector<int>> oldSocketManager::get_updated_socket_send_vec()
 {
     std::unique_lock<std::mutex> lock(mutex_send_vec);
     // while(updated_socket_send_set.empty())
@@ -144,7 +144,7 @@ std::shared_ptr<std::vector<int>> socketManager::get_updated_socket_send_vec()
 }
 
 // bool socketManager::add_socket_vec(const std::string &username, int socket)
-bool socketManager::add_socket_vec(const std::string& userid,const std::string& username,int socketfd)
+bool oldSocketManager::add_socket_vec(const std::string& userid,const std::string& username,int socketfd)
 {
     {
         if( is_username_exist(username))
@@ -205,14 +205,14 @@ bool socketManager::add_socket_vec(const std::string& userid,const std::string& 
     // }
 }
 
-void socketManager::enqueue_offline_data(const std::string &userid, std::shared_ptr<std::vector<uint8_t>> data)
+void oldSocketManager::enqueue_offline_data(const std::string &userid, std::shared_ptr<std::vector<uint8_t>> data)
 {
     // sendto_offline_user_data[username].enqueue_bulk(data->data(),data->size());
     std::lock_guard<std::mutex> lock(mutex_offline_user_data);
     sendto_offline_user_data[userid]->insert(sendto_offline_user_data[userid]->end(), data->begin(), data->end());
 }
 
-bool socketManager::delete_socket_vec(int socket)
+bool oldSocketManager::delete_socket_vec(int socket)
 {
     auto it = get_socket_vec(socket);
     if (it == nullptr)
@@ -242,7 +242,7 @@ bool socketManager::delete_socket_vec(int socket)
 
 // }
 
-void socketManager::update_socket_interaction_time(int socketfd)
+void oldSocketManager::update_socket_interaction_time(int socketfd)
 {
     auto vec = get_socket_vec(socketfd);
     if (vec == nullptr)
@@ -269,7 +269,7 @@ void socketManager::update_socket_interaction_time(int socketfd)
     }
 }
 
-int socketManager::get_tobesend_heartbeat_socketfd()
+int oldSocketManager::get_tobesend_heartbeat_socketfd()
 {
     while (true)
     {
@@ -321,7 +321,7 @@ int socketManager::get_tobesend_heartbeat_socketfd()
 // }
 }
 
-const std::string &socketManager::get_username(int socketfd)
+const std::string &oldSocketManager::get_username(int socketfd)
 {
     auto it = get_socket_vec(socketfd);
     if (it == nullptr)
@@ -335,13 +335,13 @@ const std::string &socketManager::get_username(int socketfd)
     }
 }
 
-socketManager& socketManager::getInstance()
+oldSocketManager& oldSocketManager::getInstance()
 {
-    static socketManager instance;
+    static oldSocketManager instance;
     return instance;
 }
 
-bool socketManager::is_username_exist(const std::string& username)
+bool oldSocketManager::is_username_exist(const std::string& username)
 {
     std::lock_guard<std::mutex> lock(mutex_socket_map);
     for (auto it : socket_map)
@@ -354,7 +354,7 @@ bool socketManager::is_username_exist(const std::string& username)
     return false;
 }
 
-int socketManager::get_socket_by_userid(const std::string& userid)
+int oldSocketManager::get_socket_by_userid(const std::string& userid)
 {
     std::lock_guard<std::mutex> lock(mutex_socket_map);
     for(auto it : socket_map)
@@ -390,10 +390,16 @@ int socketManager::get_socket_by_userid(const std::string& userid)
 //     }
 // }
 
-void socketManager::add_socket(int socketfd)
+void oldSocketManager::add_socket(int socketfd)
 {
     std::lock_guard<std::mutex> lock(mutex_socket_map);
     socket_map[socketfd] = std::make_shared<socketVector>(socketfd);
     // set_socket_isblocking(socketfd,false);
     // return true;
+}
+
+socketManager& socketManager::get_instance()
+{
+    static socketManager instance;
+    return instance;
 }

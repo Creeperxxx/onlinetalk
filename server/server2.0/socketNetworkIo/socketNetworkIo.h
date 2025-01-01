@@ -32,8 +32,8 @@ extern const int FULL_CONNECT_LENGTH;
 class socketNetworkIo
 {
 public:
+    ~socketNetworkIo();
     void init(int listen_port);
-    void deleter();
     // void send_data(int socketfd,std::shared_ptr<message> msg);//通过套接字发送消息
     // void send_data(int socketfd,std::shared_ptr<std::vector<uint8_t>> data);
     
@@ -48,10 +48,11 @@ public:
     bool send_data(int socketfd,const char* data,size_t len);
     std::shared_ptr<std::vector<uint8_t>> recv_data(int socketfd);
 
-    void set_blocking_mode(int socket_fd,bool blocking);// 对套接字进行设置，设置为非阻塞
+    // void set_blocking_mode(int socket_fd,bool blocking);// 对套接字进行设置，设置为非阻塞
 
     int get_listenfd(){return listen_fd;}
 private:
+    void deleter();
     void init_listenfd();
     // std::vector<uint8_t> serialize_message(const message& msg);
 private:

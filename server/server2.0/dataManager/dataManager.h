@@ -20,6 +20,7 @@ public:
     void pushReadySocketVec(const std::shared_ptr<std::vector<int>>& socket);
     int popReadySocketSingle();
     std::shared_ptr<std::vector<int>> popReadySocketVec();
+    
     // bool isReadySocketEmpty();
 private:
     void init();
@@ -34,5 +35,5 @@ private:
     std::mutex ready_socket_mutex;
     std::condition_variable ready_socket_cond;
 
-    std::unique_ptr<socketManager> socket_manager;
+    std::unique_ptr<oldSocketManager> socket_manager;
 };

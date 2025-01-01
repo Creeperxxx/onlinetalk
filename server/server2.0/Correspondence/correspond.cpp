@@ -23,27 +23,13 @@ void corRedisStream::thread_read()
     }
 }
 
-void corRedisStream::init()
+void corRedisStream::init(const std::string &server_stream = REDIS_STREAM_STREAMNAME_SERVER, const std::string &consumer_group = REDIS_STREAM_CONSUMERNAME_SERVER, int reader_num = REDIS_STREAM_READER_NUM, int writer_num = REDIS_STREAM_WRITER_NUM)
 {
-    database::get_instance().init_stream_consumer_group(REDIS_STREAM_STREAMNAME_SERVER, REDIS_STREAM_GROUPNAME_SERVER);
+    database::get_instance().init_stream_consumer_group(server_stream, consumer_group);
     m_reader_run.store(true);
     m_writer_run.store(true);
-    std::function<void()> lambda;
-    for (int i = 0; i < REDIS_STREAM_READER_NUM; ++i)
-    {
-        // threadPool::get_instance().commit(&corRedisStream::thread_read, this);
-        lambda = [this](){
-            this->thread_read();
-        };
-        threadPool::get_instance().commit(lambda);
-    }
-    for (int i = 0; i< REDOS_STREAM_WRITER_NUM; ++i)
-    {
-        lambda = [this](){
-            this->thread_write();
-        };
-        threadPool::get_instance().commit(lambda);
-    }
+    m_reader_num = reader_num;
+    m_writer_num = writer_num;
 }
 
 void corRedisStream::thread_write()
@@ -52,77 +38,81 @@ void corRedisStream::thread_write()
     std::shared_ptr<std::vector<std::pair<std::string, std::string>>> send_vec;
     nlohmann::json send_json;
     std::string receiver_stream;
-    while(m_writer_run.load())
-    {   
+    while (m_writer_run.load())
+    {
         data = dataManager::get_instance().popData();
-        if(data.empty() == true)
+        if (data.empty() == true)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(REDIS_STREAM_XACK_FAILED_SLEEPTIME));
             continue;
         }
-        //提供一个反序列化方法
-        //将对应的string消息转化为消息结构体
-        
-        //提供一个方法
-        //能将消息结构体提取出要发送的键值对放入std::vector中
-        
-        //提供一个方法
-        //确定该消息要发送的人
+        // 提供一个反序列化方法
+        // 将对应的string消息转化为消息结构体
+
+        // 提供一个方法
+        // 能将消息结构体提取出要发送的键值对放入std::vector中
+
+        // 提供一个方法
+        // 确定该消息要发送的人
         receiver_stream = get_receiver_stream(data);
 
-        //提供一个方法
-        //确定要发送的具体信息
+        // 提供一个方法
+        // 确定要发送的具体信息
 
-        //对data消息进行处理
-        database::get_instance().redis_stream_xadd_msg(receiver_stream,data);
+        // 对data消息进行处理
+        database::get_instance().redis_stream_xadd_msg(receiver_stream, data);
     }
 }
 
-std::string corRedisStream::get_receiver_name(const std::string& msg)
+std::string corRedisStream::get_receiver_name(const std::string &msg)
 {
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
         return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_RECEIVER_NAME);
-    } catch(const std::exception& e)
+    }
+    catch (const std::exception &e)
     {
-        LOG_ERROR("%s:%s:%d // json发生错误：%s",__FILE__,__FUNCTION__,__LINE__,e.what());
-    } 
+        LOG_ERROR("%s:%s:%d // json发生错误：%s", __FILE__, __FUNCTION__, __LINE__, e.what());
+    }
 }
 
-std::string corRedisStream::get_receiver_id(const std::string& msg)
+std::string corRedisStream::get_receiver_id(const std::string &msg)
 {
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
         return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_RECEIVER_ID);
-    } catch(const std::exception& e)
+    }
+    catch (const std::exception &e)
     {
-        LOG_ERROR("%s:%s:%d // json发生错误：%s",__FILE__,__FUNCTION__,__LINE__,e.what());
+        LOG_ERROR("%s:%s:%d // json发生错误：%s", __FILE__, __FUNCTION__, __LINE__, e.what());
     }
 }
 
-std::string corRedisStream::get_sender_name(const std::string& msg)
+std::string corRedisStream::get_sender_name(const std::string &msg)
 {
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
         return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_SENDER_NAME);
-    } catch(const std::exception& e)
+    }
+    catch (const std::exception &e)
     {
-        LOG_ERROR("%s:%s:%d // json发生错误：%s",__FILE__,__FUNCTION__,__LINE__,e.what());
+        LOG_ERROR("%s:%s:%d // json发生错误：%s", __FILE__, __FUNCTION__, __LINE__, e.what());
     }
 }
 
-std::string corRedisStream::get_sender_id(const std::string& msg)
+std::string corRedisStream::get_sender_id(const std::string &msg)
 {
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
         return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_SENDER_ID);
-    } catch(const std::exception& e)
+    }
+    catch (const std::exception &e)
     {
-        LOG_ERROR("%s:%s:%d // json发生错误：%s",__FILE__,__FUNCTION__,__LINE__,e.what());
+        LOG_ERROR("%s:%s:%d // json发生错误：%s", __FILE__, __FUNCTION__, __LINE__, e.what());
     }
 }
 
@@ -139,15 +129,83 @@ std::string corRedisStream::get_sender_id(const std::string& msg)
 //     }
 // }
 
-std::string corRedisStream::get_receiver_stream(const std::string& msg)
+std::string corRedisStream::get_receiver_stream(const std::string &msg)
 {
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
         return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_RECEIVER_STREAM);
         // return REDIS_STREAM_RECEIVERNAME_PREFIX + ": " + receiver_id;
-    } catch(const std::exception& e)
-    {
-        LOG_ERROR("%s:%s:%d // json发生错误：%s",__FILE__,__FUNCTION__,__LINE__,e.what());
     }
+    catch (const std::exception &e)
+    {
+        LOG_ERROR("%s:%s:%d // json发生错误：%s", __FILE__, __FUNCTION__, __LINE__, e.what());
+    }
+}
+
+void corSocket::init(int listen_port)
+{
+    m_networkio = std::make_unique<socketNetworkIo>();
+    m_networkio->init(listen_port);
+    m_event_handler = std::make_unique<ReactorEventHandler>();
+    dynamic_cast<ReactorEventHandler *>(m_event_handler.get())->init(m_networkio->get_listenfd());
+}
+
+void corRedisStream::run()
+{
+    std::function<void()> lambda;
+    for (int i = 0; i < m_reader_num; ++i)
+    {
+        // threadPool::get_instance().commit(&corRedisStream::thread_read, this);
+        lambda = [this]()
+        {
+            this->thread_read();
+        };
+        threadPool::get_instance().commit(lambda);
+    }
+    for (int i = 0; i < m_writer_num; ++i)
+    {
+        lambda = [this]()
+        {
+            this->thread_write();
+        };
+        threadPool::get_instance().commit(lambda);
+    }
+}
+
+corRedisStream::~corRedisStream()
+{
+    deleter();
+}
+
+void corRedisStream::deleter()
+{
+    m_reader_run.store(false);
+    m_writer_run.store(false);
+}
+
+corSocket::~corSocket()
+{
+    deleter();
+}
+
+void corSocket::deleter()
+{
+
+}
+
+void corSocket::thread_event_loop()
+{
+    // dynamic_cast<ReactorEventHandler*>(m_event_handler.get()).run();
+    dynamic_cast<ReactorEventHandler*>(m_event_handler.get())->run();
+}
+
+void corSocket::thread_read()
+{
+    
+}
+
+void corSocket::thread_write()
+{
+
 }

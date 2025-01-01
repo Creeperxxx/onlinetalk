@@ -3,6 +3,8 @@
 void dataManager::init()
 {
     data_queue = std::make_unique<std::queue<std::string>>();
+    ready_socket = std::make_unique<std::vector<int>>();
+    socket_manager = std::make_unique<oldSocketManager>();
 }
 
 void dataManager::pushData(const std::string& data)

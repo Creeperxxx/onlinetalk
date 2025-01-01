@@ -12,7 +12,7 @@
 
 //升级为单例模式吧，不然策略类访问不到socketmanager。也不能采用依赖注入。
 
-class socketManager
+class oldSocketManager
 {
 private:
     std::unordered_map<int,std::shared_ptr<socketVector>> socket_map;
@@ -43,9 +43,9 @@ private:
 
     // static std::string error_username;
 
-    static std::unique_ptr<socketManager> instance;
+    static std::unique_ptr<oldSocketManager> instance;
 public:
-    static socketManager& getInstance();
+    static oldSocketManager& getInstance();
     void add_socket(int socketfd);
     bool add_socket_vec(const std::string& userid,const std::string& username,int socketfd);
     bool delete_socket_vec(int socketfd);
@@ -64,15 +64,29 @@ public:
     int get_socket_by_userid(const std::string& userid);
     // void init();
 
-    ~socketManager(){}
-    socketManager(const socketManager&) = delete;
-    socketManager& operator=(const socketManager&) = delete;
-    static socketManager& getInstance();
+    ~oldSocketManager(){}
+    oldSocketManager(const oldSocketManager&) = delete;
+    oldSocketManager& operator=(const oldSocketManager&) = delete;
+    static oldSocketManager& getInstance();
 private:
-    socketManager(){}
+    oldSocketManager(){}
     
     std::shared_ptr<socketVector> get_socket_vec(int socketfd);
     bool is_username_exist(const std::string& username);
     bool is_userid_exist(const std::string& userid);
     // void set_socket_isblocking(int socketfd,bool is_block);
+};
+
+class socketManager
+{
+public:
+    static socketManager& get_instance();
+    socketManager(const socketManager&) = delete;
+    socketManager& operator=(const socketManager& a) = delete;
+private:
+    socketManager();
+    ~socketManager();
+private:
+    std::unordered_map<int,std::unique_ptr<socketVector>> socket_map;
+    
 };

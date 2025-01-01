@@ -12,7 +12,7 @@ class IStrategy
 public:
     virtual std::shared_ptr<message> handle(std::shared_ptr<message> msg) = 0;
 private:
-    std::shared_ptr<socketManager> m_socketManager;
+    std::shared_ptr<oldSocketManager> m_socketManager;
 };
 
 class ITextStrategy : public IStrategy

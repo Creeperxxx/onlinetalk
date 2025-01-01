@@ -155,7 +155,7 @@ void ReactorEventHandlerV1::init_epoll()
 
 void ReactorEventHandlerV1::deleter()
 {
-    networkio->deleter();
+    // networkio->deleter();
     close(epoll_fd);
     handle_sockets_recv_running.store(false);
     handle_sockets_send_running.store(false);
@@ -242,7 +242,7 @@ void ReactorEventHandlerV1::handle_new_connections()
         else
         {
             // 将新连接加入epoll
-            networkio->set_blocking_mode(client_fd, false);
+            // networkio->set_blocking_mode(client_fd, false);
             add_socketfd_to_epoll(client_fd, EPOLLIN | EPOLLET);
         }
     }
@@ -306,7 +306,7 @@ void ReactorEventHandlerV1::handle_sockets_recv()
                 {
                     // sockets_recv_data[socketfd].enqueue_bulk(recvmsg->data(), recvmsg->size());
                     // socket_manager->enqueue_recv_data(socketfd, recvmsg);
-                    socketManager::getInstance().enqueue_recv_data(socketfd, recvmsg);
+                    oldSocketManager::getInstance().enqueue_recv_data(socketfd, recvmsg);
                 }
             }
         }
@@ -359,11 +359,11 @@ void ReactorEventHandlerV1::handle_sockets_send()
     while (handle_sockets_send_running)
     {
         // willbesend_sockets = socket_manager->get_updated_socket_send_vec();
-        willbesend_sockets = socketManager::getInstance().get_updated_socket_send_vec();
+        willbesend_sockets = oldSocketManager::getInstance().get_updated_socket_send_vec();
         for (auto &socket : *willbesend_sockets)
         {
             // data = socket_manager->dequeue_send_data(socket);
-            data = socketManager::getInstance().dequeue_send_data(socket);
+            data = oldSocketManager::getInstance().dequeue_send_data(socket);
             if (data == nullptr || data->empty())
             {
                 continue;
@@ -425,13 +425,13 @@ void ReactorEventHandlerV1::analyze_recv_data()
     while (analyze_recv_data_running)
     {
         // ready_sockets = socket_manager->get_updated_socket_recv_vec();
-        ready_sockets = socketManager::getInstance().get_updated_socket_recv_vec();
+        ready_sockets = oldSocketManager::getInstance().get_updated_socket_recv_vec();
         // 处理接收到的数据
         for (auto &socket : *ready_sockets)
         {
             // 处理接收到的数据
             // data = socket_manager->dequeue_recv_data(socket);
-            data = socketManager::getInstance().dequeue_recv_data(socket);
+            data = oldSocketManager::getInstance().dequeue_recv_data(socket);
             if (nullptr == data || data->empty())
             {
                 continue;
@@ -548,7 +548,7 @@ int ReactorEventHandlerV1::get_socket_from_userid(const std::string &id)
     {
         return USER_NOT_EXIST;
     }
-    return socketManager::getInstance().get_socket_by_userid(id);
+    return oldSocketManager::getInstance().get_socket_by_userid(id);
 }
 
 // void ReactorEventHandler::enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data)
@@ -572,7 +572,7 @@ void ReactorEventHandlerV1::enqueue_send_message(const std::string &userid, std:
     }
 
     // socket_manager->enqueue_send_data(socket,data);
-    socketManager::getInstance().enqueue_send_data(socket, data);
+    oldSocketManager::getInstance().enqueue_send_data(socket, data);
 }
 
 // // void ReactorEventHandler::enqueue_send_message(std::shared_ptr<message> data)
@@ -623,7 +623,7 @@ void ReactorEventHandlerV1::heartbeat()
     while (heartbeat_running.load())
     {
         // socket = socket_manager->get_tobesend_heartbeat_socketfd();
-        socket = socketManager::getInstance().get_tobesend_heartbeat_socketfd();
+        socket = oldSocketManager::getInstance().get_tobesend_heartbeat_socketfd();
         if (socket == -1)
         {
             // //套接字set为空，为啥？
@@ -650,8 +650,8 @@ void ReactorEventHandlerV1::heartbeat()
             {
                 // socket_manager->enqueue_send_data(socket,data);
                 // socket_manager->update_socket_interaction_time(socket);
-                socketManager::getInstance().enqueue_send_data(socket, data);
-                socketManager::getInstance().update_socket_interaction_time(socket);
+                oldSocketManager::getInstance().enqueue_send_data(socket, data);
+                oldSocketManager::getInstance().update_socket_interaction_time(socket);
             }
         }
     }
@@ -666,7 +666,7 @@ std::shared_ptr<std::vector<uint8_t>> ReactorEventHandlerV1::get_heartbeat_data(
     d.setType(messageType::Notice);
     d.setAction(messageAction::HEARTBEAT);
     // const std::string &username = socket_manager->get_username(socketfd);
-    const std::string &username = socketManager::getInstance().get_username(socketfd);
+    const std::string &username = oldSocketManager::getInstance().get_username(socketfd);
     if (username.empty())
     {
         LOG_ERROR("%s:%s:%d // 没找到对应用户", __FILE__, __FUNCTION__, __LINE__);
@@ -864,23 +864,24 @@ void ReactorEventHandler::event_loop()
         // }
 
         // handle_events(events, nfds);
-        if (REACTOR_IS_PUSH_READY_SOCKET_SINGLE == true)
-        {
-            for (int i = 0; i < nfds; i++)
-            {
-                dataManager::get_instance().pushReadySocketSingle(events[i].data.fd);
-            }
-        }
-        else
-        {
-            std::shared_ptr<std::vector<int>> ready_sockets = std::make_shared<std::vector<int>>();
-            for (int i = 0; i < nfds; i++)
-            {
-                ready_sockets->push_back(events[i].data.fd);
-            }
-            dataManager::get_instance().pushReadySocketVec(ready_sockets);
-        }
+        // if (REACTOR_IS_PUSH_READY_SOCKET_SINGLE == true)
+        // {
+        //     for (int i = 0; i < nfds; i++)
+        //     {
+        //         dataManager::get_instance().pushReadySocketSingle(events[i].data.fd);
+        //     }
+        // }
+        // else
+        // {
+        //     std::shared_ptr<std::vector<int>> ready_sockets = std::make_shared<std::vector<int>>();
+        //     for (int i = 0; i < nfds; i++)
+        //     {
+        //         ready_sockets->push_back(events[i].data.fd);
+        //     }
+        //     dataManager::get_instance().pushReadySocketVec(ready_sockets);
+        // }
     }
+    m_event_loop_isend.store(true);
 }
 
 void ReactorEventHandler::init_epoll()
@@ -896,12 +897,13 @@ void ReactorEventHandler::init_epoll()
 void ReactorEventHandler::init(int listen_fd)
 {
     init_epoll();
-    
+
     this->listen_fd = listen_fd;
     add_socket_to_epoll(listen_fd, EPOLLIN | EPOLLET);
     set_socket_isblocking(listen_fd, false);
 
     m_event_loop_running.store(true);
+    m_event_loop_isend.store(false);
 }
 
 void ReactorEventHandler::run()
@@ -928,7 +930,7 @@ void ReactorEventHandler::accept_new_connections()
         if (client_fd != -1)
         {
             // 处理新链接的套接字
-            socketManager::getInstance().add_socket(client_fd);
+            oldSocketManager::getInstance().add_socket(client_fd);
             // add_socket_to_epoll(client_fd, EPOLLIN | EPOLLET);
             add_socket_to_epoll(client_fd, EPOLLIN | EPOLLET);
             set_socket_isblocking(client_fd, false);
@@ -983,4 +985,19 @@ void ReactorEventHandler::add_socket_to_epoll(int socketfd, uint32_t events)
         LOG_ERROR("%s:%s:%d // epoll_ctl error", __FILE__, __FUNCTION__, __LINE__);
         throw std::runtime_error("epoll_ctl error");
     }
+}
+
+ReactorEventHandler::~ReactorEventHandler()
+{
+    deleter();
+}
+
+void ReactorEventHandler::deleter()
+{
+    m_event_loop_running.store(false);
+    while (m_event_loop_isend.load() == false)
+    {
+        std::this_thread::yield();
+    }
+    close(epoll_fd);
 }

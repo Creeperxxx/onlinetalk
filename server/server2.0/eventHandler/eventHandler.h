@@ -40,6 +40,27 @@ public:
     // virtual void run() = 0;
     // virtual ~IEventHandler() = default;
     // virtual void handle_ready_connections(int socketfd) = 0;
+    virtual ~IEventHandler() = default;
+};
+
+class ReactorEventHandler : public IEventHandler
+{
+public:
+    void init(int listen_fd);
+    void run();
+    ~ReactorEventHandler() override;
+private:
+    void init_epoll();
+    void event_loop();
+    void accept_new_connections();
+    void add_socket_to_epoll(int socketfd, uint32_t events);
+    void set_socket_isblocking(int socketfd,bool isblocking);
+    void deleter();
+private:
+    std::atomic<bool> m_event_loop_running;
+    std::atomic<bool> m_event_loop_isend;
+    int epoll_fd;
+    int listen_fd;
 };
 
 class ReactorEventHandlerV1 : public IEventHandler
@@ -141,19 +162,3 @@ class ProactorEventHandler : public IEventHandler
 
 };
 
-class ReactorEventHandler : public IEventHandler
-{
-public:
-    void init(int listen_fd);
-    void run();
-private:
-    void init_epoll();
-    void event_loop();
-    void accept_new_connections();
-    void add_socket_to_epoll(int socketfd, uint32_t events);
-    void set_socket_isblocking(int socketfd,bool isblocking);
-private:
-    std::atomic<bool> m_event_loop_running;
-    int epoll_fd;
-    int listen_fd;
-};

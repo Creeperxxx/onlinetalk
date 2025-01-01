@@ -5,7 +5,7 @@ void socketNetworkIo::init(int listen_port)
 {
     this->listen_port = listen_port;
     init_listenfd();
-    set_blocking_mode(listen_fd,false);
+    // set_blocking_mode(listen_fd,false);
     
     // serialization_method = std::make_unique<serializationMethodV1>();
 }
@@ -40,25 +40,25 @@ void socketNetworkIo::init_listenfd()
     }
 }
 
-void socketNetworkIo::set_blocking_mode(int socket_fd,bool blocking)
-{
-    int flags = fcntl(socket_fd, F_GETFL, 0);
-    if (flags == -1) {
-        std::cerr << "Error getting file status flags: " << strerror(errno) << std::endl;
-    }
+// void socketNetworkIo::set_blocking_mode(int socket_fd,bool blocking)
+// {
+//     int flags = fcntl(socket_fd, F_GETFL, 0);
+//     if (flags == -1) {
+//         std::cerr << "Error getting file status flags: " << strerror(errno) << std::endl;
+//     }
 
-    if (blocking) {
-        // 设置为阻塞模式
-        if (fcntl(socket_fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
-            std::cerr << "Error setting socket to blocking mode: " << strerror(errno) << std::endl;
-        }
-    } else {
-        // 设置为非阻塞模式
-        if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-            std::cerr << "Error setting socket to non-blocking mode: " << strerror(errno) << std::endl;
-        }
-    }
-}
+//     if (blocking) {
+//         // 设置为阻塞模式
+//         if (fcntl(socket_fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
+//             std::cerr << "Error setting socket to blocking mode: " << strerror(errno) << std::endl;
+//         }
+//     } else {
+//         // 设置为非阻塞模式
+//         if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+//             std::cerr << "Error setting socket to non-blocking mode: " << strerror(errno) << std::endl;
+//         }
+//     }
+// }
 
 void socketNetworkIo::deleter()
 {
@@ -280,4 +280,9 @@ std::shared_ptr<std::vector<uint8_t>> socketNetworkIo::recv_data(int socketfd)
         }
     }
     return ret_data;
+}
+
+socketNetworkIo::~socketNetworkIo()
+{
+    deleter();
 }

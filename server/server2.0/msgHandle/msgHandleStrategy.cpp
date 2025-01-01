@@ -57,7 +57,7 @@ std::shared_ptr<message> controlUserLoginStrategy::handle(std::shared_ptr<messag
                 //  2. 将socketmanager作为接口类成员属性。
                 //最终选单例模式了
 
-                socketManager::getInstance().add_socket_vec()
+                oldSocketManager::getInstance().add_socket_vec()
 
                 //到socketmanager中看是否已登录，如果没有则加入进去
 
