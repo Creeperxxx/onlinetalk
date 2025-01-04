@@ -763,7 +763,7 @@ void ReactorEventHandlerV1::new_event_loop()
         {
             for (int i = 0; i < nfds; i++)
             {
-                dataManager::get_instance().pushReadySocketSingle(events[i].data.fd);
+                dataManager::get_instance().push_ready_socket_single(events[i].data.fd);
             }
         }
         else
@@ -773,7 +773,7 @@ void ReactorEventHandlerV1::new_event_loop()
             {
                 ready_sockets->push_back(events[i].data.fd);
             }
-            dataManager::get_instance().pushReadySocketVec(ready_sockets);
+            dataManager::get_instance().push_ready_socket_vec(ready_sockets);
         }
     }
 }
@@ -797,7 +797,7 @@ void ReactorEventHandler::event_loop()
             {
                 for(int i =0;i<nfds;i++)
                 {
-                    dataManager::get_instance().pushReadySocketSingle(events[i].data.fd);
+                    dataManager::get_instance().push_ready_socket_single(events[i].data.fd);
                 }
             }
             else
@@ -813,7 +813,7 @@ void ReactorEventHandler::event_loop()
                         accept_new_connections();
                     }
                 }
-                dataManager::get_instance().pushReadySocketVec(ready_sockets);
+                dataManager::get_instance().push_ready_socket_vec(ready_sockets);
                 ready_sockets->clear();
             }
 

@@ -6,6 +6,9 @@
 #include <memory>
 #include "../eventHandler/eventHandler.h"
 
+inline const bool CORSOCKET_POP_READYSOCKET_ISSINGLE = false;
+inline const bool CORSOCKET_POP_SENDDATA_ISSINGLE = true;
+
 class Icorrespondence
 {
 public:
@@ -63,7 +66,13 @@ public:
     ~corSocket() override;
 private:
     void deleter();
+    void send_data_single_queue();
+    void recv_data_single_queue();
+    void recv_data_multiple_queue();
 private:
+    // std::atomic<bool> m_writer_run;
+    std::atomic<bool> m_writer_run;
+    std::atomic<bool> m_reader_run;
     std::unique_ptr<socketNetworkIo> m_networkio;
     std::unique_ptr<IEventHandler> m_event_handler;
 };

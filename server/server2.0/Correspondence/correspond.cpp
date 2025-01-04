@@ -17,7 +17,7 @@ void corRedisStream::thread_read()
             for (auto &msg : *receive_vec)
             {
                 // 对读取到的消息进行处理（放到某个容器内？）
-                dataManager::get_instance().pushData(msg);
+                dataManager::get_instance().push_data(msg);
             }
         }
     }
@@ -40,7 +40,7 @@ void corRedisStream::thread_write()
     std::string receiver_stream;
     while (m_writer_run.load())
     {
-        data = dataManager::get_instance().popData();
+        data = dataManager::get_instance().pop_data();
         if (data.empty() == true)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(REDIS_STREAM_XACK_FAILED_SLEEPTIME));
@@ -149,6 +149,8 @@ void corSocket::init(int listen_port)
     m_networkio->init(listen_port);
     m_event_handler = std::make_unique<ReactorEventHandler>();
     dynamic_cast<ReactorEventHandler *>(m_event_handler.get())->init(m_networkio->get_listenfd());
+    m_reader_run.store(true);
+    m_writer_run.store(true);
 }
 
 void corRedisStream::run()
@@ -202,10 +204,89 @@ void corSocket::thread_event_loop()
 
 void corSocket::thread_read()
 {
-    
+    std::shared_ptr<std::vector<int>> ready_sockets;
+    std::shared_ptr<std::vector<uint8_t>> recv_data;
+    int socket;
+    if(CORSOCKET_POP_READYSOCKET_ISSINGLE == true)
+    {
+        while(m_reader_run.load())
+        {
+            recv_data_single_queue();
+        }
+    }
+    else
+    {
+        while(m_reader_run.load())
+        {
+            recv_data_multiple_queue();
+        }
+    }
 }
 
 void corSocket::thread_write()
 {
+    // std::shared_ptr<std::vector<uint8_t>> send_data;
+    if(CORSOCKET_POP_SENDDATA_ISSINGLE == true)
+    {
+        while(m_writer_run.load())
+        {
+            send_data_single_queue();
+        } 
+    }
+    else
+    {
 
+    }
+}
+
+void corSocket::send_data_single_queue()
+{
+    auto send_data = dataManager::get_instance().pop_send_data_from_socket();
+    if(send_data->is_send_data_empty() == false)
+    {
+        m_networkio->send_data(send_data->get_fd(),reinterpret_cast<const char*>(send_data->pop_send_data()->data()),send_data->pop_send_data()->size());
+    }
+}
+
+void corSocket::recv_data_single_queue()
+{
+    auto ready_socket = dataManager::get_instance().pop_ready_socket_single();
+    if(ready_socket != -1)
+    {
+        auto recv_data = m_networkio->recv_data(ready_socket);
+        if(recv_data->size() > 0)
+        {
+            dataManager::get_instance().push_recv_data_to_socket(ready_socket,std::move(recv_data));
+        }
+    }
+}
+
+void corSocket::recv_data_multiple_queue()
+{
+    auto ready_sockets = dataManager::get_instance().pop_ready_socket_vec();
+    std::unique_ptr<std::vector<uint8_t>> recv_data;
+    for(auto socket : *ready_sockets)
+    {
+        recv_data = m_networkio->recv_data(socket);
+        if(recv_data->size() > 0)
+        {
+            dataManager::get_instance().push_recv_data_to_socket(socket,std::move(recv_data));
+        }
+    }
+}
+
+void corSocket::run()
+{
+    auto lambda = [this](){
+        this->thread_event_loop();
+    };
+    threadPool::get_instance().commit(lambda);
+    auto lambda1 = [this](){
+        this->thread_read();
+    };
+    threadPool::get_instance().commit(lambda);
+    auto lambda2 = [this](){
+        this->thread_write();
+    };
+    threadPool::get_instance().commit(lambda);
 }

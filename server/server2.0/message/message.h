@@ -212,7 +212,7 @@ public:
 //     messageData(){}
 //     messageData(uint32_t c, uint32_t l, uint32_t s) : check_sum(c), msg_length(l), msg_sequense_num(s) {}
 //     uint32_t getCheckSum() const { return check_sum; }
-//     uint32_t getMsgLength() const { return msg_length; }
+//     uint32_wangt getMsgLength() const { return msg_length; }
 //     uint32_t getMsgSequenseNum() const { return msg_sequense_num; }
 //     void setCheckSum(uint32_t c) { check_sum = c; }
 //     void setMsgLength(uint32_t l) { msg_length = l; }
