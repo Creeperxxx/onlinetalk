@@ -24,10 +24,29 @@ public:
 
     // void push_data_to_socket(int socket,socket_data_type type ,std::shared_ptr<std::vector<uint8_t>> data);
     // std::shared_ptr<std::vector<uint8_t>> pop_data_from_socket(int socket,socket_data_type type);
-    void push_recv_data_to_socket(int socket,std::unique_ptr<std::vector<uint8_t>> data);
-    void push_send_data_to_socket(int socket,std::unique_ptr<std::vector<uint8_t>> data);
-    std::shared_ptr<socketData> pop_recv_data_from_socket();
-    std::shared_ptr<socketData> pop_send_data_from_socket();
+    void push_recv_data_to_socket_queue(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_send_data_to_socket_queue(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    std::shared_ptr<socketData> pop_recv_data_from_socket_queue();
+    std::shared_ptr<socketData> pop_send_data_from_socket_queue();
+    
+    void push_recv_data_to_socket_single_set(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_send_data_to_socket_single_set(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_recv_data_to_socket_multiple_set(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>>);
+    void push_send_data_to_socket_multiple_set(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>>);
+    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_recv_data_from_socket_multiple_set();
+    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_send_data_from_socket_multiple_set();
+    std::shared_ptr<socketData> pop_recv_data_from_socket_single_set();
+    std::shared_ptr<socketData> pop_send_data_from_socket_single_set();
+    
+    void push_recv_data_to_socket_single_loop(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_send_data_to_socket_single_loop(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_recv_data_to_socket_multiple_loop(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>>);
+    void push_send_data_to_socket_multiple_loop(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>>);
+    std::shared_ptr<socketData> pop_recv_data_from_socket_single_loop();
+    std::shared_ptr<socketData> pop_send_data_from_socket_single_loop();
+    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_recv_data_from_socket_multiple_loop();
+    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_send_data_from_socket_multiple_loop();
+
 
     // bool isReadySocketEmpty();
 private:

@@ -43,21 +43,27 @@ void msgHandler::notice_init()
 {
 }
 
-std::shared_ptr<message> msgHandler::handle(std::shared_ptr<message> msg)
-{
-    auto strategy = strategy_registry_->get_strategy(msg->getHeader().getType(), msg->getHeader().getAction());
-    if (strategy)
-    {
-        return strategy->handle(msg);
-    }
-    else
-    {
-        return nullptr;
-    }
-}
+// std::shared_ptr<message> msgHandler::handle(std::shared_ptr<message> msg)
+// {
+//     auto strategy = strategy_registry_->get_strategy(msg->getHeader().getType(), msg->getHeader().getAction());
+//     if (strategy)
+//     {
+//         return strategy->handle(msg);
+//     }
+//     else
+//     {
+//         return nullptr;
+//     }
+// }
 
 void msgHandler::init()
 {
     strategy_registry_ = std::make_unique<strategy_registry>();
+    
+}
+
+void msgHandler::handle(std::shared_ptr<socketData> data)
+{
+    auto recv_data = data->pop_recv_data();
     
 }

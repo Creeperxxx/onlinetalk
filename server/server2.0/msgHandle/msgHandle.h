@@ -62,7 +62,8 @@ class msgHandler
 {
 public:
     void init();
-    std::shared_ptr<message> handle(std::shared_ptr<message> msg);
+    // std::shared_ptr<message> handle(std::shared_ptr<message> msg);
+    void handle(std::shared_ptr<socketData> data);
 private:
     void text_init();
     void image_init();

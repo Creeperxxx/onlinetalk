@@ -7,7 +7,16 @@
 #include "../eventHandler/eventHandler.h"
 
 inline const bool CORSOCKET_POP_READYSOCKET_ISSINGLE = false;
-inline const bool CORSOCKET_POP_SENDDATA_ISSINGLE = true;
+// inline const bool CORSOCKET_POP_SENDDATA_ISSINGLE = true;
+enum class corSocketWriteType
+{
+    QUEUE,
+    SET,
+    LOOP
+};
+inline const corSocketWriteType CORSOCKET_WRITE_TYPE = corSocketWriteType::SET;
+inline const bool CORSOCKET_WRITE_SET_ISSINGLE = true;
+inline const bool CORSOCKET_WRITE_LOOP_ISSINGLE = true;
 
 class Icorrespondence
 {
@@ -66,9 +75,17 @@ public:
     ~corSocket() override;
 private:
     void deleter();
-    void send_data_single_queue();
     void recv_data_single_queue();
     void recv_data_multiple_queue();
+
+    void send_data_single_queue();
+
+    void send_data_single_set();
+    void send_data_multiple_set();
+
+    void send_data_single_loop();
+    void send_data_multiple_loop();
+    
 private:
     // std::atomic<bool> m_writer_run;
     std::atomic<bool> m_writer_run;

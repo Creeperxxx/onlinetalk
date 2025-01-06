@@ -125,18 +125,18 @@ public:
     const messageAction getAction() const {
         return m_action; }
     const std::string getSenderName() const {
-        return m_sender_name.value_or(DEFAULT_SENDER_NAME); }
+        return m_sender_name.value_or(MESSAGE_HEADER_SENDER_NAME_DEFAULT); }
     std::string getSenderId() const {
-        return m_sender_id.value_or(DEFAULT_SENDER_ID); }
+        return m_sender_id.value_or(MESSAGE_HEADER_SENDER_ID_DEFAULT); }
     // uint32_t getMessageSize() const { return m_message_size; }
     std::string getSessionId() const {
-        return m_session_id.value_or(DEFAULT_SESSION_ID);}
+        return m_session_id.value_or(MESSAGE_HEADER_SESSION_ID_DEFAULT);}
     const std::string getGroupId() const {
-        return m_group_id.value_or(DEFAULT_GROUP_ID); }
+        return m_group_id.value_or(MESSAGE_HEADER_GROUP_ID_DEFAULT); }
     const std::string getReceiverId() const {
-        return m_receiver_id.value_or(DEFAULT_RECEIVER_ID); }
+        return m_receiver_id.value_or(MESSAGE_HEADER_RECEIVER_ID_DEFAULT); }
     const std::string getReceiverName() const {
-        return m_receiver_name.value_or(DEFAULT_RECEIVER_NAME); }
+        return m_receiver_name.value_or(MESSAGE_HEADER_RECEIVER_NAME_DEAFULT); }
     bool getIsCompressed() const {
         return m_is_compressed.value_or(false); }
     int getSenderSocketFd() const {
@@ -222,3 +222,19 @@ public:
 //     uint32_t msg_length;
 //     uint32_t msg_sequense_num;
 // };
+
+class messageMetaData
+{
+public:
+    messageMetaData(uint32_t l, uint32_t s, uint32_t c): length(l), sequense_num(s), check_sum(c) {}
+    void set_length(uint32_t l){length = l;};
+    void set_sequense_num(uint32_t s){sequense_num = s;};
+    void set_check_sum(uint32_t c){check_sum = c;};
+    uint32_t get_length(){return length;};
+    uint32_t get_sequense_num(){return sequense_num;};
+    uint32_t get_check_sum(){return check_sum;};
+private:
+    uint32_t length;
+    uint32_t sequense_num;
+    uint32_t check_sum;
+};

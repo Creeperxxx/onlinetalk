@@ -50,16 +50,16 @@ public:
     std::shared_ptr<socketData> pop_send_socketdata_queue();
 
     //2中socket中的recv和send
-    void push_recv_data_single_map(int socket,std::unique_ptr<std::vector<uint8_t>> data);
-    void push_send_data_single_map(int socket,std::unique_ptr<std::vector<uint8_t>> data);
-    void push_recv_data_multiple_map(std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>);
-    void push_send_data_multiple_map(std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>);
+    void push_recv_data_single_set(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_send_data_single_set(int socket,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_recv_data_multiple_set(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>>);
+    void push_send_data_multiple_set(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>>);
     // std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> pop_recv_data_map_map();
     // std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> pop_send_data_map_map();
-    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_recv_data_multiple_map();
-    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_send_data_multiple_map();
-    std::shared_ptr<socketData> pop_recv_data_single_map();
-    std::shared_ptr<socketData> pop_send_data_single_map();
+    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_recv_data_multiple_set();
+    std::unique_ptr<std::vector<std::shared_ptr<socketData>>> pop_send_data_multiple_set();
+    std::shared_ptr<socketData> pop_recv_data_single_set();
+    std::shared_ptr<socketData> pop_send_data_single_set();
 
     //3循环遍历
     void push_recv_data_single_loop(int socket,std::unique_ptr<std::vector<uint8_t>> data);

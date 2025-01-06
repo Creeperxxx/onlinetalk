@@ -103,7 +103,7 @@
 //     }
 // }
 
-std::shared_ptr<socketInfo> oldSocketManager::get_socket_vec(int socketfd)
+/* std::shared_ptr<socketInfo> oldSocketManager::get_socket_vec(int socketfd)
 {
     std::lock_guard<std::mutex> lock(mutex_socket_map);
     auto it = socket_map.find(socketfd);
@@ -116,7 +116,7 @@ std::shared_ptr<socketInfo> oldSocketManager::get_socket_vec(int socketfd)
     {
         return it->second;
     }
-}
+} */
 
 // std::shared_ptr<std::unordered_set<int>> socketManager::get_updated_socket_recv_vec()
 std::shared_ptr<std::vector<int>> oldSocketManager::get_updated_socket_recv_vec()
@@ -145,7 +145,7 @@ std::shared_ptr<std::vector<int>> oldSocketManager::get_updated_socket_send_vec(
 }
 
 // bool socketManager::add_socket_vec(const std::string &username, int socket)
-bool oldSocketManager::add_socket_vec(const std::string &userid, const std::string &username, int socketfd)
+/* bool oldSocketManager::add_socket_vec(const std::string &userid, const std::string &username, int socketfd)
 {
     {
         if (is_username_exist(username))
@@ -175,7 +175,7 @@ bool oldSocketManager::add_socket_vec(const std::string &userid, const std::stri
         sendto_offline_user_data.erase(username);
     }
     enqueue_send_data(socketfd, temp);
-
+ */
     // auto temp = sendto_offline_user_data[username]
     // enqueue_send_data(socket,sendto_offline_user_data[username]);
     // sendto_offline_user_data.erase(username);
@@ -204,7 +204,7 @@ bool oldSocketManager::add_socket_vec(const std::string &userid, const std::stri
     //         return;
     //     }
     // }
-}
+// }
 
 void oldSocketManager::enqueue_offline_data(const std::string &userid, std::shared_ptr<std::vector<uint8_t>> data)
 {
@@ -243,7 +243,7 @@ void oldSocketManager::enqueue_offline_data(const std::string &userid, std::shar
 
 // }
 
-void oldSocketManager::update_socket_interaction_time(int socketfd)
+/* void oldSocketManager::update_socket_interaction_time(int socketfd)
 {
     auto vec = get_socket_vec(socketfd);
     if (vec == nullptr)
@@ -268,7 +268,7 @@ void oldSocketManager::update_socket_interaction_time(int socketfd)
             interaction_time_socketvec_set.insert(vec);
         }
     }
-}
+} */
 
 int oldSocketManager::get_tobesend_heartbeat_socketfd()
 {
@@ -322,7 +322,7 @@ int oldSocketManager::get_tobesend_heartbeat_socketfd()
     // }
 }
 
-const std::string &oldSocketManager::get_username(int socketfd)
+/* const std::string &oldSocketManager::get_username(int socketfd)
 {
     auto it = get_socket_vec(socketfd);
     if (it == nullptr)
@@ -334,7 +334,7 @@ const std::string &oldSocketManager::get_username(int socketfd)
     {
         return it->get_username();
     }
-}
+} */
 
 oldSocketManager &oldSocketManager::getInstance()
 {
@@ -342,7 +342,7 @@ oldSocketManager &oldSocketManager::getInstance()
     return instance;
 }
 
-bool oldSocketManager::is_username_exist(const std::string &username)
+/* bool oldSocketManager::is_username_exist(const std::string &username)
 {
     std::lock_guard<std::mutex> lock(mutex_socket_map);
     for (auto it : socket_map)
@@ -353,7 +353,7 @@ bool oldSocketManager::is_username_exist(const std::string &username)
         }
     }
     return false;
-}
+} */
 
 int oldSocketManager::get_socket_by_userid(const std::string &userid)
 {
@@ -662,7 +662,7 @@ std::shared_ptr<socketData> socketManager::pop_send_socketdata_queue()
     return std::move(data);
 }
 
-void socketManager::push_recv_data_single_map(int socket,std::unique_ptr<std::vector<uint8_t>> data)
+void socketManager::push_recv_data_single_set(int socket,std::unique_ptr<std::vector<uint8_t>> data)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_socket_map);
@@ -675,7 +675,7 @@ void socketManager::push_recv_data_single_map(int socket,std::unique_ptr<std::ve
     }
 }
 
-void socketManager::push_send_data_single_map(int socket,std::unique_ptr<std::vector<uint8_t>> data)
+void socketManager::push_send_data_single_set(int socket,std::unique_ptr<std::vector<uint8_t>> data)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_socket_map);
@@ -688,18 +688,18 @@ void socketManager::push_send_data_single_map(int socket,std::unique_ptr<std::ve
     }
 }
 
-void socketManager::push_recv_data_multiple_map(std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>> data)
+void socketManager::push_recv_data_multiple_set(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> data)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_socket_map);
-        for(auto& [socket,data] : data)
+        for(auto& [socket,socket_data] : *data)
         {
-            socket_map->at(socket)->push_recv_data(std::move(data));
+            socket_map->at(socket)->push_recv_data(std::move(socket_data));
         }
     }
     {
         std::unique_lock<std::mutex> lock(mutex_recv_notempty_socket_set);
-        for(auto& [socket,data] : data)
+        for(auto& [socket,socket_data] : *data)
         {
             recv_notempty_socket_set->insert(socket);
         }
@@ -707,18 +707,18 @@ void socketManager::push_recv_data_multiple_map(std::unordered_map<int,std::uniq
     }
 }
 
-void socketManager::push_send_data_multiple_map(std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>> data)
+void socketManager::push_send_data_multiple_set(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> data)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_socket_map);
-        for(auto& [socket,data] : data)
+        for(auto& [socket,socket_data] : *data)
         {
-            socket_map->at(socket)->push_send_data(std::move(data));
+            socket_map->at(socket)->push_send_data(std::move(socket_data));
         }
     }
     {
         std::lock_guard<std::mutex> lock(mutex_send_notempty_socket_set);
-        for(auto& [socket,data] : data)
+        for(auto& [socket,data] : *data)
         {
             send_notempty_socket_set->insert(socket);
         }
@@ -727,7 +727,7 @@ void socketManager::push_send_data_multiple_map(std::unordered_map<int,std::uniq
 }
 
 // std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> socketManager::pop_recv_data_map_map()
-std::unique_ptr<std::vector<std::shared_ptr<socketData>>> socketManager::pop_recv_data_multiple_map()
+std::unique_ptr<std::vector<std::shared_ptr<socketData>>> socketManager::pop_recv_data_multiple_set()
 {
     // std::unique_ptr<std::vector<uint8_t>> data;
     std::unique_ptr<std::vector<std::shared_ptr<socketData>>> recv_data_vec;
@@ -742,7 +742,7 @@ std::unique_ptr<std::vector<std::shared_ptr<socketData>>> socketManager::pop_rec
 }
 
 // std::unique_ptr<std::unordered_map<int,std::shared_ptr<std::vector<uint8_t>>>> socketManager::pop_send_data_map_map()
-std::unique_ptr<std::vector<std::shared_ptr<socketData>>> socketManager::pop_send_data_multiple_map()
+std::unique_ptr<std::vector<std::shared_ptr<socketData>>> socketManager::pop_send_data_multiple_set()
 {
     // std::unique_ptr<std::vector<uint8_t>> data;
     // std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> data_map = std::make_unique<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>>();
@@ -758,16 +758,16 @@ std::unique_ptr<std::vector<std::shared_ptr<socketData>>> socketManager::pop_sen
     return std::move(send_data_vec);
 }
 
-std::shared_ptr<socketData> socketManager::pop_send_data_single_map()
+std::shared_ptr<socketData> socketManager::pop_recv_data_single_set()
 {
-    std::unique_lock<std::mutex> lock(mutex_send_notempty_socket_set);
-    cond_send_notempty_socket_set.wait(lock,[&](){ return !send_notempty_socket_set->empty();});
-    auto socket = *send_notempty_socket_set->begin();
-    send_notempty_socket_set->erase(socket);
+    std::unique_lock<std::mutex> lock(mutex_recv_notempty_socket_set);
+    cond_recv_notempty_socket_set.wait(lock,[&](){return !recv_notempty_socket_set->empty();});
+    auto socket = *recv_notempty_socket_set->begin();
+    recv_notempty_socket_set->erase(socket);
     return socket_map->at(socket);
 }
 
-std::shared_ptr<socketData> socketManager::pop_send_data_single_map()
+std::shared_ptr<socketData> socketManager::pop_send_data_single_set()
 {
     std::unique_lock<std::mutex> lock(mutex_send_notempty_socket_set);
     cond_send_notempty_socket_set.wait(lock,[&](){ return !send_notempty_socket_set->empty();});

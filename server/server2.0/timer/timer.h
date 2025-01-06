@@ -8,6 +8,7 @@
 #include <memory>
 #include <future>
 #include "../logSystem/log.h"
+#include "../threadPool/threadPool.h"
 
 inline const int TIMERLIST_SLEEPTIME = 1000 * 1; //定时器列表默认sleep的时间
 inline const int TIMERLIST_FUTURE_MAXEXPIRE = 1000 * 60;  //定时器的回调函数的future的等待时间
@@ -36,13 +37,15 @@ public:
     // void add_timer(timerNode* node);
     void add_timer(std::shared_ptr<timerNode> node);
     static timerList& get_instance();
+    void start();
     void run(); 
     timerList(const timerList&) = delete;
     timerList& operator=(const timerList&) = delete;
-    void stop();
 private:
     timerList();
     ~timerList();
+    void stop();
+    void init();
 
     // void del_timer(timerNode node);
     // bool set_isempty();

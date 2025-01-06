@@ -41,45 +41,44 @@ void timerList::run()
 {
     int timer_num = 0;
     bool sleep_flag;
-    while(m_run.load())
+    while (m_run.load())
     {
-        //是否为空
-        //取出头，判断
-        // std::lock_guard<std::mutex> lock(m_timer_set_mutex);
+        // 是否为空
+        // 取出头，判断
+        //  std::lock_guard<std::mutex> lock(m_timer_set_mutex);
         sleep_flag = true;
         std::unique_lock<std::mutex> lock(m_timer_set_mutex);
-        while(m_timer_set->begin()!=m_timer_set->end())
+        while (m_timer_set->begin() != m_timer_set->end())
         {
             sleep_flag = false;
             auto curr_node = *m_timer_set->begin();
-            if(curr_node == nullptr)
+            if (curr_node == nullptr)
             {
                 m_timer_set->erase(m_timer_set->begin());
                 continue;
             }
-            if(curr_node->is_expire() == false)
+            if (curr_node->is_expire() == false)
             {
                 lock.unlock();
                 std::this_thread::sleep_for(std::chrono::milliseconds(TIMERLIST_SLEEPTIME));
                 break;
             }
-            auto future = std::async(std::launch::async,&timerNode::do_work,curr_node);
+            auto future = std::async(std::launch::async, &timerNode::do_work, curr_node);
             m_timer_set->erase(m_timer_set->begin());
-            if(curr_node->is_repeat() == true)
+            if (curr_node->is_repeat() == true)
             {
                 curr_node->update_expire_time();
                 add_timer(curr_node);
             }
             auto status = future.wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(TIMERLIST_FUTURE_MAXEXPIRE));
-            if(status == std::future_status::timeout)
+            if (status == std::future_status::timeout)
             {
-                LOG_ERROR("%s:%s:%d // 定时器set中任务的future超时了",__FILE__,__FUNCTION__,__LINE__);
+                LOG_ERROR("%s:%s:%d // 定时器set中任务的future超时了", __FILE__, __FUNCTION__, __LINE__);
             }
         }
-        if(sleep_flag == true)
+        if (sleep_flag == true)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(TIMERLIST_SLEEPTIME));
-
         }
 
         // while(set_isempty() == false)
@@ -104,8 +103,8 @@ void timerList::run()
         //         curr_node->update_expire_time();
         //         add_timer(curr_node);
         //     }
-        // } 
-        // std::this_thread::sleep_for(std::chrono::milliseconds(TIMERLIST_SLEEPTIME));   
+        // }
+        // std::this_thread::sleep_for(std::chrono::milliseconds(TIMERLIST_SLEEPTIME));
     }
 }
 
@@ -133,11 +132,10 @@ void timerNode::update_expire_time()
 
 timerList::timerList()
 {
-    m_timer_set = std::make_unique<std::multiset<std::shared_ptr<timerNode>,decltype(compare)>>(compare);
-    m_run.store(true);
+    init();
 }
 
-timerList& timerList::get_instance()
+timerList &timerList::get_instance()
 {
     static timerList instance;
     return instance;
@@ -146,4 +144,24 @@ timerList& timerList::get_instance()
 void timerList::stop()
 {
     m_run.store(false);
+}
+
+timerList::~timerList()
+{
+    stop();
+}
+
+void timerList::init()
+{
+    m_timer_set = std::make_unique<std::multiset<std::shared_ptr<timerNode>, decltype(compare)>>(compare);
+    m_run.store(true);
+}
+
+void timerList::start()
+{
+    auto lambda = [this]()
+    {
+        this->run();
+    };
+    threadPool::get_instance().commit(lambda);
 }

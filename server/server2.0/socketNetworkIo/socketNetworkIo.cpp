@@ -1,21 +1,22 @@
 #include "socketNetworkIo.h"
-const int FULL_CONNECT_LENGTH = 10;
+// const int FULL_CONNECT_LENGTH = 10;
 
 void socketNetworkIo::init(int listen_port)
 {
-    this->listen_port = listen_port;
-    init_listenfd();
+    // this->listen_port = listen_port;
+    init_listenfd(listen_port);
     // set_blocking_mode(listen_fd,false);
     
     // serialization_method = std::make_unique<serializationMethodV1>();
 }
 
-void socketNetworkIo::init_listenfd()
+void socketNetworkIo::init_listenfd(int listen_port)
 {
     listen_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(listen_fd == -1)
     {
-        std::cerr<<"Event_listen: listen_fd error"<<std::endl;//todo异常处理待优化
+        // std::cerr<<"Event_listen: listen_fd error"<<std::endl;//todo异常处理待优化
+        LOG_ERROR("%s:%s:%d // 监听端口初始化失败",__FILE__,__FUNCTION__,__LINE__);
         exit(1);
     }
 
@@ -27,14 +28,16 @@ void socketNetworkIo::init_listenfd()
 
     if(bind(listen_fd,(struct sockaddr*)&address,sizeof(address)) == -1)
     {
-        std::cerr<<"Event_listen: bind error"<<std::endl;//todo异常处理待优化
+        // std::cerr<<"Event_listen: bind error"<<std::endl;//todo异常处理待优化
+        LOG_ERROR("%s:%s:%d // 监听端口绑定失败",__FILE__,__FUNCTION__,__LINE__);
         close(listen_fd);
         exit(1);
     }
 
     if(listen(listen_fd,FULL_CONNECT_LENGTH) == -1)
     {
-        std::cerr<<"Event_listen: listen error"<<std::endl;//todo异常处理待优化
+        // std::cerr<<"Event_listen: listen error"<<std::endl;//todo异常处理待优化
+        LOG_ERROR("%s:%s:%d // 监听失败",__FILE__,__FUNCTION__,__LINE__);
         close(listen_fd);
         exit(1);   
     }
@@ -220,7 +223,7 @@ void socketNetworkIo::deleter()
 //     auto res = send()
 // }
 
-bool socketNetworkIo::send_data(int socketfd,const char* data,size_t length)
+bool socketNetworkIo::send_data(int socketfd,const unsigned char* data,size_t length)
 {
     int byte = 0;
     int byte_sum = 0;

@@ -193,13 +193,12 @@ corSocket::~corSocket()
 
 void corSocket::deleter()
 {
-
 }
 
 void corSocket::thread_event_loop()
 {
     // dynamic_cast<ReactorEventHandler*>(m_event_handler.get()).run();
-    dynamic_cast<ReactorEventHandler*>(m_event_handler.get())->run();
+    dynamic_cast<ReactorEventHandler *>(m_event_handler.get())->run();
 }
 
 void corSocket::thread_read()
@@ -207,16 +206,16 @@ void corSocket::thread_read()
     std::shared_ptr<std::vector<int>> ready_sockets;
     std::shared_ptr<std::vector<uint8_t>> recv_data;
     int socket;
-    if(CORSOCKET_POP_READYSOCKET_ISSINGLE == true)
+    if (CORSOCKET_POP_READYSOCKET_ISSINGLE == true)
     {
-        while(m_reader_run.load())
+        while (m_reader_run.load())
         {
             recv_data_single_queue();
         }
     }
     else
     {
-        while(m_reader_run.load())
+        while (m_reader_run.load())
         {
             recv_data_multiple_queue();
         }
@@ -226,37 +225,67 @@ void corSocket::thread_read()
 void corSocket::thread_write()
 {
     // std::shared_ptr<std::vector<uint8_t>> send_data;
-    if(CORSOCKET_POP_SENDDATA_ISSINGLE == true)
+    switch (CORSOCKET_WRITE_TYPE)
     {
-        while(m_writer_run.load())
+    case corSocketWriteType::QUEUE:
+        while (m_writer_run.load())
         {
             send_data_single_queue();
-        } 
-    }
-    else
-    {
-
+        }
+        break;
+    case corSocketWriteType::SET:
+        if (CORSOCKET_WRITE_SET_ISSINGLE == true)
+        {
+            while (m_writer_run.load())
+            {
+                send_data_single_set();
+            }
+        }
+        else
+        {
+            while (m_writer_run.load())
+            {
+                send_data_multiple_set();
+            }
+        }
+        break;
+    case corSocketWriteType::LOOP:
+        if (CORSOCKET_WRITE_LOOP_ISSINGLE == true)
+        {
+            while (m_writer_run.load())
+            {
+                send_data_single_loop();
+            }
+        }
+        else
+        {
+            while (m_writer_run.load())
+            {
+                send_data_multiple_loop();
+            }
+        }
+        break;
     }
 }
 
 void corSocket::send_data_single_queue()
 {
-    auto send_data = dataManager::get_instance().pop_send_data_from_socket();
-    if(send_data->is_send_data_empty() == false)
+    auto send_data = dataManager::get_instance().pop_send_data_from_socket_queue();
+    if (send_data->is_send_data_empty() == false)
     {
-        m_networkio->send_data(send_data->get_fd(),reinterpret_cast<const char*>(send_data->pop_send_data()->data()),send_data->pop_send_data()->size());
+        m_networkio->send_data(send_data->get_fd(), reinterpret_cast<const unsigned char*>(send_data->pop_send_data()->data()), send_data->pop_send_data()->size());
     }
 }
 
 void corSocket::recv_data_single_queue()
 {
     auto ready_socket = dataManager::get_instance().pop_ready_socket_single();
-    if(ready_socket != -1)
+    if (ready_socket != -1)
     {
         auto recv_data = m_networkio->recv_data(ready_socket);
-        if(recv_data->size() > 0)
+        if (recv_data->size() > 0)
         {
-            dataManager::get_instance().push_recv_data_to_socket(ready_socket,std::move(recv_data));
+            dataManager::get_instance().push_recv_data_to_socket_queue(ready_socket, std::move(recv_data));
         }
     }
 }
@@ -265,28 +294,73 @@ void corSocket::recv_data_multiple_queue()
 {
     auto ready_sockets = dataManager::get_instance().pop_ready_socket_vec();
     std::unique_ptr<std::vector<uint8_t>> recv_data;
-    for(auto socket : *ready_sockets)
+    for (auto socket : *ready_sockets)
     {
         recv_data = m_networkio->recv_data(socket);
-        if(recv_data->size() > 0)
+        if (recv_data->size() > 0)
         {
-            dataManager::get_instance().push_recv_data_to_socket(socket,std::move(recv_data));
+            dataManager::get_instance().push_recv_data_to_socket_queue(socket, std::move(recv_data));
         }
     }
 }
 
 void corSocket::run()
 {
-    auto lambda = [this](){
+    auto lambda = [this]()
+    {
         this->thread_event_loop();
     };
     threadPool::get_instance().commit(lambda);
-    auto lambda1 = [this](){
+    auto lambda1 = [this]()
+    {
         this->thread_read();
     };
     threadPool::get_instance().commit(lambda);
-    auto lambda2 = [this](){
+    auto lambda2 = [this]()
+    {
         this->thread_write();
     };
     threadPool::get_instance().commit(lambda);
+}
+
+void corSocket::send_data_single_set()
+{
+    auto send_data = dataManager::get_instance().pop_send_data_from_socket_single_set();
+    if (send_data->is_send_data_empty() == false)
+    {
+        m_networkio->send_data(send_data->get_fd(), reinterpret_cast<const unsigned char*>(send_data->pop_send_data()->data()), send_data->pop_send_data()->size());
+    }
+}
+
+void corSocket::send_data_multiple_set()
+{
+    auto send_datas = dataManager::get_instance().pop_send_data_from_socket_multiple_set();
+    for (auto send_data : *send_datas)
+    {
+        if (send_data->is_send_data_empty() == false)
+        {
+            m_networkio->send_data(send_data->get_fd(), reinterpret_cast<const unsigned char*>(send_data->pop_send_data()->data()), send_data->pop_send_data()->size());
+        }
+    }
+}
+
+void corSocket::send_data_single_loop()
+{
+    auto send_data = dataManager::get_instance().pop_send_data_from_socket_single_loop();
+    if (send_data->is_send_data_empty() == false)
+    {
+        m_networkio->send_data(send_data->get_fd(), reinterpret_cast<const unsigned char*>(send_data->pop_send_data()->data()), send_data->pop_send_data()->size());
+    }
+}
+
+void corSocket::send_data_multiple_loop()
+{
+    auto send_datas = dataManager::get_instance().pop_send_data_from_socket_multiple_loop();
+    for (auto send_data : *send_datas)
+    {
+        if (send_data->is_send_data_empty() == false)
+        {
+            m_networkio->send_data(send_data->get_fd(), reinterpret_cast<const unsigned char*>(send_data->pop_send_data()->data()), send_data->pop_send_data()->size());
+        }
+    }
 }

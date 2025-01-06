@@ -121,12 +121,21 @@ inline const std::string MYSQL_TABLE_MESSAGES_FIELD_ISDELIVERED = "is_delivered"
 inline const std::string MYSQL_TABLE_MESSAGES_FIELD_CREATEDAT = "created_at";
 
 //message
-inline const std::string DEFAULT_SENDER_NAME = "default_sender_name";
-inline const int DEFAULT_SENDER_ID = 0;
-inline const int DEFAULT_SESSION_ID = 0;
-inline const int DEFAULT_GROUP_ID = 0;
-inline const int DEFAULT_RECEIVER_ID = 0;
-inline const std::string DEFAULT_RECEIVER_NAME = "default_receiver_name";
+// inline const std::string DEFAULT_SENDER_NAME = "default_sender_name";
+// inline const int DEFAULT_SENDER_ID = 0;
+// inline const int DEFAULT_SESSION_ID = 0;
+// inline const int DEFAULT_GROUP_ID = 0;
+// inline const int DEFAULT_RECEIVER_ID = 0;
+// inline const std::string DEFAULT_RECEIVER_NAME = "default_receiver_name";
+inline const std::string MESSAGE_HEADER_SENDER_ID_DEFAULT = "default_sender_id";
+inline const std::string MESSAGE_HEADER_SENDER_NAME_DEFAULT = "default_sender_name";
+inline const std::string MESSAGE_HEADER_RECEIVER_NAME_DEAFULT = "default_receiver_name";
+inline const std::string MESSAGE_HEADER_RECEIVER_ID_DEFAULT = "default_receiver_id";
+inline const std::string MESSAGE_HEADER_SESSION_ID_DEFAULT = "default_session_id";
+inline const std::string MESSAGE_HEADER_GROUP_ID_DEFAULT = "default_group_id";
+inline const bool MESSAGE_HEADER_IS_COMPRESSED_DEFAULT = false;
+inline const int MESSAGE_HEADER_SENDER_SOCKET_FD_DEFAULT = -1;
+
 
 inline const std::string MESSAGE_HEADER_SENDER_ID = "sender_id";
 inline const std::string MESSAGE_HEADER_SENDER_NAME = "sender_name";
