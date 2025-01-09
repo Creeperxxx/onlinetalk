@@ -5,6 +5,7 @@
 #include "../logSystem/log.h"
 
 
+
 // using json = nlohmann::json;
 
 // enum msgType
@@ -63,7 +64,9 @@ class msgHandler
 public:
     void init();
     // std::shared_ptr<message> handle(std::shared_ptr<message> msg);
-    void handle(std::shared_ptr<socketData> data);
+    // void handle(std::shared_ptr<socketData> data);
+    void handle(std::unique_ptr<message> msg);
+    void handle(std::unique_ptr<std::string> msg);
 private:
     void text_init();
     void image_init();
@@ -72,6 +75,12 @@ private:
     void video_init();
     void control_init();
     void notice_init();
+    // std::unique_ptr<std::string> get_value_from_msg(std::unique_ptr<message> msg);
+    nlohmann::json get_value_from_msg(std::unique_ptr<message> msg);
+    // nlohmann::json get_value_from_msg(std::unique_ptr<std::string> msg);
+    // void handle_msg(std::unique_ptr<std::string> msg);
+    void handle_msg(nlohmann::json msg);
+    // std::string get_value_from_msg(std::unique_ptr<std::string> msg);
 private:
     // std::shared_ptr<strategy_registry> strategy_registry_;
     std::unique_ptr<strategy_registry> strategy_registry_;
@@ -80,19 +89,24 @@ private:
 class strategy_registry
 {
 public:
-    template <typename T>
-    void register_strategy(messageType type,messageAction action);
-    std::shared_ptr<IStrategy> get_strategy(messageType type,messageAction action);
+    // template <typename T>
+    // void register_strategy(messageType type,messageAction action);
+    void register_strategy(std::string type,std::string action,std::shared_ptr<IStrategy> strategy);
+    // std::shared_ptr<IStrategy> get_strategy(messageType type,messageAction action);
+    std::shared_ptr<IStrategy> get_strategy(std::string type,std::string action);
 private:
-    std::unordered_map<messageType,std::unordered_map<messageAction,std::shared_ptr<IStrategy>>> registry;
+    // std::unordered_map<messageType,std::unordered_map<messageAction,std::shared_ptr<IStrategy>>> registry;
+    // std::unordered_map<std::string,std::unique_ptr<std::unordered_map<std::string,std::shared_ptr<IStrategy>>>> registry;
+    // std::unordered_map<std::string,std::pair<std::string,std::shared_ptr<IStrategy>>> registry;
+    std::unordered_map<std::string,std::unique_ptr<std::unordered_map<std::string,std::shared_ptr<IStrategy>>>> registry;
 };
 
-template <typename T>
-void strategy_registry::register_strategy(messageType type,messageAction action)
-{
-    auto strategy = std::make_shared<T>();
-    registry[type][action] = strategy;
-}
+// template <typename T>
+// void strategy_registry::register_strategy(messageType type,messageAction action)
+// {
+//     auto strategy = std::make_shared<T>();
+//     registry[type][action] = strategy;
+// }
 
 
 

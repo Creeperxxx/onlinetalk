@@ -1,9 +1,9 @@
 #include "mysqlpool.h"
 
 
-std::unique_ptr<MySQLConnectionPool> MySQLConnectionPool::m_instance = NULL;
-// std::mutex MySQLConnectionPool::instance_mutex;
-std::once_flag MySQLConnectionPool::init_once;
+// std::unique_ptr<MySQLConnectionPool> MySQLConnectionPool::m_instance = NULL;
+// // std::mutex MySQLConnectionPool::instance_mutex;
+// std::once_flag MySQLConnectionPool::init_once;
 
 // MySQLConnectionPool::~MySQLConnectionPool()
 // {
@@ -78,11 +78,13 @@ MySQLConnectionPool& MySQLConnectionPool::getInstance()
 
     // });
     // std::call_once(init_once,&MySQLConnectionPool::initialize_pool);
-    std::call_once(init_once, [](){
-        m_instance.reset(new MySQLConnectionPool());
-        m_instance->initialize_pool();
-    });
-    return *m_instance;
+    // std::call_once(init_once, [](){
+    //     m_instance.reset(new MySQLConnectionPool());
+    //     m_instance->initialize_pool();
+    // });
+    // return *m_instance;
+    MySQLConnectionPool instance;
+    return instance;
 }
 
 // void MySQLConnectionPool::destroyInstance()

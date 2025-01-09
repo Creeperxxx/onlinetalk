@@ -23,4 +23,6 @@ private:
     bool verify_crc32(const uint8_t *data, int &offset, int recv_data_size, uint32_t length, uint32_t check_sum);
     void process_message(const uint8_t *data, int &offset, int recv_data_size, uint32_t length, uint32_t sequence_num);
     void msgAnalysis::process_incoming_data(const std::unique_ptr<std::vector<uint8_t>> data);
+private:
+    std::unique_ptr<msgHandler> msg_handler;
 };

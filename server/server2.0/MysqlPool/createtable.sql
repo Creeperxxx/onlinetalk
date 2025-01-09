@@ -6,7 +6,7 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 更新时间
     PRIMARY KEY (user_id),
-    UNIQUE INDEX idx_user_name (user_name),           -- 确保用户名唯一
+    -- UNIQUE INDEX idx_user_name (user_name),           -- 确保用户名唯一
     UNIQUE INDEX idx_user_email (user_email)          -- 确保电子邮件唯一
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

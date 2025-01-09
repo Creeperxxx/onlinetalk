@@ -69,7 +69,7 @@ std::string corRedisStream::get_receiver_name(const std::string &msg)
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
-        return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_RECEIVER_NAME);
+        return json_msg.at(MESSAGE_KEY_HEADER).at(MESSAGE_KEY_HEADER_RECEIVER_NAME);
     }
     catch (const std::exception &e)
     {
@@ -82,7 +82,7 @@ std::string corRedisStream::get_receiver_id(const std::string &msg)
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
-        return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_RECEIVER_ID);
+        return json_msg.at(MESSAGE_KEY_HEADER).at(MESSAGE_KEY_HEADER_RECEIVER_ID);
     }
     catch (const std::exception &e)
     {
@@ -95,7 +95,7 @@ std::string corRedisStream::get_sender_name(const std::string &msg)
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
-        return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_SENDER_NAME);
+        return json_msg.at(MESSAGE_KEY_HEADER).at(MESSAGE_KEY_HEADER_SENDER_NAME);
     }
     catch (const std::exception &e)
     {
@@ -108,7 +108,7 @@ std::string corRedisStream::get_sender_id(const std::string &msg)
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
-        return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_SENDER_ID);
+        return json_msg.at(MESSAGE_KEY_HEADER).at(MESSAGE_KEY_HEADER_SENDER_ID);
     }
     catch (const std::exception &e)
     {
@@ -134,7 +134,7 @@ std::string corRedisStream::get_receiver_stream(const std::string &msg)
     nlohmann::json json_msg = nlohmann::json::parse(msg);
     try
     {
-        return json_msg.at(MESSAGE_HEADER).at(MESSAGE_HEADER_RECEIVER_STREAM);
+        return json_msg.at(MESSAGE_KEY_HEADER).at(MESSAGE_KEY_HEADER_RECEIVER_STREAM);
         // return REDIS_STREAM_RECEIVERNAME_PREFIX + ": " + receiver_id;
     }
     catch (const std::exception &e)

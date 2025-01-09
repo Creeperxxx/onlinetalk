@@ -13,7 +13,7 @@ enum class messageType
     Voice,
     Video,
     Control,
-    Notice,
+    Notice
 };
 
 // enum class textAction
@@ -93,11 +93,14 @@ enum class messageAction
     USER_ONLINE_STATUS,
     FRIEND_ONLINE_STATUS,
     HEARTBEAT,
+    USER_REGISTER_RESULT
 };
 
 class dataHeader
 {
 public:
+    static std::string to_string(messageType type);
+    static std::string to_string(messageAction type);
     dataHeader() {}
     dataHeader(messageType type,
                   messageAction action,
@@ -238,3 +241,37 @@ private:
     uint32_t sequense_num;
     uint32_t check_sum;
 };
+
+std::string dataHeader::to_string(messageType type)
+{
+    switch(type)
+    {
+        case messageType::Text:
+            return MESSAGE_TYPE_TEXT;
+        case messageType::Control:
+            return MESSAGE_TYPE_CONTROL;
+        case messageType::File:
+            return MESSAGE_TYPE_FILE;
+        case messageType::Image:
+            return MESSAGE_TYPE_IMAGE;
+        case messageType::Video:
+            return MESSAGE_TYPE_VIDEO;
+        case messageType::Voice:
+            return MESSAGE_TYPE_VOICE;
+        case messageType::Notice:
+            return MESSAGE_TYPE_NOTICE;
+        default:
+            return MESSAGE_TYPE_NONE;
+    }
+}
+
+std::string dataHeader::to_string(messageAction action)
+{
+    switch(action)
+    {
+        case messageAction::USER_REGISTER_RESULT:
+            return MESSAGE_ACTION_NOTICE_USER_REGISTER_RESULT;
+        default:
+            return MESSAGE_ACTION_NONE; 
+    }
+}

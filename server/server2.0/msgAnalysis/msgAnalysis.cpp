@@ -104,10 +104,6 @@ void msgAnalysis::socket_recv_data_analysis(std::unique_ptr<std::vector<uint8_t>
     //     }
     // }
 
-
-
-
-
     // int offest = 0;
     // int recv_data_size = data->size();
     // uint32_t meta_data_length = 0;
@@ -171,7 +167,8 @@ uint32_t read_message_length(const uint8_t *data, int &offset, int recv_data_siz
     if (!has_enough_data(recv_data_size, offset, sizeof(uint32_t)))
     {
         LOG_ERROR("%s:%s:%d // 数据不足，无法读取元数据长度", __FILE__, __FUNCTION__, __LINE__);
-        throw std::runtime_error("Data insufficient for reading message length");
+        // throw std::runtime_error("Data insufficient for reading message length");
+        return 0;
     }
 
     uint32_t meta_data_length = 0;
@@ -189,7 +186,8 @@ std::unique_ptr<messageMetaData> extract_and_deserialize_meta_data(
     if (!has_enough_data(recv_data_size, offset, meta_data_length))
     {
         LOG_ERROR("%s:%s:%d // 数据不足，无法读取元数据", __FILE__, __FUNCTION__, __LINE__);
-        throw std::runtime_error("Data insufficient for reading metadata");
+        // throw std::runtime_error("Data insufficient for reading metadata");
+        return nullptr;
     }
 
     auto meta_data = std::make_unique<std::vector<uint8_t>>(
@@ -197,15 +195,15 @@ std::unique_ptr<messageMetaData> extract_and_deserialize_meta_data(
         data + offset + meta_data_length);
     offset += meta_data_length;
 
-    try
-    {
-        return cerealSerializationMethod::deserialize_message_metadata(std::move(meta_data));
-    }
-    catch (const std::exception &e)
-    {
-        LOG_ERROR("%s:%s:%d // 元数据反序列化失败: %s", __FILE__, __FUNCTION__, __LINE__, e.what());
-        return nullptr;
-    }
+    // try
+    // {
+    return cerealSerializationMethod::deserialize_message_metadata(std::move(meta_data));
+    // }
+    // catch (const std::exception &e)
+    // {
+    // LOG_ERROR("%s:%s:%d // 元数据反序列化失败: %s", __FILE__, __FUNCTION__, __LINE__, e.what());
+    // return nullptr;
+    // }
 }
 
 // bool verify_crc32(const uint8_t *data, int &offset, int recv_data_size, const std::unique_ptr<messageMetaData> msg_meta_data)
@@ -215,14 +213,14 @@ bool msgAnalysis::verify_crc32(const uint8_t *data, int &offset, int recv_data_s
     if (length <= 0 || !has_enough_data(recv_data_size, offset, length))
     {
         LOG_ERROR("%s:%s:%d // 消息长度无效或数据不足", __FILE__, __FUNCTION__, __LINE__);
-        throw std::runtime_error("Invalid message length or insufficient data");
+        // throw std::runtime_error("Invalid message length or insufficient data");
         return false;
     }
 
     if (cerealSerializationMethod::calculateCRC32(data + offset, length) != check_sum)
     {
         LOG_ERROR("%s:%s:%d // 校验和验证失败", __FILE__, __FUNCTION__, __LINE__);
-        throw std::runtime_error("Checksum verification failed");
+        // throw std::runtime_error("Checksum verification failed");
         return false;
     }
     return true;
@@ -234,7 +232,8 @@ void msgAnalysis::process_message(const uint8_t *data, int &offset, int recv_dat
     if (length <= 0)
     {
         LOG_ERROR("%s:%s:%d // 消息长度为0", __FILE__, __FUNCTION__, __LINE__);
-        throw std::runtime_error("Message length is zero");
+        return;
+        // throw std::runtime_error("Message length is zero");
     }
 
     auto msg_data = std::make_unique<std::vector<uint8_t>>(
@@ -247,13 +246,14 @@ void msgAnalysis::process_message(const uint8_t *data, int &offset, int recv_dat
     if (msg != nullptr)
     {
         // 处理消息
+        msg_handler->handle(std::move(msg));
     }
     else
     {
         LOG_ERROR("%s:%s:%d // 消息反序列化失败", __FILE__, __FUNCTION__, __LINE__);
         // todo 根据序列号重发消息
 
-        throw std::runtime_error("Failed to deserialize message");
+        // throw std::runtime_error("Failed to deserialize message");
     }
 }
 
@@ -264,33 +264,44 @@ void msgAnalysis::process_incoming_data(const std::unique_ptr<std::vector<uint8_
 
     while (offset < recv_data_size)
     {
-        try
+        // try
+        // {
+        uint32_t meta_data_length = read_message_length(data->data(), offset, recv_data_size);
+
+        if (meta_data_length > 0)
         {
-            uint32_t meta_data_length = read_message_length(data->data(), offset, recv_data_size);
-
-            if (meta_data_length > 0)
+            // auto msg_meta_data = extract_and_deserialize_meta_data(data.get(), offset, recv_data_size, meta_data_length);
+            auto msg_meta_data = extract_and_deserialize_meta_data(data->data(), offset, recv_data_size, meta_data_length);
+            if (msg_meta_data != nullptr)
             {
-                // auto msg_meta_data = extract_and_deserialize_meta_data(data.get(), offset, recv_data_size, meta_data_length);
-                auto msg_meta_data = extract_and_deserialize_meta_data(data->data(), offset, recv_data_size, meta_data_length);
-                if (msg_meta_data != nullptr)
+                // verify_crc32(data.get(), offset, recv_data_size, msg_meta_data.get());
+                if (verify_crc32(data->data(), offset, recv_data_size, msg_meta_data->get_length(), msg_meta_data->get_check_sum()) == true)
                 {
-                    // verify_crc32(data.get(), offset, recv_data_size, msg_meta_data.get());
-                    if (verify_crc32(data->data(), offset, recv_data_size, msg_meta_data->get_length(), msg_meta_data->get_check_sum()) == true)
-                    {
-                        process_message(data->data(), offset, recv_data_size, msg_meta_data->get_length(), msg_meta_data->get_sequense_num());
-                    }
-                    else
-                    {
-
-                    }
+                    process_message(data->data(), offset, recv_data_size, msg_meta_data->get_length(), msg_meta_data->get_sequense_num());
+                }
+                else
+                {
+                    // 校验和验证失败
+                    return;
                 }
             }
+            else
+            {
+                //元数据为空指针
+                return;
+            }
         }
-        catch (const std::exception &e)
+        else
         {
-            LOG_ERROR("%s:%s:%d // 异常: %s", __FILE__, __FUNCTION__, __LINE__, e.what());
-            // 可选择跳过错误消息并继续处理剩余的数据
-            continue;
+            //元数据长度不合理
+            return;
         }
+        // }
+        // catch (const std::exception &e)
+        // {
+        //     LOG_ERROR("%s:%s:%d // 异常: %s", __FILE__, __FUNCTION__, __LINE__, e.what());
+        //     // 可选择跳过错误消息并继续处理剩余的数据
+        //     continue;
+        // }
     }
 }

@@ -38,16 +38,16 @@ void ReactorEventHandlerV1::init()
     // 消息分析初始化
     msg_analysis_fsm = std::make_unique<msgAnalysisFSM>();
     msg_analysis_fsm->init();
-    std::function<void(std::string, std::shared_ptr<std::vector<uint8_t>>)> lambda4 = [this](std::string username, std::shared_ptr<std::vector<uint8_t>> data)
-    {
-        this->enqueue_send_message(username, data);
-    };
-    msg_analysis_fsm->register_event(ENQUEUE_SEND_DATA, std::any(lambda4));
-    std::function<void(std::function<void()>)> lambda5 = [this](std::function<void()> lambda)
-    {
-        this->task_commit(lambda);
-    };
-    msg_analysis_fsm->register_event(TASK_COMMIT, std::any(lambda5));
+    // std::function<void(std::string, std::shared_ptr<std::vector<uint8_t>>)> lambda4 = [this](std::string username, std::shared_ptr<std::vector<uint8_t>> data)
+    // {
+    //     this->enqueue_send_message(username, data);
+    // };
+    // msg_analysis_fsm->register_event(ENQUEUE_SEND_DATA, std::any(lambda4));
+    // std::function<void(std::function<void()>)> lambda5 = [this](std::function<void()> lambda)
+    // {
+    //     this->task_commit(lambda);
+    // };
+    // msg_analysis_fsm->register_event(TASK_COMMIT, std::any(lambda5));
 
     auto lambda1 = [this]()
     { this->handle_sockets_recv(); };
@@ -306,7 +306,7 @@ void ReactorEventHandlerV1::handle_sockets_recv()
                 {
                     // sockets_recv_data[socketfd].enqueue_bulk(recvmsg->data(), recvmsg->size());
                     // socket_manager->enqueue_recv_data(socketfd, recvmsg);
-                    oldSocketManager::getInstance().enqueue_recv_data(socketfd, recvmsg);
+                    // oldSocketManager::getInstance().enqueue_recv_data(socketfd, recvmsg);
                 }
             }
         }
@@ -370,7 +370,7 @@ void ReactorEventHandlerV1::handle_sockets_send()
             }
             else
             {
-                if (false == networkio->send_data_binary(socket, data))
+                // if (false == networkio->send_data_binary(socket, data))
                 {
                     // 发送失败
                     LOG_ERROR("%s:%s:%d // 发送失败", __FILE__, __FUNCTION__, __LINE__);
@@ -378,10 +378,10 @@ void ReactorEventHandlerV1::handle_sockets_send()
                     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, nullptr);
                     continue;
                 }
-                else
-                {
-                    // todo 发送成功
-                }
+                // else
+                // {
+                //     // todo 发送成功
+                // }
             }
         }
         // for (auto &it : sockets_send_data)
