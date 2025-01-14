@@ -156,11 +156,11 @@
 //     static databaseV2 instance;
 //     return instance;
 // }
-database &database::get_instance()
-{
-    static database instance;
-    return instance;
-}
+// database &database::get_instance()
+// {
+//     static database instance;
+//     return instance;
+// }
 
 // std::string database::get_user_info_from_cacheordb(const std::string &account, loginType type)
 // {
@@ -375,7 +375,8 @@ database &database::get_instance()
 
 std::shared_ptr<std::vector<std::string>> database::redis_stream_xreadgroup(const std::string &stream_name, const std::string &group_name, const std::string &consumer_name, const std::optional<int> block_time, const std::optional<int> count)
 {
-    return m_redisMethods->redis_stream_xreadgroup(stream_name, group_name, consumer_name, block_time, count);
+    // return m_redisMethods->redis_stream_xreadgroup(stream_name, group_name, consumer_name, block_time, count);
+    return redisMethodsCor::redis_stream_xreadgroup(stream_name, group_name, consumer_name, block_time, count);
     // auto res_vec = m_redisMethods->redis_stream_xreadgroup(stream_name,group_name,consumer_name,block_time,count);
     // if(res_vec->empty())
     // {
@@ -391,13 +392,15 @@ std::shared_ptr<std::vector<std::string>> database::redis_stream_xreadgroup(cons
 
 void database::init_stream_consumer_group(const std::string &stream_name, const std::string &groupname)
 {
-    m_redisMethods->init_stream_consumer_group(stream_name, groupname);
+    // m_redisMethods->init_stream_consumer_group(stream_name, groupname);
+    redisMethodsCor::init_stream_consumer_group(stream_name, groupname);
 }
 
 // std::string database::redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields)
 std::string database::redis_stream_xadd_fields(const std::string &stream, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> fields)
 {
-    return m_redisMethods->redis_stream_xadd(stream, fields);
+    // return m_redisMethods->redis_stream_xadd(stream, fields);
+    return redisMethodsCor::redis_stream_xadd(stream,fields);
 }
 
 int database::redis_stream_xack_single(const std::string &stream, const std::string &groupname, const std::string &msgid)
@@ -406,7 +409,8 @@ int database::redis_stream_xack_single(const std::string &stream, const std::str
     int trycount = REDIS_STREAM_XACK_FAILED_MAXRETRY;
     while (trycount != 0)
     {
-        flag = m_redisMethods->redis_stream_xack(stream, groupname, msgid);
+        // flag = m_redisMethods->redis_stream_xack(stream, groupname, msgid);
+        flag = redisMethodsCor::redis_stream_xack(stream,groupname,msgid);
         if (flag == true)
         {
             break;
@@ -445,7 +449,8 @@ int database::redis_stream_xack_batch(const std::string &stream, const std::stri
 
 std::string database::redis_stream_xadd_msg(const std::string &stream, const std::string &msg)
 {
-    return m_redisMethods->redis_stream_xadd(stream, msg);
+    // return m_redisMethods->redis_stream_xadd(stream, msg);
+    return redisMethodsCor::redis_stream_xadd(stream,msg);
 }
 
 bool database::is_user_exist_in_db(const std::string &username, const std::string &email)
@@ -454,7 +459,8 @@ bool database::is_user_exist_in_db(const std::string &username, const std::strin
     std::vector<std::any> params;
     params.push_back(username);
     params.push_back(email);
-    auto res = m_mysqlMethods->execute_sql(statementType::QUERY, select_sql, params);
+    // auto res = m_mysqlMethods->execute_sql(statementType::QUERY, select_sql, params);
+    auto res = mysqlMethods::execute_sql(statementType::QUERY, select_sql, params);
     auto result = res->get_res();
     while (result != nullptr && result->next())
     {
@@ -486,7 +492,8 @@ uint64_t database::add_user_to_db(const std::string &username, const std::string
     // std::vector <std::variant<int,std::string>> params = {username,password,email};
     std::vector<std::any> params = {username, password, email};
     // auto res = m_mysqlMethods->execute_sql(statementType::NOTQUERY,add_sql,params);
-    auto res = m_mysqlMethods->execute_sql(statementType::INSERT, add_sql, params);
+    // auto res = m_mysqlMethods->execute_sql(statementType::INSERT, add_sql, params);
+    auto res = mysqlMethods::execute_sql(statementType::INSERT, add_sql, params);
     if (res != nullptr)
     {
         return res->get_generated_key();
@@ -530,7 +537,8 @@ bool database::get_login_result(const std::string type, const std::string &accou
     std::vector<std::any> params;
     params.push_back(account);
     params.push_back(password);
-    auto res = m_mysqlMethods->execute_sql(statementType::QUERY, query_sql, params);
+    // auto res = m_mysqlMethods->execute_sql(statementType::QUERY, query_sql, params);
+    auto res = mysqlMethods::execute_sql(statementType::QUERY, query_sql, params);
     if (res != nullptr)
     {
         auto resultset = res->get_res();
@@ -542,6 +550,87 @@ bool database::get_login_result(const std::string type, const std::string &accou
                 return true;
             }
         }
+    }
+    return false;
+}
+
+void database::add_logined_userid(const std::string& set_key,std::unique_ptr<std::vector<std::string>> userid_vec)
+{
+    // m_redisMethods->redis_sadd_push_logined_userid(std::move(userid_vec));
+    redisMethodsLoginedUserid::redis_sadd_push_logined_userid(set_key,std::move(userid_vec));
+}
+
+bool database::is_userid_exist_in_redis(const std::string& set_key,const std::string& userid)
+{
+    return redisMethodsLoginedUserid::redis_sismember_logined_userid(set_key,userid);
+}
+
+void database::delete_logined_userid_in_redis(const std::string& set_key ,const std::string& userid)
+{
+    redisMethodsLoginedUserid::redis_srem_pop_logined_userid(set_key,userid);
+}
+
+std::string database::get_userid_by_name_passwd_in_db(const std::string& username,const std::string& passwd)
+{
+    mysqlConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(conn == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 获取数据库连接失败",__FILE__,__FUNCTION__,__LINE__);
+        return "";
+    }
+    // std::string select_sql = "SELECT " + MYSQL_TABLE_USER_FIELD_ID + " FROM " + MYSQL_TABLE_USERS + " WHERE " + MYSQL_TABLE_USER_FIELD_NAME + " = ?";
+    std::string select_sql = "SELECT " + MYSQL_TABLE_USER_FIELD_ID + " FROM " + MYSQL_TABLE_USERS + " WHERE " + MYSQL_TABLE_USER_FIELD_NAME + " = ? AND " + MYSQL_TABLE_USER_FIELD_PASSWD + " = ?";
+    std::vector<std::any> params;
+    params.push_back(username);
+    params.push_back(passwd);
+    auto res = mysqlMethods::execute_sql(statementType::QUERY, select_sql, params);
+    if(res == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 执行查询语句失败",__FILE__,__FUNCTION__,__LINE__);
+        return "";
+    }
+    auto result = res->get_res();
+    if(result == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 执行查询语句返回nullptr",__FILE__,__FUNCTION__,__LINE__);
+        return "";
+    }
+    if(result->next())
+    {
+        return std::to_string(result->getUInt64(MYSQL_TABLE_USER_FIELD_ID));
+    }
+    return "";
+}
+
+bool database::is_login_success_by_userid_in_db(const std::string& userid,const std::string& passwd)
+{
+    mysqlConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(conn == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 获取数据库连接失败",__FILE__,__FUNCTION__,__LINE__);
+        return false;
+    }
+    std::string select_sql = "SELECT " + MYSQL_TABLE_USER_FIELD_ID + " FROM " + MYSQL_TABLE_USERS + " WHERE " + MYSQL_TABLE_USER_FIELD_ID + " = ? AND " + MYSQL_TABLE_USER_FIELD_PASSWD + " = ?";
+    std::vector<std::any> params;
+    params.push_back(userid);
+    params.push_back(passwd);
+    auto res = mysqlMethods::execute_sql(statementType::QUERY, select_sql, params);
+    if(res == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 执行查询语句失败",__FILE__,__FUNCTION__,__LINE__);
+        return false;
+    }
+    auto result = res->get_res();
+    if(result == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 执行查询语句返回nullptr",__FILE__,__FUNCTION__,__LINE__);
+        return false;
+    }
+    if(result->next())
+    {
+        return true;
     }
     return false;
 }

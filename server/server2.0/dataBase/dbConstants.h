@@ -37,6 +37,8 @@ inline const std::string REDIS_POOL_ADDRESS = "127.0.0.1";
 inline const int REDIS_POOL_PORT = 6379;
 inline const size_t REDIS_POOL_SIZE = 10;
 
+inline const std::string REDIS_KEY_LOGINED_USERID = "user:logined_userid:";
+
 // inline const std::string REDIS_PRIEFIX_FIND_USERINFO = "user:user_info:";
 // inline const std::string REDIS_PRIEFIX_FIND_USERID = "user:find_userid_by_username:";
 // inline const std::string REDIS_JSON_FIELD_STREAMNAME = "stream_name";
@@ -57,6 +59,24 @@ inline const int REDIS_STREAM_READER_NUM = 1;
 inline const int REDIS_STREAM_WRITER_NUM = 1;
 inline const std::string REDIS_STREAM_MESSAGE_FIELD_NAME = "message";
 inline const std::string REDIS_STREAM_REGISTERNAME_PREFIX = "register";
+inline const std::string REDIS_STREAM_KEY_STREAMNAME = "stream_name";
+inline const std::string REDIS_STREAM_KEY_MESSAGEID = "message_id";
+inline const std::string REDIS_STREAM_KEY_MESSAGEDATA = "message_data";
+inline const std::string REDIS_STREAM_KEY_MESSAGEDATA_JSONMSG = "json_msg";
+
+/*
+redis stream接收消息后进行处理得到的消息
+{
+    "message_id" : "message_id",
+    "stream_name" : "stream_name",
+    "message_data" : {
+        json_msg : {}
+        或者
+        field1 : value1,
+        field2 : value2,
+    }
+}
+*/
 
 
 

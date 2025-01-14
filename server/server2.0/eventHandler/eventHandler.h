@@ -13,7 +13,8 @@
 #include "../msgAnalysis/msgAnalysisFSM.h"
 #include "../logSystem/log.h"
 #include <string>
-#include "../socketManager/socketManager.h"
+// #include "../socketManager/socketManager.h"
+#include "../userManager/userManager.h"
 #include "ehConstants.h"
 #include "../dataManager/dataManager.h"
 #include <fcntl.h>

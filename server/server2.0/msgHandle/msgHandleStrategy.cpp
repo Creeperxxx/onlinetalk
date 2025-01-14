@@ -107,7 +107,7 @@ nlohmann::json controlUserRegistryStrategy::handle(nlohmann::json msg)
         std::string register_status;
         uint64_t ret_id;
 
-        if (database::get_instance().is_user_exist_in_db(user_name, user_email) == true)
+        if (database::is_user_exist_in_db(user_name, user_email) == true)
         {
             // 注册失败
             register_status = MESSAGE_KEY_DATA_CONTENT_REGISTER_STATUS_FAILURE;
@@ -117,7 +117,7 @@ nlohmann::json controlUserRegistryStrategy::handle(nlohmann::json msg)
             // 可以注册
             // 1. 加入到数据库中
             // 2. 获取返回的主键放入返回消息中
-            ret_id = database::get_instance().add_user_to_db(user_name, user_passwd, user_email);
+            ret_id = database::add_user_to_db(user_name, user_passwd, user_email);
             response[MESSAGE_KEY_DATA][MESSAGE_KEY_DATA_CONTENT][MESSAGE_KEY_DATA_CONTENT_REGISTER_RET_USERID] = ret_id;
 
             if (ret_id > 0)
@@ -149,25 +149,47 @@ nlohmann::json controlUserLoginStrategy::handle(nlohmann::json msg)
         std::string login_type = msg.at(MESSAGE_KEY_DATA).at(MESSAGE_KEY_DATA_CONTENT).at(MESSAGE_KEY_DATA_CONTENT_LOGIN_TYPE);
         // std::string login_user_name;
         // std::string login_user_id;
-        std::string account;
+        // std::string account;
+        std::string userid;
         std::string login_user_passwd = msg.at(MESSAGE_KEY_DATA).at(MESSAGE_KEY_DATA_CONTENT).at(MESSAGE_KEY_DATA_CONTENT_LOGIN_PASSWD);
         if (login_type == MESSAGE_KEY_DATA_CONTENT_LOGIN_TYPE_ID)
         {
-            account = msg.at(MESSAGE_KEY_DATA).at(MESSAGE_KEY_DATA_CONTENT).at(MESSAGE_KEY_DATA_CONTENT_LOGIN_ID);
+            userid = msg.at(MESSAGE_KEY_DATA).at(MESSAGE_KEY_DATA_CONTENT).at(MESSAGE_KEY_DATA_CONTENT_LOGIN_ID);
+            //直接用userid和passwd判断是否登录成功
+            if(database::is_login_success_by_userid_in_db(userid,login_user_passwd) == true)
+            {
+                //登录成功
+            }
+            else
+            {
+                //登录失败
+            }
         }
         else if (login_type == MESSAGE_KEY_DATA_CONTENT_LOGIN_TYPE_NAME)
         {
-            account = msg.at(MESSAGE_KEY_DATA).at(MESSAGE_KEY_DATA_CONTENT).at(MESSAGE_KEY_DATA_CONTENT_LOGIN_NAME);
+            //如果不是userid，则判断是否登录成功并尝试获取userid。
+            std::string user_name = msg.at(MESSAGE_KEY_DATA).at(MESSAGE_KEY_DATA_CONTENT).at(MESSAGE_KEY_DATA_CONTENT_LOGIN_NAME);
+            userid = database::get_userid_by_name_passwd_in_db(user_name,login_user_passwd);
+            if(userid.empty())
+            {
+                LOG_ERROR("%s:%s:%d // 登录失败，用户名不存在", __FILE__, __FUNCTION__, __LINE__);
+                return IStrategy::construct_error_response(msg, "登录失败，用户名不存在");
+            }
+            else
+            {
+                IuserManager::
+            } 
         }
         else
         {
             LOG_ERROR("%s:%s:%d // 登录方式错误", __FILE__, __FUNCTION__, __LINE__);
             return IStrategy::construct_error_response(msg, "登录方式错误");
         }
-        if(database::get_instance().get_login_result(login_type,account,login_user_passwd) == true)
+        if(database::get_login_result(login_type,account,login_user_passwd) == true)
         {
             //判断是否登录
-            //1. 先到服务器临时存储登录信息中找，然后到redis中是否登录
+            //1. 先到服务器临时存储登录信息中找，然后到redis中是否登录.如果使用其他方式登录就转换为userid
+            
             //2. 如果未登录，则允许登录，然后将离线消息发送给他
             
         }

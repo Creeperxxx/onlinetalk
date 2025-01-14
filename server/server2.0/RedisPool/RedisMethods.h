@@ -40,26 +40,54 @@ class redisMethods //: public IredisMethods
     // std::unique_ptr<redisReply> execute_command(const std::string& rediscommand) override;
     // std::unique_ptr<redisReply,decltype(freeReplyObject)> execute_command(const std::string& rediscommand) override;
     // std::shared_ptr<redisReply> execute_command(const std::string& rediscommand) override;
-public:
+    friend class database;
+private:
     bool redis_del(const std::string& key);
 
     std::string redis_set_get(const std::string& key);
     bool redis_set_set(const std::string& key,const std::string& value, std::optional<redisSetMode> mode = std::nullopt, std::optional<int> expire = std::nullopt);
     
     // std::string build_cache_key(const std::string& userid);
-    std::string build_key_find_userinfo(const std::string& userid);
+    // std::string build_key_find_userinfo(const std::string& userid);
     // std::string build_find_userid_key(const std::string& username);
-    std::string build_key_find_userid(const std::string& username);
-    std::shared_ptr<std::vector<std::string>> redis_stream_xreadgroup(const std::string& stream_name,const std::string& group_name,const std::string& consumer_name, const std::optional<int> block_time = std::nullopt,const std::optional<int> count = std::nullopt);
-    bool init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);
-    // std::string redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields);
-    std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
-    std::string redis_stream_xadd(const std::string& stream,const std::string& msg);
-    bool redis_stream_xack(const std::string& stream,const std::string& groupname,const std::string& id);
-private:
-    std::shared_ptr<std::vector<std::string>> get_string_from_redisreply(redisReply* reply);
+    // std::string build_key_find_userid(const std::string& username);
+    // std::shared_ptr<std::vector<std::string>> redis_stream_xreadgroup(const std::string& stream_name,const std::string& group_name,const std::string& consumer_name, const std::optional<int> block_time = std::nullopt,const std::optional<int> count = std::nullopt);
+    // bool init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);
+    // // std::string redis_stream_xadd(const std::string& stream,const std::vector<std::pair<std::string,std::string>>& fields);
+    // std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
+    // std::string redis_stream_xadd(const std::string& stream,const std::string& msg);
+    // bool redis_stream_xack(const std::string& stream,const std::string& groupname,const std::string& id);
+    // void redis_sadd_push_logined_userid(const std::string& set_key,std::unique_ptr<std::vector<std::string>> userid_vec);
+    // std::unique_ptr<std::vector<std::string>> redis_smembers_get_logined_userid(const std::string& set_key = REDIS_KEY_LOGINED_USERID);
+    // void redis_srem_pop_logined_userid(const std::string& set_key = REDIS_KEY_LOGINED_USERID,const std::string& userid);
+// private:
+//     std::shared_ptr<std::vector<std::string>> get_string_from_redisreply(redisReply* reply);
     // void judge_redisreply_status(redisReply* reply);
     // bool update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo);
 // private:
 //     static std::unique_ptr<redisMethods> m_instance;
 };
+
+
+class redisMethodsLoginedUserid 
+{
+    friend class database;
+private:
+    static std::unique_ptr<std::vector<std::string>> redis_smembers_get_logined_userid(const std::string& set_key = REDIS_KEY_LOGINED_USERID); 
+    static void redis_sadd_push_logined_userid(const std::string& set_key,std::unique_ptr<std::vector<std::string>> userid_vec);
+    static void redis_srem_pop_logined_userid(const std::string& set_key = REDIS_KEY_LOGINED_USERID,const std::string& userid);
+    static bool redis_sismember_logined_userid(const std::string& set_key = REDIS_KEY_LOGINED_USERID,const std::string& userid);
+};
+
+class redisMethodsCor
+{
+    friend class database;
+private:
+    static std::shared_ptr<std::vector<std::string>> redis_stream_xreadgroup(const std::string& stream_name,const std::string& group_name,const std::string& consumer_name, const std::optional<int> block_time = std::nullopt,const std::optional<int> count = std::nullopt);
+    static bool init_stream_consumer_group(const std::string& stream_name,const std::string& groupname);
+    static std::string redis_stream_xadd(const std::string& stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields);
+    static std::string redis_stream_xadd(const std::string& stream,const std::string& msg);
+    static bool redis_stream_xack(const std::string& stream,const std::string& groupname,const std::string& id);
+    static std::shared_ptr<std::vector<std::string>> get_string_from_redisreply(redisReply* reply);
+};
+

@@ -182,15 +182,15 @@ bool redisMethods::redis_del(const std::string& key)
     }
 }
 
-std::string redisMethods::build_key_find_userinfo(const std::string& userid)
-{
-    return REDIS_PRIEFIX_FIND_USERINFO + userid;
-}
+// std::string redisMethods::build_key_find_userinfo(const std::string& userid)
+// {
+//     return REDIS_PRIEFIX_FIND_USERINFO + userid;
+// }
 
-std::string redisMethods::build_key_find_userid(const std::string& username)
-{
-    return REDIS_PRIEFIX_FIND_USERID + username;
-}
+// std::string redisMethods::build_key_find_userid(const std::string& username)
+// {
+//     return REDIS_PRIEFIX_FIND_USERID + username;
+// }
 
 // bool redisMethods::update_redis_cache(const std::string& username,const std::string& userid,const std::string& userinfo)
 // {
@@ -210,7 +210,7 @@ std::string redisMethods::build_key_find_userid(const std::string& username)
 // }
 
 // std::string redisMethods::redis_stream_xreadgroup(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
-std::shared_ptr<std::vector<std::string>> redisMethods::redis_stream_xreadgroup(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
+std::shared_ptr<std::vector<std::string>> redisMethodsCor::redis_stream_xreadgroup(const std::string &stream_name,const std::string& group_name,const std::string& consumer_name,const std::optional<int> block_time,const std::optional<int> count)
 {
     std::shared_ptr<std::vector<std::string>> res = std::make_shared<std::vector<std::string>>();
     redisConnRAII connraii;
@@ -323,7 +323,7 @@ std::shared_ptr<std::vector<std::string>> redisMethods::redis_stream_xreadgroup(
     // return res;
 }
 
-bool redisMethods::init_stream_consumer_group(const std::string &stream_name ,const std::string& group_name)
+bool redisMethodsCor::init_stream_consumer_group(const std::string &stream_name ,const std::string& group_name)
 {
     redisConnRAII connraii;
     auto conn = connraii.get_connection();
@@ -355,7 +355,7 @@ bool redisMethods::init_stream_consumer_group(const std::string &stream_name ,co
 }
 
 // std::string redisMethods::get_string_from_redisreply(redisReply* reply)
-std::shared_ptr<std::vector<std::string>> redisMethods::get_string_from_redisreply(redisReply* reply)
+std::shared_ptr<std::vector<std::string>> redisMethodsCor::get_string_from_redisreply(redisReply* reply)
 {
     nlohmann::json res_json;
     std::string stream_name;
@@ -398,11 +398,14 @@ std::shared_ptr<std::vector<std::string>> redisMethods::get_string_from_redisrep
                 message_id = reply->element[i]->element[1]->element[j]->element[0]->str;
                 for(int k = 0; k < reply->element[i]->element[1]->element[j]->element[1]->elements - 1; k += 2)
                 {
-                    res_json[reply->element[i]->element[1]->element[j]->element[1]->element[k]->str] = reply->element[i]->element[1]->element[j]->element[1]->element[k+1]->str;
+                    res_json[REDIS_STREAM_KEY_MESSAGEDATA][reply->element[i]->element[1]->element[j]->element[1]->element[k]->str] = reply->element[i]->element[1]->element[j]->element[1]->element[k+1]->str;
                 }
                 // res_vec->push_back(res_json.dump());
-                res_json[REDIS_JSON_FIELD_STREAMNAME] = stream_name;
-                res_json[REDIS_JSON_FIELD_MESSAGEID] = message_id;
+                // res_json[REDIS_JSON_FIELD_STREAMNAME] = stream_name;
+                // res_json[REDIS_JSON_FIELD_MESSAGEID] = message_id;
+                res_json[REDIS_STREAM_KEY_MESSAGEID] = message_id;
+                res_json[REDIS_STREAM_KEY_STREAMNAME] = stream_name;
+                
                 res_vec->push_back(res_json.dump());
                 res_json.clear();
             }
@@ -457,7 +460,7 @@ std::shared_ptr<std::vector<std::string>> redisMethods::get_string_from_redisrep
 }
 
 // std::string redisMethods::redis_stream_xadd(const std::string &stream,const std::vector<std::pair<std::string,std::string>>& fields)
-std::string redisMethods::redis_stream_xadd(const std::string &stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields)
+std::string redisMethodsCor::redis_stream_xadd(const std::string &stream,std::shared_ptr<std::vector<std::pair<std::string,std::string>>> fields)
 {
     redisConnRAII connraii;
     auto conn = connraii.get_connection();
@@ -484,7 +487,7 @@ std::string redisMethods::redis_stream_xadd(const std::string &stream,std::share
     }
 }
 
-bool redisMethods::redis_stream_xack(const std::string &stream,const std::string& group_name,const std::string& id)
+bool redisMethodsCor::redis_stream_xack(const std::string &stream,const std::string& group_name,const std::string& id)
 {
     redisConnRAII connraii;
     auto conn = connraii.get_connection();
@@ -507,7 +510,7 @@ bool redisMethods::redis_stream_xack(const std::string &stream,const std::string
     }
 }
 
-std::string redisMethods::redis_stream_xadd(const std::string& stream,const std::string& msg)
+std::string redisMethodsCor::redis_stream_xadd(const std::string& stream,const std::string& msg)
 {
     redisConnRAII connraii;
     auto conn = connraii.get_connection();
@@ -529,3 +532,130 @@ std::string redisMethods::redis_stream_xadd(const std::string& stream,const std:
         return add_reply->str;
     }
 }
+
+void redisMethodsLoginedUserid::redis_sadd_push_logined_userid(const std::string& set_key ,std::unique_ptr<std::vector<std::string>> userid_vec)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
+    std::string command_str = "SADD " + set_key + " ";
+    for(auto& userid : *userid_vec)
+    {
+        command_str += userid + " ";
+    }
+    std::unique_ptr<redisReply, void(*)(redisReply*)> add_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(add_reply == nullptr || add_reply->type != REDIS_REPLY_INTEGER)
+    {
+        LOG_ERROR("%s:%s:%d // 向集合%s添加用户失败", __FILE__, __FUNCTION__, __LINE__,REDIS_KEY_LOGINED_USERID.c_str());
+        return;
+    }
+    else
+    {
+        if(add_reply->integer != userid_vec->size())
+        {
+            LOG_WARING("%s:%s:%d // 向集合%s添加用户失败,返回的个数与输入个数不一致", __FILE__, __FUNCTION__, __LINE__,REDIS_KEY_LOGINED_USERID.c_str());
+            return;
+        }
+        else
+        {
+            return;
+        }
+    }
+}
+
+std::unique_ptr<std::vector<std::string>> redisMethodsLoginedUserid::redis_smembers_get_logined_userid(const std::string& set_key)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return nullptr;
+    }
+    std::string command_str = "SMEMBERS " + set_key;
+    std::unique_ptr<redisReply, void(*)(redisReply*)> members_reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(members_reply == nullptr || members_reply->type != REDIS_REPLY_ARRAY)
+    {
+        LOG_ERROR("%s:%s:%d // 从集合%s获取用户失败", __FILE__, __FUNCTION__, __LINE__,REDIS_KEY_LOGINED_USERID.c_str());
+        return nullptr;
+    }
+    else
+    {
+        std::unique_ptr<std::vector<std::string>> userid_vec = std::make_unique<std::vector<std::string>>();
+        for(size_t i = 0; i < members_reply->elements; ++i)
+        {
+            userid_vec->push_back(members_reply->element[i]->str);
+        }
+        return std::move(userid_vec);
+    }
+}
+
+void redisMethodsLoginedUserid::redis_srem_pop_logined_userid(const std::string& set_key ,const std::string& userid)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
+    std::string command_str = "SREM " + set_key + " " + userid;
+    std::unique_ptr<redisReply, void(*)(redisReply*)> reply(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(reply == nullptr)
+    {
+        LOG_ERROR("%s:%s:%d // 在redis中删除已登录userid返回nullptr",__FILE__,__FUNCTION__,__LINE__);
+        return;
+    }
+    //确认是否删除
+    command_str = "SISMEMBER " + set_key + " " +userid;
+    std::unique_ptr<redisReply,void(*)(redisReply*)> reply1(static_cast<redisReply*>(redisCommand(conn.get(),command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(reply1 == nullptr || reply1->type != REDIS_REPLY_INTEGER)
+    {
+        LOG_ERROR("%s:%s:%d // redis删除已登录userid发生错误",__FILE__,__FUNCTION__,__LINE__);
+    }
+    else
+    {
+        if(reply1->integer == 1)
+        {
+            LOG_INFO("%s:%s:%d // redis的userid_set中成功删除userid：%s",__FILE__,__FUNCTION__,__LINE__,userid);
+        }
+        else
+        {
+            LOG_WARING("%s:%s:%d // 在redis的userid_set中删除userid:%s失败",__FILE__,__FUNCTION__,__LINE__,userid);
+        }
+    }
+}
+
+bool redisMethodsLoginedUserid::redis_sismember_logined_userid(const std::string& set_key,const std::string& userid)
+{
+    redisConnRAII connraii;
+    auto conn = connraii.get_connection();
+    if(!conn)
+    {
+        LOG_ERROR("%s:%s:%d // 得到的数据库连接为nullptr", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+    std::string command_str = "SISMEMBER " + set_key + " " + userid;
+    std::unique_ptr<redisReply, void(*)(redisReply*)> reply = std::unique_ptr<redisReply, void(*)(redisReply*)>(static_cast<redisReply*>(redisCommand(conn.get(), command_str.c_str())),[](redisReply* reply){freeReplyObject(reply);});
+    if(reply == nullptr || reply->type != REDIS_REPLY_INTEGER)
+    {
+        LOG_ERROR("%s:%s:%d // redis判断userid是否在userid_set中发生错误",__FILE__,__FUNCTION__,__LINE__);
+        return false;
+    }
+    else
+    {
+        if(reply->integer == 1)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
+

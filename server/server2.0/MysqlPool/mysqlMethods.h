@@ -60,12 +60,14 @@ private:
 
 class mysqlMethods //: public ImysqlMethods
 {
-public:
+// public:
     // std::shared_ptr<sql::Connection> getConnection();
 
     // std::variant<bool, std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type,const std::string& sql, std::vector<std::variant<int,std::string>>& params);
     // std::variant<bool, std::unique_ptr<sql::ResultSet, decltype(&sql::ResultSet::close)>> execute_sql(statementType type,const std::string& sql, std::optional<std::vector<std::variant<int,std::string>>> params = std::nullopt);
     // std::unique_ptr<mysqlRes> execute_sql(statementType type,const std::string& sql, std::optional<std::vector<std::variant<int,std::string>>> params = std::nullopt);
-    std::unique_ptr<mysqlRes> execute_sql(statementType type,const std::string& sql, std::optional<std::vector<std::any>> params = std::nullopt);
+    friend class database;
+private:
+    static std::unique_ptr<mysqlRes> execute_sql(statementType type,const std::string& sql, std::optional<std::vector<std::any>> params = std::nullopt);
 };
 
