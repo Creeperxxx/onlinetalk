@@ -54,34 +54,37 @@ private:
     std::atomic<bool> is_socket_active;
     std::atomic<bool> is_redisStream_active;
 
+    std::atomic<bool> m_is_socket_using;
+    std::atomic<bool> m_is_redisStream_using;
+
 public:
     void set_userId(const std::string &userid) { m_userId = userid; }
     std::string get_userId() { return m_userId; }
-    void set_userName(const std::string& userName){m_userName = userName;}
-    std::string get_userName(const std::string& userName){return m_userName;}
-    void set_socketFd(const int& fd){m_socketFd = fd;}
-    int get_socketFd(){return m_socketFd;}
-    void set_redisStream(const std::string& redisStream){m_redisStream = redisStream;}
-    std::string get_redisSteam(){return m_redisStream;}
-    
-    //更新 判断是否过期 返回
-    void update_socket_interactionTime(){m_socket_lastInteractionTime.store(std::chrono::steady_clock::now());}
-    void update_redisStream_interactionTime(){m_redisStream_lastInteractionTime.store(std::chrono::steady_clock::now());}
+    void set_userName(const std::string &userName) { m_userName = userName; }
+    std::string get_userName(const std::string &userName) { return m_userName; }
+    void set_socketFd(const int &fd) { m_socketFd = fd; }
+    int get_socketFd() { return m_socketFd; }
+    void set_redisStream(const std::string &redisStream) { m_redisStream = redisStream; }
+    std::string get_redisSteam() { return m_redisStream; }
+
+    // 更新 判断是否过期 返回
+    void update_socket_interactionTime() { m_socket_lastInteractionTime.store(std::chrono::steady_clock::now()); }
+    void update_redisStream_interactionTime() { m_redisStream_lastInteractionTime.store(std::chrono::steady_clock::now()); }
     bool is_socket_timeOut();
     bool is_redisStream_timeOut();
-    std::chrono::time_point<std::chrono::steady_clock> get_socket_lastInteractionTime(){return m_socket_lastInteractionTime.load();}
-    std::chrono::time_point<std::chrono::steady_clock> get_redisStream_lastInteractionTime(){return m_redisStream_lastInteractionTime.load();}
-    
-    //push和pop
-    //socket
+    std::chrono::time_point<std::chrono::steady_clock> get_socket_lastInteractionTime() { return m_socket_lastInteractionTime.load(); }
+    std::chrono::time_point<std::chrono::steady_clock> get_redisStream_lastInteractionTime() { return m_redisStream_lastInteractionTime.load(); }
+
+    // push和pop
+    // socket
     void push_socket_recvData(std::unique_ptr<std::vector<uint8_t>> data);
     void push_socket_sendData(std::unique_ptr<std::vector<uint8_t>> data);
     std::unique_ptr<std::vector<uint8_t>> pop_socket_recvData();
     std::unique_ptr<std::vector<uint8_t>> pop_socket_sendData();
 
-    //redisStream
-    void push_redisStream_recvData(const std::string& msg);
-    void push_redisStream_sendData(const std::string& msg);
+    // redisStream
+    void push_redisStream_recvData(const std::string &msg);
+    void push_redisStream_sendData(const std::string &msg);
     std::unique_ptr<std::vector<std::string>> pop_redisStream_recvData();
     std::unique_ptr<std::vector<std::string>> pop_redisStream_sendData();
 
@@ -90,11 +93,18 @@ public:
     bool is_redisStream_recvData_empty();
     bool is_redisStream_sendData_empty();
 
+    bool is_socket_using();
+    bool is_redisStream_using();
+
+    void set_socket_using(bool is_using) { m_is_socket_using.store(is_using); }
+    void set_redisStream_using(bool is_using) { m_is_redisStream_using.store(is_using); }
+
+    User();
 };
 
 struct compareUserSocketInteractionTimeASC
 {
-    bool operator()(const std::shared_ptr<User>& lhs,const std::shared_ptr<User>& rhs)
+    bool operator()(const std::shared_ptr<User> &lhs, const std::shared_ptr<User> &rhs)
     {
         return lhs->get_socket_lastInteractionTime() < rhs->get_socket_lastInteractionTime();
     }
@@ -102,7 +112,7 @@ struct compareUserSocketInteractionTimeASC
 
 struct compareUserRedisStreamInteractionTimeASC
 {
-    bool operator()(const std::shared_ptr<User>& lhs,const std::shared_ptr<User>& rhs)
+    bool operator()(const std::shared_ptr<User> &lhs, const std::shared_ptr<User> &rhs)
     {
         return lhs->get_redisStream_lastInteractionTime() < rhs->get_redisStream_lastInteractionTime();
     }
@@ -110,9 +120,9 @@ struct compareUserRedisStreamInteractionTimeASC
 
 struct compareUserSocketIsRecvDataEmpty
 {
-    bool operator()(const std::shared_ptr<User>& luser,const std::shared_ptr<User>& ruser)
+    bool operator()(const std::shared_ptr<User> &luser, const std::shared_ptr<User> &ruser)
     {
-        if(luser->is_socket_recvData_empty() == false&& ruser->is_socket_recvData_empty() == true)
+        if (luser->is_socket_recvData_empty() == false && ruser->is_socket_recvData_empty() == true)
         {
             return true;
         }
@@ -122,22 +132,15 @@ struct compareUserSocketIsRecvDataEmpty
 
 struct compareUserSocketIsSendDataEmpty
 {
-    bool operator()(const std::shared_ptr<User>& luser,const std::shared_ptr<User>& ruser)
+    bool operator()(const std::shared_ptr<User> &luser, const std::shared_ptr<User> &ruser)
     {
-        if(luser->is_socket_sendData_empty() == false&& ruser->is_socket_sendData_empty() == true)
+        if (luser->is_socket_sendData_empty() == false && ruser->is_socket_sendData_empty() == true)
         {
             return true;
         }
         return false;
     }
 };
-
-
-
-
-
-
-
 
 // class socketInfo
 // {
@@ -304,6 +307,3 @@ struct compareUserSocketIsSendDataEmpty
 //     bool is_recv_empty();
 //     bool is_send_empty();
 // };
-
-
-

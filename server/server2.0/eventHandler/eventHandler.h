@@ -64,81 +64,87 @@ private:
     int listen_fd;
 };
 
-class ReactorEventHandlerV1 : public IEventHandler
-{
-public:
-    ~ReactorEventHandlerV1();
-    void init();
-    void new_init();
-    void run();
-    void old_1_event_loop();
-    void new_event_loop();
-    void handle_sockets_recv();
-    void handle_sockets_send();//todo 同时检查是否有要发给为上线用户的消息。
-    void analyze_recv_data();
-    void heartbeat();
-    // void enqueue_send_message(std::shared_ptr<message> data);
-    // void enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data);
-    void enqueue_send_message(const std::string& userid,std::shared_ptr<std::vector<uint8_t>> data);
-    void task_commit(std::function<void()> task);
-    void add_new_userid_to_all_userid(const std::string& userid);
-    void delete_userid_from_all_userid(const std::string& userid);
+
+
+
+
+
+
+// class ReactorEventHandlerV1 : public IEventHandler
+// {
+// public:
+//     ~ReactorEventHandlerV1();
+//     void init();
+//     void new_init();
+//     void run();
+//     void old_1_event_loop();
+//     void new_event_loop();
+//     void handle_sockets_recv();
+//     void handle_sockets_send();//todo 同时检查是否有要发给为上线用户的消息。
+//     void analyze_recv_data();
+//     void heartbeat();
+//     // void enqueue_send_message(std::shared_ptr<message> data);
+//     // void enqueue_send_message(std::string username , std::shared_ptr<std::vector<uint8_t>> data);
+//     void enqueue_send_message(const std::string& userid,std::shared_ptr<std::vector<uint8_t>> data);
+//     void task_commit(std::function<void()> task);
+//     void add_new_userid_to_all_userid(const std::string& userid);
+//     void delete_userid_from_all_userid(const std::string& userid);
     
     
 
-private:
-    void deleter();
-    void init_epoll();
-    void add_socketfd_to_epoll(int socketfd, uint32_t events);
-    // void accept_new_connection();
-    void handle_new_connections();
-    // void handle_ready_connections(int socketfd) override;
-    // template <typename T>
-    // std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
-    // uint32_t calculateCRC32(const uint8_t *data, size_t length);
-    // int get_socket_from_username(const std::string& username);
-    int get_socket_from_userid(const std::string& userid);
-    // int get_socket_from_userid(int userid);
-    std::shared_ptr<std::vector<uint8_t>> get_heartbeat_data(int socketfd);
-    void load_all_userid();
-    bool is_userid_exist(const std::string& userid);
-    // bool is_user_online(const std::string& userid);
+// private:
+//     void deleter();
+//     void init_epoll();
+//     void add_socketfd_to_epoll(int socketfd, uint32_t events);
+//     // void accept_new_connection();
+//     void handle_new_connections();
+//     // void handle_ready_connections(int socketfd) override;
+//     // template <typename T>
+//     // std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue);
+//     // uint32_t calculateCRC32(const uint8_t *data, size_t length);
+//     // int get_socket_from_username(const std::string& username);
+//     int get_socket_from_userid(const std::string& userid);
+//     // int get_socket_from_userid(int userid);
+//     std::shared_ptr<std::vector<uint8_t>> get_heartbeat_data(int socketfd);
+//     void load_all_userid();
+//     bool is_userid_exist(const std::string& userid);
+//     // bool is_user_online(const std::string& userid);
 
-private:
-    int epoll_fd;
-    std::atomic<int> handle_sockets_recv_running;
-    std::atomic<int> handle_sockets_send_running;
-    std::atomic<int> analyze_recv_data_running;
-    std::atomic<int> heartbeat_running;
-    std::unique_ptr<socketNetworkIo> networkio;
-    std::unique_ptr<threadPool> thread_pool;
-    // std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
-    std::unique_ptr<msgAnalysisFSM> msg_analysis_fsm;
-    // std::shared_ptr<msgAnalysis> msgAnalysis;
+// private:
+//     int epoll_fd;
+//     std::atomic<int> handle_sockets_recv_running;
+//     std::atomic<int> handle_sockets_send_running;
+//     std::atomic<int> analyze_recv_data_running;
+//     std::atomic<int> heartbeat_running;
+//     std::unique_ptr<socketNetworkIo> networkio;
+//     std::unique_ptr<threadPool> thread_pool;
+//     // std::shared_ptr<msgAnalysisFSM> msg_analysis_fsm;
+//     std::unique_ptr<msgAnalysisFSM> msg_analysis_fsm;
+//     // std::shared_ptr<msgAnalysis> msgAnalysis;
     
-    // std::unique_ptr<IserializationMethod> serializationMethod;
+//     // std::unique_ptr<IserializationMethod> serializationMethod;
 
-    // moodycamel::ConcurrentQueue<int> ready_sockets;
-    // std::queue<int> ready_sockets;
-    std::vector<int> ready_sockets;
-    std::mutex ready_sockets_mutex;
-    std::condition_variable ready_sockets_cv;
+//     // moodycamel::ConcurrentQueue<int> ready_sockets;
+//     // std::queue<int> ready_sockets;
+//     std::vector<int> ready_sockets;
+//     std::mutex ready_sockets_mutex;
+//     std::condition_variable ready_sockets_cv;
 
-    std::unordered_set<std::string> all_userid;
-    std::mutex all_userid_mutex;
+//     std::unordered_set<std::string> all_userid;
+//     std::mutex all_userid_mutex;
 
-    std::atomic<bool> m_event_loop_running;
+//     std::atomic<bool> m_event_loop_running;
 
-    // std::shared_ptr<socketManager> socket_manager;
-    // std::unique_ptr<socketManager> socket_manager;
+//     // std::shared_ptr<socketManager> socket_manager;
+//     // std::unique_ptr<socketManager> socket_manager;
     
-    // 这里有两种方案设计，一种是无锁队列存放二进制，另一种是无锁队列存放vector，每个vector存放一个消息的二进制
-    //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_recv_data;
-    //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;
-    // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_recv_data;
-    // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_send_data;
-    // std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> username_send_data;//这里真的有必要用无锁队列吗，还是用条件变量呢？
-};
+//     // 这里有两种方案设计，一种是无锁队列存放二进制，另一种是无锁队列存放vector，每个vector存放一个消息的二进制
+//     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_recv_data;
+//     //  std::unordered_map<int,moodycamel::ConcurrentQueue<std::vector<uint8_t>>> sockets_send_data;
+//     // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_recv_data;
+//     // std::unordered_map<int, moodycamel::ConcurrentQueue<uint8_t>> sockets_send_data;
+//     // std::unordered_map<std::string,moodycamel::ConcurrentQueue<uint8_t>> username_send_data;//这里真的有必要用无锁队列吗，还是用条件变量呢？
+// };
 
 // template <typename T>
 // std::shared_ptr<std::vector<T>> data_from_concurrentQueue(moodycamel::ConcurrentQueue<T> &queue)

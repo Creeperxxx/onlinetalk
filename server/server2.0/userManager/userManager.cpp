@@ -943,7 +943,7 @@
 // {
 //     std::lock_guard<std::mutex> lock(mutex_socket_map);
 //     for (auto& [userid, userinfo] : *socket_map) {
-//         IuserManager::push_userid(userinfo->get_user_id());
+//         IuserManager::push_userid(userinfo->get_userId());
 //     }
 
 // }
@@ -954,22 +954,51 @@
 //     return fd_user_map->contains(socketFd);
 // }
 
-
-
-
 void userManager::push_socket_haveRecvData_user_single(int socketFd, std::unique_ptr<std::vector<uint8_t>> recv_data)
 {
     std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
     if (fd_to_user_map->contains(socketFd) == true)
     {
-        (*fd_to_user_map)[socketFd]->push_socket_recvData(std::move(recv_data));
-        std::lock_guard<std::mutex> lock1(mutex_socket_haveSendData_user_set);
-        socket_haveRecvData_user_set->insert((*fd_to_user_map)[socketFd]);
-        cv_socket_haveRecvData_user_set.notify_one();
-        return;
+        auto user = fd_to_user_map->at(socketFd);
+        lock.unlock();
+        user->push_socket_recvData(std::move(recv_data));
+        if (user->is_socket_using() == true)
+        {
+            // auto user = fd_to_user_map->at(socketFd);
+            // lock.unlock();
+            // user->push_socket_recvData(std::move(recv_data));
+            std::lock_guard<std::mutex> lock1(mutex_socket_haveSendData_user_set);
+            socket_haveRecvData_user_set->insert(user);
+            cv_socket_haveRecvData_user_set.notify_one();
+            return;
+        }
+        else
+        {
+            // 如果这个用户的这个连接失效了，加入到容器中
+            lock.lock();
+            fd_to_user_map->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    // 用户不在线又在线？
+                    LOG_ERROR("%s:%s:%d // 用户有在线又不在线", __FILE__, __FUNCTION__, __LINE__);
+                    return;
+                }
+            }
+        }
     }
     else
     {
+        // 从这个套接字接收到了数据，但这个套接字的用户又下线了
+        lock.unlock();
+        // socket_unclaimed_recv_data->push_back(std::move(recv_data));
+        push_socket_unclaimed_recv_data(std::move(recv_data));
         return;
     }
 }
@@ -980,13 +1009,48 @@ void userManager::push_socket_haveRecvData_user_map(std::unique_ptr<std::unorder
     {
         if (fd_to_user_map->contains(pair.first) == true)
         {
-            (*fd_to_user_map)[pair.first]->push_socket_recvData(std::move(pair.second));
-            std::lock_guard<std::mutex> lock1(mutex_socket_haveRecvData_socket_set);
-            socket_haveRecvData_user_set->insert((*fd_to_user_map)[pair.first]);
-            continue;
+            auto user = fd_to_user_map->at(pair.first);
+            lock.unlock();
+            user->push_socket_recvData(std::move(pair.second));
+
+            if (user->is_socket_using() == true)
+            {
+                // auto user = fd_to_user_map->at(pair.first);
+                // lock.unlock();
+                // user->push_socket_recvData(std::move(pair.second));
+                // {
+                std::lock_guard<std::mutex> lock0(mutex_socket_haveRecvData_socket_set);
+                socket_haveRecvData_user_set->insert(user);
+                // }
+                lock.lock();
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                fd_to_user_map->erase(pair.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        continue;
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户有在线又不在线", __FILE__, __FUNCTION__, __LINE__);
+                        continue;
+                    }
+                }
+            }
         }
         else
         {
+            lock.unlock();
+            // socket_unclaimed_recv_data->push_back(std::move(pair.second));
+            push_socket_unclaimed_recv_data(std::move(pair.second));
+            lock.lock();
             continue;
         }
     }
@@ -998,14 +1062,42 @@ void userManager::push_socket_haveSendData_user_single(int socketFd, std::unique
     std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
     if (fd_to_user_map->contains(socketFd) == true)
     {
-        (*fd_to_user_map)[socketFd]->push_socket_sendData(std::move(send_data));
-        std::unique_lock<std::mutex> lock1(mutex_socket_haveSendData_user_set);
-        socket_haveSendData_user_set->insert((*fd_to_user_map)[socketFd]);
-        cv_socket_haveRecvData_user_set.notify_one();
-        return;
+        auto user = fd_to_user_map->at(socketFd);
+        lock.unlock();
+        user->push_socket_sendData(std::move(send_data));
+        if (user->is_socket_using() == true)
+        {
+
+            std::unique_lock<std::mutex> lock1(mutex_socket_haveSendData_user_set);
+            socket_haveSendData_user_set->insert(user);
+            cv_socket_haveRecvData_user_set.notify_one();
+            return;
+        }
+        else
+        {
+            lock.lock();
+            fd_to_user_map->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    return;
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户有在线又不在线", __FILE__, __FUNCTION__, __LINE__);
+                    return;
+                }
+            }
+        }
     }
     else
     {
+        // socket_unclaimed_send_data->push_back(std::move(send_data));
+        lock.unlock();
+        push_socket_unclaimed_send_data(std::move(send_data));
         return;
     }
 }
@@ -1016,13 +1108,48 @@ void userManager::push_socket_haveSendData_user_map(std::unique_ptr<std::unorder
     {
         if (fd_to_user_map->contains(pair.first) == true)
         {
-            (*fd_to_user_map)[pair.first]->push_socket_sendData(std::move(pair.second));
-            std::unique_lock<std::mutex> lock1(mutex_socket_haveSendData_user_set);
-            socket_haveSendData_user_set->insert((*fd_to_user_map)[pair.first]);
-            continue;
+            auto user = fd_to_user_map->at(pair.first);
+            lock.unlock();
+            user->push_socket_sendData(std::move(pair.second));
+            // lock.lock();
+            if (user->is_socket_using() == true)
+            {
+                // auto user = fd_to_user_map->at(pair.first);
+                // lock.unlock();
+                // user->push_socket_sendData(std::move(pair.second));
+                {
+                    std::unique_lock<std::mutex> lock1(mutex_socket_haveSendData_user_set);
+                    socket_haveSendData_user_set->insert(user);
+                }
+                lock.lock();
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                fd_to_user_map->erase(pair.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        continue;
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户有在线但不在线", __FILE__, __FUNCTION__, __LINE__);
+                        continue;
+                    }
+                }
+                // continue;
+            }
         }
         else
         {
+            lock.unlock();
+            push_socket_unclaimed_send_data(std::move(pair.second));
+            lock.lock();
             continue;
         }
     }
@@ -1031,48 +1158,167 @@ void userManager::push_socket_haveSendData_user_map(std::unique_ptr<std::unorder
 
 std::shared_ptr<User> userManager::pop_socket_haveRecvData_user_single()
 {
-    std::unique_lock<std::mutex> lock(mutex_socket_haveRecvData_user_set);
-    cv_socket_haveRecvData_user_set.wait(lock, [this]
-                                         { return !this->socket_haveRecvData_user_set->empty(); });
-    auto first_user = *socket_haveRecvData_user_set->begin();
-    socket_haveRecvData_user_set->erase(socket_haveRecvData_user_set->begin());
-    return first_user;
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_haveRecvData_user_set);
+        cv_socket_haveRecvData_user_set.wait(lock, [this]
+                                             { return !this->socket_haveRecvData_user_set->empty(); });
+        auto first_user = *socket_haveRecvData_user_set->begin();
+        socket_haveRecvData_user_set->erase(socket_haveRecvData_user_set->begin());
+        if (first_user->is_socket_using() == true)
+        {
+            return first_user;
+        }
+        else
+        {
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
+                fd_to_user_map->erase(first_user->get_socketFd());
+            }
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(first_user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(first_user->get_userId(), first_user);
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            // continue;
+        }
+    }
 }
+
 std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_haveRecvData_user_vec()
 {
-    std::unique_lock<std::mutex> lock(mutex_socket_haveRecvData_user_set);
-    cv_socket_haveRecvData_user_set.wait(lock, [this]
-                                         { return !this->socket_haveRecvData_user_set->empty(); });
-    auto res = std::make_unique<std::vector<std::shared_ptr<User>>>();
-    for (auto &user : *socket_haveRecvData_user_set)
+    while (true)
     {
-        res->emplace_back(user);
+        std::unique_lock<std::mutex> lock(mutex_socket_haveRecvData_user_set);
+        cv_socket_haveRecvData_user_set.wait(lock, [this]
+                                             { return !this->socket_haveRecvData_user_set->empty(); });
+        auto res = std::make_unique<std::vector<std::shared_ptr<User>>>();
+        for (auto &user : *socket_haveRecvData_user_set)
+        {
+            if (user->is_socket_using() == true)
+            {
+                res->emplace_back(user);
+                continue;
+            }
+            else
+            {
+                {
+                    std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
+                    fd_to_user_map->erase(user->get_socketFd());
+                }
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        continue;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
+        socket_haveRecvData_user_set->clear();
+        if (res->empty() == true)
+        {
+            continue;
+        }
+        else
+        {
+            return std::move(res);
+        }
     }
-    socket_haveRecvData_user_set->clear();
-    return std::move(res);
 }
 
 std::shared_ptr<User> userManager::pop_socket_haveSendData_user_single()
 {
-    std::unique_lock<std::mutex> lock(mutex_socket_haveSendData_user_set);
-    cv_socket_haveSendData_user_set.wait(lock, [this]
-                                         { return !this->socket_haveSendData_user_set->empty(); });
-    auto first_user = *socket_haveSendData_user_set->begin();
-    socket_haveSendData_user_set->erase(socket_haveSendData_user_set->begin());
-    return first_user;
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_haveSendData_user_set);
+        cv_socket_haveSendData_user_set.wait(lock, [this]
+                                             { return !this->socket_haveSendData_user_set->empty(); });
+        auto first_user = *socket_haveSendData_user_set->begin();
+        socket_haveSendData_user_set->erase(socket_haveSendData_user_set->begin());
+        if (first_user->is_socket_using() == true)
+        {
+            return first_user;
+        }
+        else
+        {
+            {
+                std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
+                fd_to_user_map->erase(first_user->get_socketFd());
+            }
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(first_user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(first_user->get_userId(), first_user);
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+        }
+    }
 }
 std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_haveSendData_user_vec()
 {
-    std::unique_lock<std::mutex> lock(mutex_socket_haveSendData_user_set);
-    cv_socket_haveSendData_user_set.wait(lock, [this]
-                                         { return !this->socket_haveSendData_user_set->empty(); });
-    auto res = std::make_unique<std::vector<std::shared_ptr<User>>>();
-    for (auto &user : *socket_haveSendData_user_set)
+    while (true)
     {
-        res->emplace_back(user);
+        std::unique_lock<std::mutex> lock(mutex_socket_haveSendData_user_set);
+        cv_socket_haveSendData_user_set.wait(lock, [this]
+                                             { return !this->socket_haveSendData_user_set->empty(); });
+        auto res = std::make_unique<std::vector<std::shared_ptr<User>>>();
+        for (auto &user : *socket_haveSendData_user_set)
+        {
+            if (user->is_socket_using() == true)
+            {
+                res->emplace_back(user);
+                continue;
+            }
+            else
+            {
+                {
+                    std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
+                    fd_to_user_map->erase(user->get_socketFd());
+                }
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        continue;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
+        socket_haveSendData_user_set->clear();
+        if (res->empty() == true)
+        {
+            continue;
+        }
+        else
+        {
+            return std::move(res);
+        }
     }
-    socket_haveSendData_user_set->clear();
-    return std::move(res);
 }
 
 void userManager::push_socket_haveRecvData_socket_single(int socketFd, std::unique_ptr<std::vector<uint8_t>> data)
@@ -1080,11 +1326,38 @@ void userManager::push_socket_haveRecvData_socket_single(int socketFd, std::uniq
     std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
     if (fd_to_user_map->contains(socketFd) == true)
     {
-        (*fd_to_user_map)[socketFd]->push_socket_recvData(std::move(data));
-        std::lock_guard<std::mutex> lock1(mutex_socket_haveRecvData_socket_set);
-        socket_haveRecvData_socket_set->insert(socketFd);
-        cv_socket_haveRecvData_socket_set.notify_one();
-        return;
+        auto user = fd_to_user_map->at(socketFd);
+        lock.unlock();
+        user->push_socket_recvData(std::move(data));
+        if (user->is_socket_using() == true)
+        {
+            // (*fd_to_user_map)[socketFd]->push_socket_recvData(std::move(data));
+            // lock.unlock();
+            std::lock_guard<std::mutex> lock1(mutex_socket_haveRecvData_socket_set);
+            socket_haveRecvData_socket_set->insert(socketFd);
+            cv_socket_haveRecvData_socket_set.notify_one();
+            return;
+        }
+        else
+        {
+            lock.lock();
+            fd_to_user_map->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    return;
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    return;
+                }
+            }
+            // fd_to_user_map->erase(socketFd);
+        }
     }
 }
 void userManager::push_socket_haveRecvData_socket_map(std::unique_ptr<std::unordered_map<int, std::unique_ptr<std::vector<uint8_t>>>> recv_data_map)
@@ -1094,13 +1367,47 @@ void userManager::push_socket_haveRecvData_socket_map(std::unique_ptr<std::unord
     {
         if (fd_to_user_map->contains(pair.first) == true)
         {
-            (*fd_to_user_map)[pair.first]->push_socket_recvData(std::move(pair.second));
-            std::lock_guard<std::mutex> lock1(mutex_socket_haveRecvData_socket_set);
-            socket_haveRecvData_socket_set->insert(pair.first);
-            continue;
+            auto user = fd_to_user_map->at(pair.first);
+            lock.unlock();
+            user->push_socket_recvData(std::move(pair.second));
+            if (user->is_socket_using() == true)
+            {
+                // (*fd_to_user_map)[pair.first]->push_socket_recvData(std::move(pair.second));
+                // lock.unlock();
+                {
+                    std::lock_guard<std::mutex> lock1(mutex_socket_haveRecvData_socket_set);
+                    socket_haveRecvData_socket_set->insert(pair.first);
+                }
+                lock.lock();
+                continue;
+            }
+            else
+            {
+                // fd_to_user_map->erase(pair.first);
+                lock.lock();
+                fd_to_user_map->erase(pair.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        continue;
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                        continue;
+                    }
+                }
+                // continue;
+            }
         }
         else
         {
+            lock.unlock();
+            push_socket_unclaimed_recv_data(std::move(pair.second));
+            lock.lock();
             continue;
         }
     }
@@ -1112,14 +1419,41 @@ void userManager::push_socket_haveSendData_socket_single(int socketFd, std::uniq
     std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
     if (fd_to_user_map->contains(socketFd) == true)
     {
-        (*fd_to_user_map)[socketFd]->push_socket_sendData(std::move(send_data));
-        std::lock_guard<std::mutex> lock1(mutex_socket_haveSendData_socket_set);
-        socket_haveSendData_socket_set->insert(socketFd);
-        cv_socket_haveSendData_socket_set.notify_one();
-        return;
+        auto user = fd_to_user_map->at(socketFd);
+        lock.unlock();
+        user->push_socket_sendData(std::move(send_data));
+        if (user->is_socket_using() == true)
+        {
+            // (*fd_to_user_map)[socketFd]->push_socket_sendData(std::move(send_data));
+            // lock.unlock();
+            std::lock_guard<std::mutex> lock1(mutex_socket_haveSendData_socket_set);
+            socket_haveSendData_socket_set->insert(socketFd);
+            cv_socket_haveSendData_socket_set.notify_one();
+            return;
+        }
+        else
+        {
+            lock.lock();
+            fd_to_user_map->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    return;
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    return;
+                }
+            }
+        }
     }
     else
     {
+        push_socket_unclaimed_send_data(std::move(send_data));
         return;
     }
 }
@@ -1130,13 +1464,43 @@ void userManager::push_socket_haveSendData_socket_map(std::unique_ptr<std::unord
     {
         if (fd_to_user_map->contains(pair.first) == true)
         {
-            (*fd_to_user_map)[pair.first]->push_socket_sendData(std::move(pair.second));
-            std::lock_guard<std::mutex> lock1(mutex_socket_haveSendData_socket_set);
-            socket_haveSendData_socket_set->insert(pair.first);
-            continue;
+            auto user = fd_to_user_map->at(pair.first);
+            lock.unlock();
+            user->push_socket_sendData(std::move(pair.second));
+            if (user->is_socket_using() == true)
+            {
+                // (*fd_to_user_map)[pair.first]->push_socket_sendData(std::move(pair.second));
+                // lock.unlock();
+                {
+                    std::lock_guard<std::mutex> lock1(mutex_socket_haveSendData_socket_set);
+                    socket_haveSendData_socket_set->insert(pair.first);
+                }
+                lock.lock();
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                fd_to_user_map->erase(pair.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        continue;
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                // continue;
+            }
         }
         else
         {
+            push_socket_unclaimed_send_data(std::move(pair.second));
             continue;
         }
     }
@@ -1166,7 +1530,28 @@ std::shared_ptr<User> userManager::pop_socket_haveRecvData_socket_single()
             auto it = fd_to_user_map->find(s);
             if (it != fd_to_user_map->end())
             {
-                return it->second; // 返回用户指针
+                auto user = it->second;
+                if (user->is_socket_using() == true)
+                {
+                    return user;
+                }
+                else
+                {
+                    fd_to_user_map->erase(it);
+                    lock.unlock();
+                    {
+                        std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                        if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                        {
+                            socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        }
+                        else
+                        {
+                            LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                        }
+                    }
+                    // continue;
+                }
             }
         }
 
@@ -1193,22 +1578,52 @@ std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_have
 
         // 尝试获取与每个套接字关联的用户
         {
-            std::unique_lock<std::mutex> lock1(mutex_fd_to_user_map);
+            std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
             for (auto &s : temp_sockets)
             {
                 auto it = fd_to_user_map->find(s);
+                // auto user = it->second;
                 if (it != fd_to_user_map->end())
                 {
-                    res->emplace_back(it->second);
+                    auto user = it->second;
+                    if (user->is_socket_using() == true)
+                    {
+                        res->emplace_back(it->second);
+                    }
+                    else
+                    {
+                        fd_to_user_map->erase(it);
+                        lock.unlock();
+                        {
+                            std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                            if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                            {
+                                socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                            }
+                            else
+                            {
+                                LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                            }
+                        }
+                        lock.lock();
+                    }
+                    // continue;
                 }
-                // 如果需要处理未找到用户的套接字，可以在这里添加逻辑
             }
+            // else
+            // {
+            // continue;
+            // }
+            // 如果需要处理未找到用户的套接字，可以在这里添加逻辑
         }
-
         // 如果找到了任何用户，则返回结果；否则继续等待新的套接字
         if (!res->empty())
         {
             return std::move(res);
+        }
+        else
+        {
+            continue;
         }
     }
 }
@@ -1228,11 +1643,32 @@ std::shared_ptr<User> userManager::pop_socket_haveSendData_socket_single()
 
         // 尝试获取与套接字关联的用户
         {
-            std::unique_lock<std::mutex> lock1(mutex_fd_to_user_map);
+            std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
             auto it = fd_to_user_map->find(s);
             if (it != fd_to_user_map->end())
             {
-                return it->second; // 返回用户指针
+                auto user = it->second;
+                if (user->is_socket_using() == true)
+                {
+                    return user; // 返回用户指针
+                }
+                else
+                {
+                    fd_to_user_map->erase(s);
+                    lock.unlock();
+                    {
+                        std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                        if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                        {
+                            socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                        }
+                        else
+                        {
+                            LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                        }
+                    }
+                    // continue;
+                }
             }
             // 如果没找到用户，则继续循环等待下一个套接字
         }
@@ -1257,13 +1693,35 @@ std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_have
 
         // 尝试获取与每个套接字关联的用户
         {
-            std::unique_lock<std::mutex> lock1(mutex_fd_to_user_map);
+            std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
             for (auto &s : temp_sockets)
             {
                 auto it = fd_to_user_map->find(s);
                 if (it != fd_to_user_map->end())
                 {
-                    res->emplace_back(it->second);
+                    auto user = it->second;
+                    if (user->is_socket_using() == true)
+                    {
+                        res->emplace_back(user);
+                    }
+                    else
+                    {
+                        fd_to_user_map->erase(s);
+                        lock.unlock();
+                        {
+                            std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                            if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                            {
+                                socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                            }
+                            else
+                            {
+                                LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                            }
+                        }
+                        lock.lock();
+                        continue;
+                    }
                 }
                 // 如果需要处理未找到用户的套接字，可以在这里添加逻辑
                 else
@@ -1286,11 +1744,40 @@ void userManager::push_socket_haveRecvData_loop_single(int socketFd, std::unique
     std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
     if (fd_to_user_map->find(socketFd) != fd_to_user_map->end())
     {
-        (*fd_to_user_map)[socketFd]->push_socket_recvData(std::move(data));
+        auto user = fd_to_user_map->at(socketFd);
+        lock.unlock();
+        user->push_socket_recvData(std::move(data));
+        // lock.unlock();
+        if (user->is_socket_using() == true)
+        {
+            // lock.unlock();
+            // user->push_socket_recvData(std::move(data));
+            return;
+        }
+        else
+        {
+            lock.lock();
+            fd_to_user_map->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+            return;
+        }
         // cv_fd_user_map.notify_one();
     }
     else
     {
+        lock.unlock();
+        push_socket_unclaimed_recv_data(std::move(data));
         return;
     }
 }
@@ -1301,10 +1788,41 @@ void userManager::push_socket_haveRecvData_loop_map(std::unique_ptr<std::unorder
     {
         if (fd_to_user_map->find(it.first) != fd_to_user_map->end())
         {
-            (*fd_to_user_map)[it.first]->push_socket_recvData(std::move(it.second));
+            auto user = fd_to_user_map->at(it.first);
+            lock.unlock();
+            user->push_socket_recvData(std::move(it.second));
+            if (user->is_socket_using() == true)
+            {
+                // (*fd_to_user_map)[it.first]->push_socket_recvData(std::move(it.second));
+                lock.lock();
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                fd_to_user_map->erase(it.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                lock.lock();
+
+                continue;
+            }
         }
         else
         {
+            lock.unlock();
+            push_socket_unclaimed_recv_data(std::move(it.second));
+            lock.lock();
             continue;
         }
     }
@@ -1315,11 +1833,37 @@ void userManager::push_socket_haveSendData_loop_single(int socketFd, std::unique
     std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
     if (fd_to_user_map->find(socketFd) != fd_to_user_map->end())
     {
-        (*fd_to_user_map)[socketFd]->push_socket_sendData(std::move(data));
+        auto user = fd_to_user_map->at(socketFd);
+        lock.unlock();
+        user->push_socket_sendData(std::move(data));
+        if (user->is_socket_using() == true)
+        {
+            // (*fd_to_user_map)[socketFd]->push_socket_sendData(std::move(data));
+        }
+        else
+        {
+            lock.lock();
+            fd_to_user_map->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+            // return;
+        }
         // cv_fd_user_map.notify_one();
     }
     else
     {
+        lock.unlock();
+        push_socket_unclaimed_send_data(std::move(data));
         return;
     }
 }
@@ -1330,10 +1874,40 @@ void userManager::push_socket_haveSendData_loop_map(std::unique_ptr<std::unorder
     {
         if (fd_to_user_map->find(it.first) != fd_to_user_map->end())
         {
-            (*fd_to_user_map)[it.first]->push_socket_sendData(std::move(it.second));
+            auto user = fd_to_user_map->at(it.first);
+            lock.unlock();
+            user->push_socket_sendData(std::move(it.second));
+            if (user->is_socket_using() == true)
+            {
+                // (*fd_to_user_map)[it.first]->push_socket_sendData(std::move(it.second));
+                lock.lock();
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                fd_to_user_map->erase(it.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                lock.lock();
+                continue;
+            }
         }
         else
         {
+            lock.unlock();
+            push_socket_unclaimed_send_data(std::move(it.second));
+            lock.lock();
             continue;
         }
     }
@@ -1346,12 +1920,36 @@ std::shared_ptr<User> userManager::pop_socket_haveRecvData_loop_single()
         std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
         for (auto &pair : *fd_to_user_map)
         {
+            lock.unlock();
             if (!pair.second->is_socket_recvData_empty())
             {
-                return pair.second;
+                if (pair.second->is_socket_using() == true)
+                {
+                    return pair.second;
+                }
+                else
+                {
+                    lock.lock();
+                    fd_to_user_map->erase(pair.first);
+                    lock.unlock();
+                    {
+                        std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                        if (socket_userId_to_offlineUser_map->contains(pair.second->get_userId()) == false)
+                        {
+                            socket_userId_to_offlineUser_map->emplace(pair.second->get_userId(), pair.second);
+                        }
+                        else
+                        {
+                            LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                        }
+                    }
+                    lock.lock();
+                    continue;
+                }
             }
             else
             {
+                lock.lock();
                 continue;
             }
         }
@@ -1366,12 +1964,36 @@ std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_have
         std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
         for (auto &pair : *fd_to_user_map)
         {
+            lock.unlock();
             if (!pair.second->is_socket_recvData_empty())
             {
-                res->emplace_back(pair.second);
+                if (pair.second->is_socket_using() == true)
+                {
+                    res->emplace_back(pair.second);
+                }
+                else
+                {
+                    lock.lock();
+                    fd_to_user_map->erase(pair.first);
+                    lock.unlock();
+                    {
+                        std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                        if (socket_userId_to_offlineUser_map->contains(pair.second->get_userId()) == false)
+                        {
+                            socket_userId_to_offlineUser_map->emplace(pair.second->get_userId(), pair.second);
+                        }
+                        else
+                        {
+                            LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                        }
+                    }
+                    lock.lock();
+                    continue;
+                }
             }
             else
             {
+                lock.lock();
                 continue;
             }
         }
@@ -1392,12 +2014,36 @@ std::shared_ptr<User> userManager::pop_socket_haveSendData_loop_single()
         std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
         for (auto &pair : *fd_to_user_map)
         {
+            lock.unlock();
             if (!pair.second->is_socket_sendData_empty())
             {
-                return pair.second;
+                if (pair.second->is_socket_using() == true)
+                {
+                    return pair.second;
+                }
+                else
+                {
+                    lock.lock();
+                    fd_to_user_map->erase(pair.first);
+                    lock.unlock();
+                    {
+                        std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                        if (socket_userId_to_offlineUser_map->contains(pair.second->get_userId()) == false)
+                        {
+                            socket_userId_to_offlineUser_map->emplace(pair.second->get_userId(), pair.second);
+                        }
+                        else
+                        {
+                            LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                        }
+                    }
+                    lock.lock();
+                    continue;
+                }
             }
             else
             {
+                lock.lock();
                 continue;
             }
         }
@@ -1412,12 +2058,36 @@ std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_have
         std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
         for (auto &pair : *fd_to_user_map)
         {
+            lock.unlock();
             if (!pair.second->is_socket_sendData_empty())
             {
-                res->emplace_back(pair.second);
+                if (pair.second->is_socket_using() == true)
+                {
+                    res->emplace_back(pair.second);
+                }
+                else
+                {
+                    lock.lock();
+                    fd_to_user_map->erase(pair.first);
+                    lock.unlock();
+                    {
+                        std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                        if (socket_userId_to_offlineUser_map->contains(pair.second->get_userId()) == false)
+                        {
+                            socket_userId_to_offlineUser_map->emplace(pair.second->get_userId(), pair.second);
+                        }
+                        else
+                        {
+                            LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                        }
+                    }
+                    lock.lock();
+                    continue;
+                }
             }
             else
             {
+                lock.lock();
                 continue;
             }
         }
@@ -1430,4 +2100,733 @@ std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_have
             continue;
         }
     }
+}
+
+void userManager::push_socket_is_haveRecvData_map_map_single(int socketFd, std::unique_ptr<std::vector<uint8_t>> data)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_is_haveRecvData_map);
+    if ((*socket_is_haveRecvData_map_map)[false]->find(socketFd) != (*socket_is_haveRecvData_map_map)[false]->end())
+    {
+        auto user = (*socket_is_haveRecvData_map_map)[false]->at(socketFd);
+        lock.unlock();
+        user->push_socket_recvData(std::move(data));
+        lock.lock();
+
+        if (user->is_socket_using() == true)
+        {
+            (*socket_is_haveRecvData_map_map)[true]->insert_or_assign(socketFd, user);
+            (*socket_is_haveRecvData_map_map)[false]->erase(socketFd);
+            cv_socket_is_haveRecvData_map.notify_one();
+            return;
+        }
+        else
+        {
+            (*socket_is_haveRecvData_map_map)[false]->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+            return;
+        }
+    }
+    else if ((*socket_is_haveRecvData_map_map)[true]->find(socketFd) != (*socket_is_haveRecvData_map_map)[true]->end())
+    {
+        auto user = (*socket_is_haveRecvData_map_map)[true]->at(socketFd);
+        lock.unlock();
+        user->push_socket_recvData(std::move(data));
+        lock.lock();
+        if (user->is_socket_using() == true)
+        {
+            // (*socket_is_haveRecvData_map_map)[true]->at(socketFd)->push_socket_recvData(std::move(data));
+            cv_socket_is_haveRecvData_map.notify_one();
+            return;
+        }
+        else
+        {
+            (*socket_is_haveRecvData_map_map)[true]->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+            return;
+        }
+    }
+    else
+    {
+        // 找不到套接字对应的用户
+        lock.unlock();
+        push_socket_unclaimed_recv_data(std::move(data));
+        return;
+    }
+}
+void userManager::push_socket_is_haveRecvData_map_map_map(std::unique_ptr<std::unordered_map<int, std::unique_ptr<std::vector<uint8_t>>>> recv_data_map)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_is_haveRecvData_map);
+    for (auto &it : *recv_data_map)
+    {
+        if ((*socket_is_haveRecvData_map_map)[false]->find(it.first) != (*socket_is_haveRecvData_map_map)[false]->end())
+        {
+            auto user = (*socket_is_haveRecvData_map_map)[false]->at(it.first);
+            lock.unlock();
+            user->push_socket_recvData(std::move(it.second));
+            lock.lock();
+            if (user->is_socket_using() == true)
+            {
+                // auto user = (*socket_is_haveRecvData_map_map)[false]->at(it.first);
+                // user->push_socket_recvData(std::move(it.second));
+                (*socket_is_haveRecvData_map_map)[true]->insert_or_assign(it.first, user);
+                (*socket_is_haveRecvData_map_map)[false]->erase(it.first);
+                continue;
+            }
+            else
+            {
+                (*socket_is_haveRecvData_map_map)[false]->erase(it.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                continue;
+            }
+        }
+        else if ((*socket_is_haveRecvData_map_map)[true]->find(it.first) != (*socket_is_haveRecvData_map_map)[true]->end())
+        {
+            auto user = (*socket_is_haveRecvData_map_map)[true]->at(it.first);
+            lock.unlock();
+            user->push_socket_recvData(std::move(it.second));
+            if (user->is_socket_using() == true)
+            {
+                // (*socket_is_haveRecvData_map_map)[true]->at(it.first)->push_socket_recvData(std::move(it.second));
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                (*socket_is_haveRecvData_map_map)[true]->erase(it.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                continue;
+            }
+        }
+        else
+        {
+            // 找不到套接字对应的用户
+            lock.unlock();
+            push_socket_unclaimed_recv_data(std::move(it.second));
+            lock.lock();
+            continue;
+        }
+    }
+    cv_socket_is_haveRecvData_map.notify_one();
+}
+void userManager::push_socket_is_haveSendData_map_map_single(int socketFd, std::unique_ptr<std::vector<uint8_t>> data)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_is_haveSendData_map);
+    if ((*socket_is_haveSendData_map_map)[false]->find(socketFd) != (*socket_is_haveSendData_map_map)[false]->end())
+    {
+        auto user = (*socket_is_haveSendData_map_map)[false]->at(socketFd);
+        lock.unlock();
+        user->push_socket_sendData(std::move(data));
+        lock.lock();
+        if (user->is_socket_using() == true)
+        {
+            // auto user = (*socket_is_haveSendData_map_map)[false]->at(socketFd);
+            // user->push_socket_sendData(std::move(data));
+            (*socket_is_haveSendData_map_map)[true]->insert_or_assign(socketFd, user);
+            (*socket_is_haveSendData_map_map)[false]->erase(socketFd);
+            cv_socket_is_haveSendData_map.notify_one();
+            return;
+        }
+        else
+        {
+            (*socket_is_haveSendData_map_map)[false]->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+            return;
+        }
+    }
+    else if ((*socket_is_haveSendData_map_map)[true]->find(socketFd) != (*socket_is_haveSendData_map_map)[true]->end())
+    {
+        auto user = (*socket_is_haveSendData_map_map)[true]->at(socketFd);
+        lock.unlock();
+        user->push_socket_sendData(std::move(data));
+        if (user->is_socket_using() == true)
+        {
+            // (*socket_is_haveSendData_map_map)[true]->at(socketFd)->push_socket_sendData(std::move(data));
+            cv_socket_is_haveSendData_map.notify_one();
+            return;
+        }
+        else
+        {
+            lock.lock();
+            (*socket_is_haveSendData_map_map)[true]->erase(socketFd);
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+            return;
+        }
+    }
+    else
+    {
+        // 找不到套接字对应的用户
+        lock.unlock();
+        push_socket_unclaimed_send_data(std::move(data));
+        return;
+    }
+}
+void userManager::push_socket_is_haveSendData_map_map_map(std::unique_ptr<std::unordered_map<int, std::unique_ptr<std::vector<uint8_t>>>> send_data_map)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_is_haveSendData_map);
+    for (auto &it : *send_data_map)
+    {
+        if ((*socket_is_haveSendData_map_map)[false]->find(it.first) != (*socket_is_haveSendData_map_map)[false]->end())
+        {
+            auto user = (*socket_is_haveSendData_map_map)[false]->at(it.first);
+            lock.unlock();
+            user->push_socket_sendData(std::move(it.second));
+            if (user->is_socket_using() == true)
+            {
+                // auto user = (*socket_is_haveSendData_map_map)[false]->at(it.first);
+                // user->push_socket_sendData(std::move(it.second));
+                lock.lock();
+                (*socket_is_haveSendData_map_map)[true]->insert_or_assign(it.first, user);
+                (*socket_is_haveSendData_map_map)[false]->erase(it.first);
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                (*socket_is_haveSendData_map_map)[false]->erase(it.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                continue;
+            }
+        }
+        else if ((*socket_is_haveSendData_map_map)[true]->find(it.first) != (*socket_is_haveSendData_map_map)[true]->end())
+        {
+            auto user = (*socket_is_haveSendData_map_map)[true]->at(it.first);
+            lock.unlock();
+            user->push_socket_sendData(std::move(it.second));
+            if (user->is_socket_using() == true)
+            {
+                // (*socket_is_haveSendData_map_map)[true]->at(it.first)->push_socket_sendData(std::move(it.second));
+                continue;
+            }
+            else
+            {
+                lock.lock();
+                (*socket_is_haveSendData_map_map)[true]->erase(it.first);
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                continue;
+            }
+        }
+        else
+        {
+            // 找不到套接字对应的用户
+            lock.unlock();
+            push_socket_unclaimed_send_data(std::move(it.second));
+            lock.lock();
+            continue;
+        }
+    }
+    cv_socket_is_haveSendData_map.notify_one();
+}
+std::shared_ptr<User> userManager::pop_socket_is_haveRecvData_map_map_single()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_is_haveRecvData_map);
+        cv_socket_is_haveRecvData_map.wait(lock, [&]()
+                                           { return !(*socket_is_haveRecvData_map_map)[true]->empty(); });
+        auto user = (*socket_is_haveRecvData_map_map)[true]->begin()->second;
+        (*socket_is_haveRecvData_map_map)[true]->erase((*socket_is_haveRecvData_map_map)[true]->begin());
+        if (user->is_socket_using() == true)
+        {
+            (*socket_is_haveRecvData_map_map)[false]->insert_or_assign(user->get_socketFd(), user);
+            return user;
+        }
+        else
+        {
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+        }
+    }
+}
+std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_is_haveRecvData_map_map_vec()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_is_haveRecvData_map);
+        cv_socket_is_haveRecvData_map.wait(lock, [&]()
+                                           { return !(*socket_is_haveRecvData_map_map)[true]->empty(); });
+        std::unique_ptr<std::vector<std::shared_ptr<User>>> user_vec = std::make_unique<std::vector<std::shared_ptr<User>>>();
+        for (auto &it : *(*socket_is_haveRecvData_map_map)[true])
+        {
+            auto user = it.second;
+            (*socket_is_haveRecvData_map_map)[true]->erase(it.first);
+            if (it.second->is_socket_using() == true)
+            {
+                user_vec->push_back(it.second);
+                (*socket_is_haveRecvData_map_map)[false]->insert_or_assign(it.first, it.second);
+                continue;
+            }
+            else
+            {
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                lock.lock();
+                continue;
+            }
+        }
+        (*socket_is_haveRecvData_map_map)[true]->clear();
+        if (user_vec->empty() == true)
+        {
+            continue;
+        }
+        else
+        {
+            return std::move(user_vec);
+        }
+    }
+}
+std::shared_ptr<User> userManager::pop_socket_is_haveSendData_map_map_single()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_is_haveSendData_map);
+        cv_socket_is_haveSendData_map.wait(lock, [&]()
+                                           { return !(*socket_is_haveSendData_map_map)[true]->empty(); });
+        auto user = (*socket_is_haveSendData_map_map)[true]->begin()->second;
+        (*socket_is_haveSendData_map_map)[true]->erase((*socket_is_haveSendData_map_map)[true]->begin());
+        if (user->is_socket_using() == true)
+        {
+            (*socket_is_haveSendData_map_map)[false]->insert_or_assign(user->get_socketFd(), user);
+            return user;
+        }
+        else
+        {
+            lock.unlock();
+            {
+                std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                {
+                    socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                }
+                else
+                {
+                    LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                }
+            }
+            continue;
+        }
+    }
+}
+std::unique_ptr<std::vector<std::shared_ptr<User>>> userManager::pop_socket_is_haveSendData_map_map_vec()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_is_haveSendData_map);
+        cv_socket_is_haveSendData_map.wait(lock, [&]()
+                                           { return !(*socket_is_haveSendData_map_map)[true]->empty(); });
+        std::unique_ptr<std::vector<std::shared_ptr<User>>> user_vec = std::make_unique<std::vector<std::shared_ptr<User>>>();
+        for (auto &it : *(*socket_is_haveSendData_map_map)[true])
+        {
+            auto user = it.second;
+            (*socket_is_haveSendData_map_map)[true]->erase(it.first);
+
+            if (it.second->is_socket_using() == true)
+            {
+                (*socket_is_haveSendData_map_map)[false]->insert_or_assign(it.first, it.second);
+                user_vec->push_back(it.second);
+                continue;
+            }
+            else
+            {
+                lock.unlock();
+                {
+                    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+                    if (socket_userId_to_offlineUser_map->contains(user->get_userId()) == false)
+                    {
+                        socket_userId_to_offlineUser_map->emplace(user->get_userId(), user);
+                    }
+                    else
+                    {
+                        LOG_ERROR("%s:%s:%d // 用户既上线有没有上线", __FILE__, __FUNCTION__, __LINE__);
+                    }
+                }
+                continue;
+            }
+        }
+        (*socket_is_haveSendData_map_map)[true]->clear();
+        if (user_vec->empty() == true)
+        {
+            continue;
+        }
+        else
+        {
+            return std::move(user_vec);
+        }
+    }
+}
+
+void userManager::add_user(std::shared_ptr<User> user)
+{
+    {
+        std::unique_lock<std::mutex> lock(mutex_users);
+        // users->insert(user);
+        users->push_back(user);
+    }
+    {
+        if (user->is_socket_using() == true)
+        {
+            // add_user_to_socket_fdUser_Map(user);
+            // add_user_to_socket_userTimeOut_set(user);
+            // if (USERMANAGER_SOCKET_ISBOOLMAP_USING == true)
+            // {
+            // add_user_to_socket_ishaveData_user_map(user);
+            // }
+            auto old_user = pop_socket_recvData_from_offlineUser_map(user->get_userId());
+            if (old_user == nullptr)
+            {
+            }
+            else
+            {
+                user->push_socket_recvData(std::move(old_user->pop_socket_recvData()));
+                user->push_socket_sendData(std::move(old_user->pop_socket_recvData()));
+            }
+            add_user_to_socket_fdUser_Map(user);
+            add_user_to_socket_userTimeOut_set(user);
+            if (USERMANAGER_SOCKET_ISBOOLMAP_USING == true)
+            {
+                add_user_to_socket_ishaveData_user_map(user);
+            }
+        }
+        if (user->is_redisStream_using() == true)
+        {
+        }
+    }
+    add_user_to_userIdToUser_map(user);
+}
+
+void userManager::add_user_to_socket_fdUser_Map(std::shared_ptr<User> user)
+{
+    std::unique_lock<std::mutex> lock(mutex_fd_to_user_map);
+    fd_to_user_map->insert_or_assign(user->get_socketFd(), user);
+}
+
+void userManager::add_user_to_socket_userTimeOut_set(std::shared_ptr<User> user)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_users_isTimeOut_set);
+    socket_users_isTimeOut_set->insert(user);
+}
+
+void userManager::add_user_to_socket_ishaveData_user_map(std::shared_ptr<User> user)
+{
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_is_haveRecvData_map);
+        (*socket_is_haveRecvData_map_map)[false]->insert_or_assign(user->get_socketFd(), user);
+    }
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_is_haveSendData_map);
+        (*socket_is_haveSendData_map_map)[false]->insert_or_assign(user->get_socketFd(), user);
+    }
+}
+
+void userManager::del_user(const std::string &userid, UserConnectionType type)
+{
+
+    std::unique_lock<std::mutex> lock(mutex_userId_to_user_map);
+    if (userId_to_user_map->find(userid) != userId_to_user_map->end())
+    {
+        if (type == UserConnectionType::ALL)
+        {
+            userId_to_user_map->at(userid)->set_socket_using(false);
+            userId_to_user_map->at(userid)->set_redisStream_using(false);
+        }
+        else if (type == UserConnectionType::SOCKET)
+        {
+            userId_to_user_map->at(userid)->set_socket_using(false);
+        }
+        else if (type == UserConnectionType::REDIS_STREAM)
+        {
+            userId_to_user_map->at(userid)->set_redisStream_using(false);
+        }
+    }
+    else
+    {
+        // 没找到用户
+        return;
+    }
+}
+
+void userManager::add_user_to_userIdToUser_map(std::shared_ptr<User> user)
+{
+    std::unique_lock<std::mutex> lock(mutex_userId_to_user_map);
+    userId_to_user_map->insert_or_assign(user->get_userId(), user);
+}
+
+void userManager::add_user_to_userIdToOfflineUser_map(std::shared_ptr<User> user)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+    socket_userId_to_offlineUser_map->insert_or_assign(user->get_userId(), user);
+}
+
+void userManager::push_socket_recvData_to_offlineUser_map(const std::string &userid, std::unique_ptr<std::vector<uint8_t>> data)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+    if (socket_userId_to_offlineUser_map->find(userid) != socket_userId_to_offlineUser_map->end())
+    {
+        socket_userId_to_offlineUser_map->at(userid)->push_socket_recvData(std::move(data));
+        return;
+    }
+    else
+    {
+        std::shared_ptr<User> user = std::make_shared<User>();
+        user->set_userId(userid);
+        user->push_socket_recvData(std::move(data));
+        add_user_to_userIdToOfflineUser_map(user);
+    }
+}
+
+void userManager::push_socket_sendData_to_offlineUser_map(const std::string &userid, std::unique_ptr<std::vector<uint8_t>> data)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+    if (socket_userId_to_offlineUser_map->find(userid) != socket_userId_to_offlineUser_map->end())
+    {
+        socket_userId_to_offlineUser_map->at(userid)->push_socket_sendData(std::move(data));
+        return;
+    }
+    else
+    {
+        std::shared_ptr<User> user = std::make_shared<User>();
+        user->set_userId(userid);
+        user->push_socket_sendData(std::move(data));
+        add_user_to_userIdToOfflineUser_map(user);
+    }
+}
+
+std::shared_ptr<User> userManager::pop_socket_recvData_from_offlineUser_map(const std::string &userid)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+    if (socket_userId_to_offlineUser_map->find(userid) != socket_userId_to_offlineUser_map->end())
+    {
+        std::shared_ptr<User> user = socket_userId_to_offlineUser_map->at(userid);
+        return user;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+std::shared_ptr<User> userManager::pop_socket_sendData_from_offlineUser_map(const std::string &userid)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_userId_to_offlineUser_map);
+    if (socket_userId_to_offlineUser_map->find(userid) != socket_userId_to_offlineUser_map->end())
+    {
+        std::shared_ptr<User> user = socket_userId_to_offlineUser_map->at(userid);
+        return user;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+void userManager::push_socket_unclaimed_recv_data(std::unique_ptr<std::vector<uint8_t>> data)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_unclaimed_recv_data);
+    socket_unclaimed_recv_data->push_back(std::move(data));
+    cv_socket_unclaimed_recv_data.notify_one();
+}
+
+void userManager::push_socket_unclaimed_send_data(std::unique_ptr<std::vector<uint8_t>> data)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_unclaimed_send_data);
+    socket_unclaimed_send_data->push_back(std::move(data));
+    cv_socket_unclaimed_recv_data.notify_one();
+}
+
+std::unique_ptr<std::vector<uint8_t>> userManager::pop_socket_unclaimed_recv_data()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_unclaimed_recv_data);
+        cv_socket_unclaimed_recv_data.wait(lock, [this]
+                                           { return !socket_unclaimed_recv_data->empty(); });
+        auto data = std::move(socket_unclaimed_recv_data->back());
+        socket_unclaimed_recv_data->pop_back();
+        if (data->empty() == true)
+        {
+            continue;
+        }
+        else
+        {
+            return data;
+        }
+    }
+}
+
+std::unique_ptr<std::vector<uint8_t>> userManager::pop_socket_unclaimed_send_data()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_unclaimed_send_data);
+        cv_socket_unclaimed_recv_data.wait(lock, [this]
+                                           { return !socket_unclaimed_send_data->empty(); });
+        auto data = std::move(socket_unclaimed_send_data->back());
+        socket_unclaimed_send_data->pop_back();
+        if (data->empty() == true)
+        {
+            continue;
+        }
+        else
+        {
+            return data;
+        }
+    }
+}
+
+void userManager::socket_update_user_interactionTime(const std::string &userid)
+{
+    std::unique_lock<std::mutex> lock(mutex_socket_users_isTimeOut_set);
+    auto it = std::find_if(socket_users_isTimeOut_set->begin(), socket_users_isTimeOut_set->end(), [&userid](std::shared_ptr<User> &user)
+                           { return user->get_userId() == userid; });
+    if (it != socket_users_isTimeOut_set->end())
+    {
+        auto user = *it;
+        socket_users_isTimeOut_set->erase(it);
+        user->update_socket_interactionTime();
+        socket_users_isTimeOut_set->insert(user);
+    }
+    else
+    {
+        return;
+    }
+}
+
+std::shared_ptr<User> userManager::pop_socket_timeOut_user()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(mutex_socket_users_isTimeOut_set);
+        if (socket_users_isTimeOut_set->empty() == false)
+        {
+            auto user = *socket_users_isTimeOut_set->begin();
+            if (user->is_socket_timeOut() == true)
+            {
+                return user;
+            }
+            else
+            {
+                lock.unlock();
+                std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_USERCONNECTION_SOCKET_MILLISECOND / 4));
+                continue;
+            }
+        }
+        else
+        {
+            LOG_ERROR("%s:%s:%d // timeout集合中没有用户", __FILE__, __FUNCTION__, __LINE__);
+            return std::make_shared<User>();
+        }
+    }
+}
+
+userManager& userManager::get_instance()
+{
+    static userManager instance;
+    return instance;
 }

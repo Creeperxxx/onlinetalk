@@ -13,6 +13,7 @@
 #include <string.h>
 #include <queue>
 #include <future>
+#include <algorithm>
 // #include "../requirement/moodycamel/concurrentqueue.h"
 
 //升级为单例模式吧，不然策略类访问不到socketmanager。也不能采用依赖注入。
@@ -29,11 +30,25 @@
 //就用针对每一个通信类搞一个usermanager？然后datamanager又要提供一个总的方法来管理数据，那么成员属性就要有各种usermanager。可是这样处理用户登录和用户的消息时，
 //应该选择哪个usermanager呢？好烦人，想了这些问题想了老半天了，我是真不喜欢软件架构啊。目前打算不管扩展和开闭原则了。
 
+
+
+inline const bool USERMANAGER_SOCKET_ISBOOLMAP_USING = false;
+
+enum class UserConnectionType
+{
+    SOCKET,
+    REDIS_STREAM,
+    ALL,
+};
+
 class userManager
 {
 private:
     std::unique_ptr<std::vector<std::shared_ptr<User>>> users;
     std::mutex mutex_users;
+
+    std::unique_ptr<std::unordered_map<std::string,std::shared_ptr<User>>> userId_to_user_map;
+    std::mutex mutex_userId_to_user_map;
     
     //以下的这些都是保存不同的指针，但指向同一个对象
     std::unique_ptr<std::unordered_map<int,std::shared_ptr<User>>> fd_to_user_map;
@@ -42,11 +57,11 @@ private:
     std::unique_ptr<std::unordered_map<std::string,std::shared_ptr<User>>> userStream_to_user_map;
     std::mutex mutex_userStream_user_map;
     
-    std::unique_ptr<std::multiset<std::shared_ptr<User>,compareUserSocketInteractionTimeASC>> socket_users_set;
-    std::mutex mutex_socket_users_set;
+    std::unique_ptr<std::multiset<std::shared_ptr<User>,compareUserSocketInteractionTimeASC>> socket_users_isTimeOut_set;
+    std::mutex mutex_socket_users_isTimeOut_set;
     
-    std::unique_ptr<std::multiset<std::shared_ptr<User>,compareUserRedisStreamInteractionTimeASC>> socket_users_set_desc;
-    std::mutex mutex_socket_users_set;
+    std::unique_ptr<std::multiset<std::shared_ptr<User>,compareUserRedisStreamInteractionTimeASC>> redisStream_users_isTimeOut_set;
+    std::mutex mutex_redisStream_users_isTimeOut_set;
 
     //关于socket通信方法的用户收发数据相关的容器
     //1.如果一个用户有recv的数据，那么将这个用户入队。send同理。这里是记录有数据用户的shared_ptr<User>
@@ -105,9 +120,11 @@ private:
     // std::unique_ptr<std::unordered_map<bool,std::unique_ptr<std::vector<std::shared_ptr<User>>>>> socket_is_haveRecvData_map;
     std::unique_ptr<std::unordered_map<bool,std::unique_ptr<std::unordered_map<int,std::shared_ptr<User>>>>> socket_is_haveRecvData_map_map;
     std::mutex mutex_socket_is_haveRecvData_map;
+    std::condition_variable cv_socket_is_haveRecvData_map;
     // std::unique_ptr<std::unordered_map<bool,std::unique_ptr<std::vector<std::shared_ptr<User>>>>> socket_is_haveSendData_map;
     std::unique_ptr<std::unordered_map<bool,std::unique_ptr<std::unordered_map<int,std::shared_ptr<User>>>>> socket_is_haveSendData_map_map;
     std::mutex mutex_socket_is_haveSendData_map;
+    std::condition_variable cv_socket_is_haveSendData_map;
 
 public:
     void push_socket_is_haveRecvData_map_map_single(int socketFd,std::unique_ptr<std::vector<uint8_t>> data);
@@ -119,28 +136,77 @@ public:
     std::shared_ptr<User> pop_socket_is_haveSendData_map_map_single();
     std::unique_ptr<std::vector<std::shared_ptr<User>>> pop_socket_is_haveSendData_map_map_vec();
 
-    //5. 优先队列
+    //5. 优先队列。
+    //好像用不了啊，怎么从优先队列中找到特定元素并出队呢？好像无法解决
+// private:
+//     std::unique_ptr<std::priority_queue<std::shared_ptr<User>,std::vector<std::shared_ptr<User>>,compareUserSocketIsRecvDataEmpty>> socket_is_haveRecvData_priorityqueue;
+//     std::mutex mutex_socket_is_haveRecvData_priorityqueue;
+//     std::unique_ptr<std::priority_queue<std::shared_ptr<User>,std::vector<std::shared_ptr<User>>,compareUserSocketIsSendDataEmpty>> socket_is_haveSendData_priorityqueue;
+//     std::mutex mutex_socket_is_haveSendData_priorityqueue;
+// public:
+//     void push_socket_is_haveRecvData_priorityqueue_single(int socketFd,std::unique_ptr<std::vector<uint8_t>> data);
+//     void push_socket_is_haveRecvData_priorityqueue_map(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> recv_data_map);
+//     void push_socket_is_haveSendData_priorityqueue_single(int socketFd,std::unique_ptr<std::vector<uint8_t>> data);
+//     void push_socket_is_haveSendData_priorityqueue_map(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> send_data_map);
+//     std::shared_ptr<User> pop_socket_is_haveRecvData_priorityqueue_single();
+//     std::unique_ptr<std::vector<std::shared_ptr<User>>> pop_socket_is_haveRecvData_priorityqueue_vec();
+//     std::shared_ptr<User> pop_socket_is_haveSendData_priorityqueue_single();
+//     std::unique_ptr<std::vector<std::shared_ptr<User>>> pop_socket_is_haveSendData_priorityqueue_vec();
+
+    //userid到离线user的映射
 private:
-    std::unique_ptr<std::priority_queue<std::shared_ptr<User>,std::vector<std::shared_ptr<User>>,compareUserSocketIsRecvDataEmpty>> socket_is_haveRecvData_priorityqueue;
-    std::mutex mutex_socket_is_haveRecvData_priorityqueue;
-    std::unique_ptr<std::priority_queue<std::shared_ptr<User>,std::vector<std::shared_ptr<User>>,compareUserSocketIsSendDataEmpty>> socket_is_haveSendData_priorityqueue;
-    std::mutex mutex_socket_is_haveSendData_priorityqueue;
+    std::unique_ptr<std::unordered_map<std::string,std::shared_ptr<User>>> socket_userId_to_offlineUser_map;
+    std::mutex mutex_socket_userId_to_offlineUser_map;
 public:
-    void push_socket_is_haveRecvData_priorityqueue_single(int socketFd,std::unique_ptr<std::vector<uint8_t>> data);
-    void push_socket_is_haveRecvData_priorityqueue_map(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> recv_data_map);
-    void push_socket_is_haveSendData_priorityqueue_single(int socketFd,std::unique_ptr<std::vector<uint8_t>> data);
-    void push_socket_is_haveSendData_priorityqueue_map(std::unique_ptr<std::unordered_map<int,std::unique_ptr<std::vector<uint8_t>>>> send_data_map);
-    std::shared_ptr<User> pop_socket_is_haveRecvData_priorityqueue_single();
-    std::unique_ptr<std::vector<std::shared_ptr<User>>> pop_socket_is_haveRecvData_priorityqueue_vec();
-    std::shared_ptr<User> pop_socket_is_haveSendData_priorityqueue_single();
-    std::unique_ptr<std::vector<std::shared_ptr<User>>> pop_socket_is_haveSendData_priorityqueue_vec();
+    void push_socket_recvData_to_offlineUser_map(const std::string& userid,std::unique_ptr<std::vector<uint8_t>> data);
+    void push_socket_sendData_to_offlineUser_map(const std::string& userid,std::unique_ptr<std::vector<uint8_t>> data);
+    std::shared_ptr<User> pop_socket_recvData_from_offlineUser_map(const std::string& userid);
+    std::shared_ptr<User> pop_socket_sendData_from_offlineUser_map(const std::string& userid);
+
+
+    //6. 未认领的数据
+private:
+    std::unique_ptr<std::vector<std::unique_ptr<std::vector<uint8_t>>>> socket_unclaimed_recv_data;
+    std::mutex mutex_socket_unclaimed_recv_data;
+    std::condition_variable cv_socket_unclaimed_recv_data;
+    std::unique_ptr<std::vector<std::unique_ptr<std::vector<uint8_t>>>> socket_unclaimed_send_data;
+    std::mutex mutex_socket_unclaimed_send_data;
+    std::condition_variable cv_socket_unclaimed_send_data;
+public:
+    void push_socket_unclaimed_recv_data(std::unique_ptr<std::vector<uint8_t>> data);
+    void push_socket_unclaimed_send_data(std::unique_ptr<std::vector<uint8_t>> data);
+    std::unique_ptr<std::vector<uint8_t>> pop_socket_unclaimed_recv_data();
+    std::unique_ptr<std::vector<uint8_t>> pop_socket_unclaimed_send_data();
+
+
+    
+public:
+    //更新和弹出一个过期的
+    void socket_update_user_interactionTime(const std::string& userid);
+    std::shared_ptr<User> pop_socket_timeOut_user();
+    
+    void redisStream_update_user_interactionTime(const std::string& userid);
+    std::shared_ptr<User> pop_redisStream_timeOut_user();
 
 public:
     void add_user(std::shared_ptr<User> user);
-    void del_user(const std::string& userid);
+    void add_user_socket(int socket);
+    void del_user(const std::string& userid,UserConnectionType type);
 private:
-    void add_user_to_fdUserMap(std::shared_ptr<User> user);
+    void add_user_to_socket_fdUser_Map(std::shared_ptr<User> user);
+    void add_user_to_socket_userTimeOut_set(std::shared_ptr<User> user);
+    void add_user_to_socket_ishaveData_user_map(std::shared_ptr<User> user);
+    void add_user_to_userIdToUser_map(std::shared_ptr<User> user);
+    void add_user_to_userIdToOfflineUser_map(std::shared_ptr<User> user);
     // bool is_user_exist_at_socket(int socketFd);
+
+public:
+    static userManager& get_instance();
+    userManager & operator=(const userManager& a) = delete;
+    userManager(const userManager& a) = delete;
+private:
+    userManager();
+    ~userManager(); 
 };
 
 

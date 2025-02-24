@@ -1660,9 +1660,20 @@
 #include <vector>
 using namespace std;
 
+std::unique_ptr<int> func()
+{
+    std::unique_ptr<int> a = std::make_unique<int>(1);
+    return std::move(a);
+}
+
 int main()
 {
-    std::unique_ptr<std::vector<int>> a = std::make_unique<std::vector<int>>();
+    auto a = func();
+    cout<<*a<<endl;
+
+    
+
+   /*  std::unique_ptr<std::vector<int>> a = std::make_unique<std::vector<int>>();
     a->push_back(1);
     a->push_back(2);
     std::unique_ptr<std::vector<int>> b = std::move(a);
@@ -1678,5 +1689,6 @@ int main()
         for(auto i:*a)
             cout<<i<<endl;
     }
+    */
     return 0;
 }

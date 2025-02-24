@@ -259,3 +259,24 @@ std::unique_ptr<std::vector<std::string>> User::pop_redisStream_sendData()
     redisStream_sendData = std::make_unique<std::vector<std::string>>();
     return std::move(ret);
 }
+
+bool User::is_socket_using()
+{
+    return m_is_socket_using.load();
+}
+
+bool User::is_redisStream_using()
+{
+    return m_is_redisStream_using.load();
+}
+
+User::User()
+{
+    m_socket_lastInteractionTime = std::chrono::steady_clock::now();
+    m_redisStream_lastInteractionTime = std::chrono::steady_clock::now();
+    socket_recvData = std::make_unique<std::vector<uint8_t>>();
+    socket_sendData = std::make_unique<std::vector<uint8_t>>();
+    redisStream_recvData = std::make_unique<std::vector<std::string>>();
+    redisStream_sendData = std::make_unique<std::vector<std::string>>();
+    
+}
